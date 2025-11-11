@@ -97,15 +97,38 @@ Acceder a: http://127.0.0.1:8000/
 ## 📂 Estructura del Proyecto
 
 proyecto_nuam/
+│
 ├── calificaciones/ # Aplicación principal
+│ ├── migrations/ # Migraciones de base de datos
+│ ├── management/ # Comandos personalizados
+│ ├── templatetags/ # Filtros personalizados (formato chileno)
+│ ├── models.py # Modelos de datos
+│ ├── views.py # Lógica de negocio
+│ ├── forms.py # Formularios Django
+│ ├── admin.py # Panel de administración
+│ ├── permissions.py # Sistema RBAC
+│ └── urls.py # URLs de la app
+│
 ├── templates/ # Plantillas HTML
-├── static/ # CSS, JS, imágenes
+│ ├── base.html # Template base
+│ ├── calificaciones/ # Templates de la app
+│ └── registration/ # Login/Logout
+│
+├── static/ # Archivos estáticos
+│ ├── css/
+│ │ └── style.css # Estilos personalizados
+│ ├── js/ # (si tienes JavaScript)
+│ └── img/ # Imágenes
+│
 ├── nuam_project/ # Configuración Django
-├── manage.py
-├── requirements.txt
-└── README.md
-
-text
+│ ├── settings.py # Configuración principal
+│ ├── urls.py # URLs principales
+│ └── wsgi.py # WSGI config
+│
+├── manage.py # Script de gestión Django
+├── requirements.txt # Dependencias Python
+├── .gitignore # Archivos ignorados por Git
+└── README.md # Este archivo
 
 ## 🔐 Roles y Permisos
 
