@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% load formatos %}
+
+{% block title %}Carga Masiva - NUAM{% endblock %}
+
+{% block content %}
+<!-- Header de la página -->
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="mb-1">
+                <i class="bi bi-cloud-upload-fill text-primary"></i> Carga Masiva de Calificaciones
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Carga Masiva</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Formulario de carga -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-upload"></i> Subir Archivo
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <!-- Instrucciones -->
+                <div class="alert alert-info border-0 mb-4">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <i class="bi bi-info-circle-fill" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <h6 class="alert-heading mb-2">Instrucciones de Carga</h6>
+                            <ul class="mb-0 small">
+                                <li>Formatos aceptados: <strong>CSV</strong> o <strong>Excel (.xlsx)</strong></li>
+                                <li>Descarga la plantilla de ejemplo para conocer el formato requerido</li>
+                                <li>Asegúrate de que todos los instrumentos existan en el sistema</li>
+                                <li>Formato de fecha: <code>YYYY-MM-DD</code> (ejemplo: 2025-11-11)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario de upload -->
+                <form method="post" enctype="multipart/form-data" id="uploadForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.archivo.id_for_label }}" class="form-label fw-bold">
+                            Seleccionar Archivo
+                        </label>
+                        <div class="upload-area border rounded p-4 text-center" id="uploadArea">
+                            <div class="upload-icon mb-3">
+                                <i class="bi bi-cloud-arrow-up" style="font-size: 4rem; color: #0d6efd;"></i>
+                            </div>
+                            <p class="mb-2">Arrastra tu archivo aquí o haz clic para seleccionar</p>
+                            <small class="text-muted">CSV o Excel (XLSX) - Máximo 10 MB</small>
+                            <input type="file" 
+                                   name="archivo" 
+                                   id="{{ form.archivo.id_for_label }}" 
+                                   class="form-control mt-3" 
+                                   accept=".csv,.xlsx"
+                                   required>
+                        </div>
+                        {% if form.archivo.errors %}
+                            <div class="text-danger mt-2">
+                                <i class="bi bi-exclamation-triangle"></i> {{ form.archivo.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg px-5" id="btnSubmit">
+                            <i class="bi bi-upload"></i> Procesar Archivo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel lateral -->
+    <div class="col-lg-4">
+        <!-- Plantilla de ejemplo -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #198754 0%, #146c43 100%);">
+                <h6 class="mb-0">
+                    <i class="bi bi-download"></i> Plantilla de Ejemplo
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">
+                    Descarga esta plantilla para ver el formato correcto de los datos:
+                </p>
+                
+                <div class="d-grid gap-2">
+                    <button onclick="descargarPlantilla(); return false;" class="btn btn-success">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Descargar Plantilla CSV
+                    </button>
+                </div>
+                
+                <hr class="my-3">
+                
+                <h6 class="small fw-bold mb-2">Columnas requeridas:</h6>
+                <ul class="small mb-0 ps-3">
+                    <li><code>codigo_instrumento</code></li>
+                    <li><code>metodo_ingreso</code></li>
+                    <li><code>monto</code> (opcional)</li>
+                    <li><code>factor</code> (opcional)</li>
+                    <li><code>numero_dj</code></li>
+                    <li><code>fecha_informe</code></li>
+                    <li><code>observaciones</code></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Tips -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%);">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb"></i> Consejos
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="small mb-0 ps-3">
+                    <li class="mb-2">Verifica que los códigos de instrumentos existan antes de cargar</li>
+                    <li class="mb-2">El método puede ser <strong>MONTO</strong> o <strong>FACTOR</strong></li>
+                    <li class="mb-2">Si usas Excel, guarda como CSV UTF-8 para mejor compatibilidad</li>
+                    <li class="mb-2">Revisa el historial para ver errores detallados</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Historial de cargas -->
+{% if cargas_anteriores %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Historial de Cargas
+                    </h5>
+                    <span class="badge bg-primary">{{ cargas_anteriores|length }} registro{{ cargas_anteriores|length|pluralize:"s" }}</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0">Fecha y Hora</th>
+                                <th class="border-0">Archivo</th>
+                                <th class="border-0">Estado</th>
+                                <th class="border-0 text-center">Procesados</th>
+                                <th class="border-0 text-center">Exitosos</th>
+                                <th class="border-0 text-center">Fallidos</th>
+                                <th class="border-0 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for carga in cargas_anteriores %}
+                            <tr>
+                                <td>
+                                    <small>{{ carga.fecha_carga|date:"d/m/Y H:i" }}</small>
+                                </td>
+                                <td>
+                                    <i class="bi bi-file-earmark-text text-muted me-1"></i>
+                                    {{ carga.archivo_nombre }}
+                                </td>
+                                <td>
+                                    {% if carga.estado == 'EXITOSO' %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> {{ carga.estado }}
+                                        </span>
+                                    {% elif carga.estado == 'PARCIAL' %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-exclamation-triangle"></i> {{ carga.estado }}
+                                        </span>
+                                    {% elif carga.estado == 'FALLIDO' %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle"></i> {{ carga.estado }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-hourglass"></i> {{ carga.estado }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <strong>{{ carga.registros_procesados }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    <span class="text-success fw-bold">{{ carga.registros_exitosos }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if carga.registros_fallidos > 0 %}
+                                        <span class="text-danger fw-bold">{{ carga.registros_fallidos }}</span>
+                                    {% else %}
+                                        <span class="text-muted">0</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if carga.errores_detalle %}
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-info" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#errorModal{{ carga.id }}">
+                                            <i class="bi bi-eye"></i> Ver Errores
+                                        </button>
+                                        
+                                        <!-- Modal de errores -->
+                                        <div class="modal fade" id="errorModal{{ carga.id }}" tabindex="-1">
+                                            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-danger text-white">
+                                                        <h5 class="modal-title">
+                                                            <i class="bi bi-exclamation-triangle"></i> 
+                                                            Errores Encontrados
+                                                        </h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="alert alert-light border">
+                                                            <strong>Archivo:</strong> {{ carga.archivo_nombre }}<br>
+                                                            <strong>Fecha:</strong> {{ carga.fecha_carga|date:"d/m/Y H:i" }}
+                                                        </div>
+                                                        <h6 class="fw-bold mb-3">Detalle de errores:</h6>
+                                                        <pre class="bg-light p-3 rounded" style="white-space: pre-wrap; font-size: 0.875rem;">{{ carga.errores_detalle }}</pre>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                            Cerrar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted small">Sin errores</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Función para descargar plantilla CSV
+function descargarPlantilla() {
+    const csvContent = "codigo_instrumento,metodo_ingreso,monto,factor,numero_dj,fecha_informe,observaciones\n" +
+                      "CMPC,MONTO,5000000,,1949,2025-11-10,Ejemplo de ingreso por monto\n" +
+                      "BCHILE,FACTOR,,12.5,1922,2025-11-10,Ejemplo de ingreso por factor";
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", "plantilla_calificaciones.csv");
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Drag and Drop para el área de upload
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('{{ form.archivo.id_for_label }}');
+
+if (uploadArea && fileInput) {
+    // Prevenir comportamiento por defecto
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Highlight en drag over
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight(e) {
+        uploadArea.classList.add('border-primary', 'bg-light');
+    }
+
+    function unhighlight(e) {
+        uploadArea.classList.remove('border-primary', 'bg-light');
+    }
+
+    // Manejar el drop
+    uploadArea.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        fileInput.files = files;
+        
+        if (files.length > 0) {
+            updateFileName(files[0].name);
+        }
+    }
+
+    // Actualizar nombre del archivo seleccionado
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            updateFileName(this.files[0].name);
+        }
+    });
+
+    function updateFileName(filename) {
+        const icon = uploadArea.querySelector('.upload-icon i');
+        icon.className = 'bi bi-file-earmark-check-fill';
+        icon.style.color = '#198754';
+        
+        const text = uploadArea.querySelector('p');
+        text.innerHTML = `<strong>Archivo seleccionado:</strong> ${filename}`;
+    }
+}
+
+// Loading al enviar formulario
+document.getElementById('uploadForm').addEventListener('submit', function() {
+    const btn = document.getElementById('btnSubmit');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
+    btn.disabled = true;
+});
+</script>
+{% endblock %}

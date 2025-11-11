@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesión Cerrada - NUAM</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a5490 0%, #0d6efd 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logout-card {
+            max-width: 500px;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .success-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            box-shadow: 0 10px 30px rgba(25, 135, 84, 0.3);
+        }
+        
+        .success-icon i {
+            font-size: 4rem;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logout-card">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body text-center p-5">
+                    <div class="success-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    
+                    <h2 class="mb-3">¡Sesión Cerrada Exitosamente!</h2>
+                    <p class="text-muted mb-4">
+                        Has cerrado sesión de forma segura del Sistema NUAM de Calificaciones Tributarias
+                    </p>
+                    
+                    <div class="alert alert-success border-0 mb-4">
+                        <i class="bi bi-shield-check"></i> 
+                        Todos tus cambios han sido guardados correctamente
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión Nuevamente
+                        </a>
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="bi bi-house"></i> Ir al Inicio
+                        </a>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-muted small">
+                        <p class="mb-0">
+                            <i class="bi bi-info-circle"></i> 
+                            Si no cerraste sesión, contacta al administrador inmediatamente
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-light text-center border-top-0 py-3">
+                    <small class="text-muted">© 2025 NUAM Exchange - Todos los derechos reservados</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

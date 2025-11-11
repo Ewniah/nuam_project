@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+{% load formatos %}
+
+{% block title %}Panel Principal - NUAM{% endblock %}
+
+{% block content %}
+<!-- Header del Dashboard con mensaje personalizado (NO se auto-cierra) -->
+<div class="dashboard-header mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-12">
+            <div class="welcome-banner border-0 shadow-sm p-4 rounded" 
+                 style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);">
+                <div class="d-flex align-items-center">
+                    <div class="me-3" style="font-size: 2.5rem;">{{ icono_saludo }}</div>
+                    <div class="flex-grow-1">
+                        <h4 class="text-white mb-1">
+                            {{ saludo }}, {{ user.get_full_name|default:user.username }}!
+                        </h4>
+                        <p class="text-white-50 mb-0">
+                            {% if user.is_superuser %}
+                                <i class="bi bi-shield-fill"></i> Administrador del Sistema
+                            {% elif user.perfilusuario.rol %}
+                                <i class="bi bi-person-badge"></i> {{ user.perfilusuario.rol.nombre_rol }}
+                            {% endif %}
+                            · {% now "l, d \d\e F \d\e Y" %}
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <div class="btn-group" role="group">
+                            {% if user.is_superuser or user.is_staff %}
+                            <a href="{% url 'crear_calificacion' %}" class="btn btn-light">
+                                <i class="bi bi-plus-circle"></i> Nueva
+                            </a>
+                            <a href="{% url 'carga_masiva' %}" class="btn btn-outline-light">
+                                <i class="bi bi-upload"></i> Importar
+                            </a>
+                            {% elif user.perfilusuario.rol.nombre_rol == 'Analista Financiero' %}
+                            <a href="{% url 'crear_calificacion' %}" class="btn btn-light">
+                                <i class="bi bi-plus-circle"></i> Nueva
+                            </a>
+                            <a href="{% url 'carga_masiva' %}" class="btn btn-outline-light">
+                                <i class="bi bi-upload"></i> Importar
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- KPIs / Métricas Principales -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stats-card card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-1 small text-uppercase">Total Calificaciones</p>
+                        <h3 class="mb-0 fw-bold">{{ total_calificaciones }}</h3>
+                        <small class="text-success">
+                            <i class="bi bi-arrow-up"></i> Registros activos
+                        </small>
+                    </div>
+                    <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0 pt-0 pb-3">
+                <a href="{% url 'listar_calificaciones' %}" class="text-decoration-none small">
+                    Ver detalles <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="stats-card card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-1 small text-uppercase">Instrumentos</p>
+                        <h3 class="mb-0 fw-bold">{{ total_instrumentos }}</h3>
+                        <small class="text-info">
+                            <i class="bi bi-graph-up"></i> Tipos disponibles
+                        </small>
+                    </div>
+                    <div class="stats-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0 pt-0 pb-3">
+                <a href="{% url 'listar_instrumentos' %}" class="text-decoration-none small">
+                    Ver detalles <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="stats-card card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-1 small text-uppercase">Usuarios Activos</p>
+                        <h3 class="mb-0 fw-bold">{{ total_usuarios }}</h3>
+                        <small class="text-primary">
+                            <i class="bi bi-people"></i> En el sistema
+                        </small>
+                    </div>
+                    <div class="stats-icon bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0 pt-0 pb-3">
+                <a href="/admin/auth/user/" class="text-decoration-none small">
+                    Gestionar <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="stats-card card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-1 small text-uppercase">Últimos 30 Días</p>
+                        <h3 class="mb-0 fw-bold">{{ calificaciones_recientes_30d }}</h3>
+                        <small class="text-warning">
+                            <i class="bi bi-calendar-check"></i> Nuevas calificaciones
+                        </small>
+                    </div>
+                    <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-calendar3-range"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0 pt-0 pb-3">
+                <small class="text-muted">Actividad mensual</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sección de Gráficos -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bar-chart-fill text-primary"></i> 
+                        Distribución de Calificaciones
+                    </h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary active">Mes</button>
+                        <button type="button" class="btn btn-outline-secondary">Año</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if calificaciones_por_metodo %}
+                    <canvas id="chartMetodos" height="100"></canvas>
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                        <p class="mt-3">No hay datos para mostrar</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart-fill text-success"></i> 
+                    Tipos de Instrumentos
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if instrumentos_por_tipo %}
+                    <canvas id="chartInstrumentos" height="200"></canvas>
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                        <p class="mt-3">No hay datos</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones Rápidas y Actividad Reciente -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning-charge-fill text-warning"></i> 
+                    Acciones Rápidas
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% if user.perfilusuario.rol.nombre_rol == 'Administrador' or user.perfilusuario.rol.nombre_rol == 'Analista Financiero' or user.is_superuser %}
+                    <a href="{% url 'crear_calificacion' %}" class="list-group-item list-group-item-action d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="stats-icon bg-primary bg-opacity-10 text-primary" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                                <i class="bi bi-plus-circle"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Nueva Calificación</h6>
+                            <small class="text-muted">Registrar calificación tributaria</small>
+                        </div>
+                    </a>
+                    <a href="{% url 'carga_masiva' %}" class="list-group-item list-group-item-action d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="stats-icon bg-success bg-opacity-10 text-success" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                                <i class="bi bi-upload"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Carga Masiva</h6>
+                            <small class="text-muted">Importar desde Excel/CSV</small>
+                        </div>
+                    </a>
+                    {% endif %}
+                    {% if user.is_superuser or user.perfilusuario.rol.nombre_rol == 'Administrador' %}
+                    <a href="{% url 'crear_instrumento' %}" class="list-group-item list-group-item-action d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="stats-icon bg-info bg-opacity-10 text-info" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                                <i class="bi bi-plus-square"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Nuevo Instrumento</h6>
+                            <small class="text-muted">Agregar instrumento financiero</small>
+                        </div>
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'exportar_excel' %}" class="list-group-item list-group-item-action d-flex align-items-center">
+                        <div class="me-3">
+                            <div class="stats-icon bg-warning bg-opacity-10 text-warning" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                                <i class="bi bi-file-earmark-excel"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Exportar Reporte</h6>
+                            <small class="text-muted">Descargar datos en Excel</small>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history text-info"></i> 
+                        Actividad Reciente
+                    </h5>
+                    <a href="{% url 'listar_calificaciones' %}" class="btn btn-sm btn-outline-primary">
+                        Ver todas <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if calificaciones_recientes %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0">Instrumento</th>
+                                <th class="border-0">Método</th>
+                                <th class="border-0">Monto</th>
+                                <th class="border-0">Factor</th>
+                                <th class="border-0">Fecha</th>
+                                <th class="border-0">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cal in calificaciones_recientes %}
+                            <tr>
+                                <td>
+                                    <strong>{{ cal.instrumento.codigo_instrumento }}</strong>
+                                    <br><small class="text-muted">{{ cal.instrumento.nombre_instrumento|truncatewords:3 }}</small>
+                                </td>
+                                <td>
+                                    {% if cal.metodo_ingreso == 'MONTO' %}
+                                        <span class="badge bg-primary">Monto</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Factor</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ cal.monto|formato_clp:2 }}</td>
+                                <td>{{ cal.factor|formato_factor:8 }}</td>
+                                <td>
+                                    <small>{{ cal.fecha_informe|date:"d/m/Y" }}</small>
+                                </td>
+                                <td>
+                                    {% if user.perfilusuario.rol.nombre_rol == 'Administrador' or user.perfilusuario.rol.nombre_rol == 'Analista Financiero' or user.is_superuser %}
+                                    <a href="{% url 'editar_calificacion' cal.id %}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                    <p class="mt-3">No hay actividad reciente</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logs de Auditoría (solo para Admin y Auditor) -->
+{% if logs_recientes %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-shield-lock-fill text-danger"></i> 
+                    Registro de Auditoría
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Usuario</th>
+                                <th>Acción</th>
+                                <th>Tabla</th>
+                                <th>Detalles</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs_recientes %}
+                            <tr>
+                                <td><small>{{ log.fecha_hora|date:"d/m/Y H:i" }}</small></td>
+                                <td>{{ log.usuario.username }}</td>
+                                <td>
+                                    {% if log.accion == 'CREATE' %}
+                                        <span class="badge bg-success">Crear</span>
+                                    {% elif log.accion == 'UPDATE' %}
+                                        <span class="badge bg-warning">Actualizar</span>
+                                    {% elif log.accion == 'DELETE' %}
+                                        <span class="badge bg-danger">Eliminar</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ log.accion }}</span>
+                                    {% endif %}
+                                </td>
+                                <td><small>{{ log.tabla_afectada }}</small></td>
+                                <td><small class="text-muted">{{ log.detalles|truncatewords:8 }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+{% if calificaciones_por_metodo %}
+const datosMetodos = {
+    labels: [{% for item in calificaciones_por_metodo %}'{{ item.metodo_ingreso }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+    values: [{% for item in calificaciones_por_metodo %}{{ item.total }}{% if not forloop.last %},{% endif %}{% endfor %}]
+};
+
+const ctxMetodos = document.getElementById('chartMetodos');
+if (ctxMetodos) {
+    new Chart(ctxMetodos.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: datosMetodos.labels,
+            datasets: [{
+                label: 'Calificaciones',
+                data: datosMetodos.values,
+                backgroundColor: ['rgba(13, 110, 253, 0.8)', 'rgba(32, 201, 151, 0.8)'],
+                borderColor: ['rgb(13, 110, 253)', 'rgb(32, 201, 151)'],
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+}
+{% endif %}
+
+{% if instrumentos_por_tipo %}
+const datosInstrumentos = {
+    labels: [{% for item in instrumentos_por_tipo %}'{{ item.tipo_instrumento }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+    values: [{% for item in instrumentos_por_tipo %}{{ item.total }}{% if not forloop.last %},{% endif %}{% endfor %}]
+};
+
+const ctxInstrumentos = document.getElementById('chartInstrumentos');
+if (ctxInstrumentos) {
+    new Chart(ctxInstrumentos.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: datosInstrumentos.labels,
+            datasets: [{
+                data: datosInstrumentos.values,
+                backgroundColor: [
+                    'rgba(13, 110, 253, 0.8)',
+                    'rgba(25, 135, 84, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(220, 53, 69, 0.8)',
+                    'rgba(108, 117, 125, 0.8)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+}
+{% endif %}
+</script>
+{% endblock %}

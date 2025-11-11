@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load formatos %}
+
+{% block title %}Mi Perfil - NUAM{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="mb-1">
+                <i class="bi bi-person-circle text-primary"></i> Mi Perfil
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Mi Perfil</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Información del Usuario -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body text-center p-4">
+                <div class="avatar-circle mb-3">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <h4 class="mb-1">{{ user.get_full_name|default:user.username }}</h4>
+                <p class="text-muted mb-3">@{{ user.username }}</p>
+                
+                {% if user.is_superuser %}
+                    <span class="badge bg-danger mb-3">
+                        <i class="bi bi-shield-fill"></i> Administrador del Sistema
+                    </span>
+                {% elif perfil and perfil.rol %}
+                    <span class="badge bg-primary mb-3">
+                        <i class="bi bi-person-badge"></i> {{ perfil.rol.nombre_rol }}
+                    </span>
+                {% endif %}
+                
+                <div class="text-start mt-4">
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">
+                            <i class="bi bi-envelope"></i> Email
+                        </small>
+                        <strong>{{ user.email|default:"No especificado" }}</strong>
+                    </div>
+                    
+                    {% if perfil %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">
+                            <i class="bi bi-building"></i> Departamento
+                        </small>
+                        <strong>{{ perfil.departamento|default:"No especificado" }}</strong>
+                    </div>
+                    
+                    {% if perfil.telefono %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">
+                            <i class="bi bi-telephone"></i> Teléfono
+                        </small>
+                        <strong>{{ perfil.telefono }}</strong>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">
+                            <i class="bi bi-calendar-check"></i> Fecha de registro
+                        </small>
+                        <strong>{{ user.date_joined|date:"d/m/Y" }}</strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">
+                            <i class="bi bi-clock-history"></i> Último acceso
+                        </small>
+                        <strong>{{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estadísticas Rápidas -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0">
+                    <i class="bi bi-bar-chart"></i> Mis Estadísticas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                    <div>
+                        <small class="text-muted d-block">Calificaciones Creadas</small>
+                        <h4 class="mb-0 text-primary">{{ calificaciones_creadas }}</h4>
+                    </div>
+                    <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted d-block">Acciones Registradas</small>
+                        <h4 class="mb-0 text-success">{{ logs_usuario|length }}</h4>
+                    </div>
+                    <div class="stats-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actividad Reciente -->
+    <div class="col-lg-8">
+        <!-- Mis Calificaciones -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Mis Últimas Calificaciones
+                    </h5>
+                    <a href="{% url 'listar_calificaciones' %}" class="btn btn-sm btn-outline-primary">
+                        Ver Todas <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if ultimas_calificaciones %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0">Instrumento</th>
+                                <th class="border-0">Método</th>
+                                <th class="border-0 text-end">Monto</th>
+                                <th class="border-0 text-end">Factor</th>
+                                <th class="border-0">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cal in ultimas_calificaciones %}
+                            <tr>
+                                <td>
+                                    <strong>{{ cal.instrumento.codigo_instrumento }}</strong>
+                                    <br><small class="text-muted">{{ cal.instrumento.nombre_instrumento|truncatewords:3 }}</small>
+                                </td>
+                                <td>
+                                    {% if cal.metodo_ingreso == 'MONTO' %}
+                                        <span class="badge bg-primary">Monto</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Factor</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">{{ cal.monto|formato_clp:2 }}</td>
+                                <td class="text-end"><code>{{ cal.factor|formato_factor:8 }}</code></td>
+                                <td><small>{{ cal.fecha_informe|date:"d/m/Y" }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #dee2e6;"></i>
+                    <p class="text-muted mt-3 mb-0">No has creado calificaciones todavía</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Registro de Actividad -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-activity"></i> Mi Actividad Reciente
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if logs_usuario %}
+                <div class="list-group list-group-flush">
+                    {% for log in logs_usuario %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    {% if log.accion == 'CREATE' %}
+                                        <span class="badge bg-success me-2">
+                                            <i class="bi bi-plus-circle"></i> Crear
+                                        </span>
+                                    {% elif log.accion == 'UPDATE' %}
+                                        <span class="badge bg-warning me-2">
+                                            <i class="bi bi-pencil"></i> Actualizar
+                                        </span>
+                                    {% elif log.accion == 'DELETE' %}
+                                        <span class="badge bg-danger me-2">
+                                            <i class="bi bi-trash"></i> Eliminar
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-info me-2">
+                                            <i class="bi bi-info-circle"></i> {{ log.accion }}
+                                        </span>
+                                    {% endif %}
+                                    <strong>{{ log.tabla_afectada }}</strong>
+                                </div>
+                                <p class="mb-0 small text-muted">{{ log.detalles|truncatewords:15 }}</p>
+                            </div>
+                            <small class="text-muted text-nowrap ms-3">
+                                <i class="bi bi-clock"></i> {{ log.fecha_hora|date:"d/m/Y H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-activity" style="font-size: 3rem; color: #dee2e6;"></i>
+                    <p class="text-muted mt-3 mb-0">No hay actividad registrada</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<style>
+.avatar-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3);
+}
+
+.avatar-circle i {
+    font-size: 4rem;
+    color: white;
+}
+
+.stats-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "admin/change_form.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+(function() {
+    'use strict';
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const metodoSelect = document.querySelector('#id_metodo_ingreso');
+        const montoInput = document.querySelector('#id_monto');
+        const factorInput = document.querySelector('#id_factor');
+        
+        if (!metodoSelect || !montoInput || !factorInput) {
+            console.log('Elementos no encontrados');
+            return;
+        }
+        
+        function actualizarCampos() {
+            const metodo = metodoSelect.value;
+            
+            if (metodo === 'MONTO') {
+                // Habilitar monto, deshabilitar factor
+                montoInput.disabled = false;
+                montoInput.closest('.form-row').style.opacity = '1';
+                factorInput.disabled = true;
+                factorInput.closest('.form-row').style.opacity = '0.5';
+                factorInput.value = '';
+            } else if (metodo === 'FACTOR') {
+                // Habilitar factor, deshabilitar monto
+                factorInput.disabled = false;
+                factorInput.closest('.form-row').style.opacity = '1';
+                montoInput.disabled = true;
+                montoInput.closest('.form-row').style.opacity = '0.5';
+                montoInput.value = '';
+            } else {
+                // Si no hay método seleccionado, habilitar ambos
+                montoInput.disabled = false;
+                factorInput.disabled = false;
+                montoInput.closest('.form-row').style.opacity = '1';
+                factorInput.closest('.form-row').style.opacity = '1';
+            }
+        }
+        
+        // Ejecutar al cargar
+        actualizarCampos();
+        
+        // Ejecutar al cambiar
+        metodoSelect.addEventListener('change', actualizarCampos);
+    });
+})();
+</script>
+{% endblock %}
