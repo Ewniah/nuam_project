@@ -28,10 +28,8 @@ Aplicación que permite gestionar calificaciones tributarias según normativas D
 
 ### 1. Clonar repositorio
 
-git clone https://github.com/tu-usuario/sistema-nuam.git
+git clone https://github.com/tu-usuario/nuam_project.git
 cd sistema-nuam
-
-text
 
 ### 2. Crear entorno virtual
 
@@ -39,13 +37,9 @@ python -m venv venv
 venv\Scripts\activate # Windows
 source venv/bin/activate # Linux/Mac
 
-text
-
 ### 3. Instalar dependencias
 
 pip install -r requirements.txt
-
-text
 
 ### 4. Configurar base de datos
 
@@ -62,27 +56,19 @@ DATABASES = {
 }
 }
 
-text
-
 ### 5. Ejecutar migraciones
 
 python manage.py makemigrations
 python manage.py migrate
-
-text
 
 ### 6. Crear datos iniciales
 
 python manage.py crear_datos_iniciales
 python manage.py createsuperuser
 
-text
-
 ### 7. Iniciar servidor
 
 python manage.py runserver
-
-text
 
 Acceder a: http://127.0.0.1:8000/
 
@@ -93,42 +79,6 @@ Acceder a: http://127.0.0.1:8000/
 | admin     | admin123   | Administrador |
 | analista1 | nuam2025   | Analista      |
 | auditor1  | nuam2025   | Auditor       |
-
-## 📂 Estructura del Proyecto
-
-proyecto_nuam/
-│
-├── calificaciones/ # Aplicación principal
-│ ├── migrations/ # Migraciones de base de datos
-│ ├── management/ # Comandos personalizados
-│ ├── templatetags/ # Filtros personalizados (formato chileno)
-│ ├── models.py # Modelos de datos
-│ ├── views.py # Lógica de negocio
-│ ├── forms.py # Formularios Django
-│ ├── admin.py # Panel de administración
-│ ├── permissions.py # Sistema RBAC
-│ └── urls.py # URLs de la app
-│
-├── templates/ # Plantillas HTML
-│ ├── base.html # Template base
-│ ├── calificaciones/ # Templates de la app
-│ └── registration/ # Login/Logout
-│
-├── static/ # Archivos estáticos
-│ ├── css/
-│ │ └── style.css # Estilos personalizados
-│ ├── js/ # (si tienes JavaScript)
-│ └── img/ # Imágenes
-│
-├── nuam_project/ # Configuración Django
-│ ├── settings.py # Configuración principal
-│ ├── urls.py # URLs principales
-│ └── wsgi.py # WSGI config
-│
-├── manage.py # Script de gestión Django
-├── requirements.txt # Dependencias Python
-├── .gitignore # Archivos ignorados por Git
-└── README.md # Este archivo
 
 ## 🔐 Roles y Permisos
 
