@@ -28,24 +28,20 @@ Aplicación que permite gestionar calificaciones tributarias según normativas D
 
 ### 1. Clonar repositorio
 
-git clone https://github.com/tu-usuario/sistema-nuam.git
-cd sistema-nuam
-
-text
+git clone https://github.com/tu-usuario/nuam_project.git
+cd nuam_project
 
 ### 2. Crear entorno virtual
 
 python -m venv venv
-venv\Scripts\activate # Windows
-source venv/bin/activate # Linux/Mac
 
-text
+venv\Scripts\activate # Windows
+
+source venv/bin/activate # Linux/Mac
 
 ### 3. Instalar dependencias
 
 pip install -r requirements.txt
-
-text
 
 ### 4. Configurar base de datos
 
@@ -62,27 +58,19 @@ DATABASES = {
 }
 }
 
-text
-
 ### 5. Ejecutar migraciones
 
 python manage.py makemigrations
 python manage.py migrate
-
-text
 
 ### 6. Crear datos iniciales
 
 python manage.py crear_datos_iniciales
 python manage.py createsuperuser
 
-text
-
 ### 7. Iniciar servidor
 
 python manage.py runserver
-
-text
 
 Acceder a: http://127.0.0.1:8000/
 
@@ -93,19 +81,6 @@ Acceder a: http://127.0.0.1:8000/
 | admin     | admin123   | Administrador |
 | analista1 | nuam2025   | Analista      |
 | auditor1  | nuam2025   | Auditor       |
-
-## 📂 Estructura del Proyecto
-
-proyecto_nuam/
-├── calificaciones/ # Aplicación principal
-├── templates/ # Plantillas HTML
-├── static/ # CSS, JS, imágenes
-├── nuam_project/ # Configuración Django
-├── manage.py
-├── requirements.txt
-└── README.md
-
-text
 
 ## 🔐 Roles y Permisos
 
