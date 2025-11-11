@@ -29,12 +29,14 @@ Aplicación que permite gestionar calificaciones tributarias según normativas D
 ### 1. Clonar repositorio
 
 git clone https://github.com/tu-usuario/nuam_project.git
-cd sistema-nuam
+cd nuam_project
 
 ### 2. Crear entorno virtual
 
 python -m venv venv
+
 venv\Scripts\activate # Windows
+
 source venv/bin/activate # Linux/Mac
 
 ### 3. Instalar dependencias
