@@ -77,6 +77,36 @@ pip install -r requirements.txt
 
 ### 4. Configurar variables de entorno
 
+1. Con el entorno virtual activado y en la carpeta del proyecto (donde está manage.py)
+
+2. Genera una SECRET_KEY única:
+
+3. Ejecuta:
+
+```bash
+python manage.py shell
+```
+
+4. Luego:
+
+```bash
+from django.core.management.utils import get_random_secret_key
+print(get_random_secret_key())
+```
+
+5. Presionar Enter y te dará la SECRET_KEY. Cópiala.
+
+6. Sal del shell:
+
+```bash
+exit()
+
+```
+
+IMPORTANTE: Nunca compartas tu SECRET_KEY. Cada instalación debe tener su propia clave.
+
+2. Crea el archivo .env con este contenido:
+
 Crea un archivo .env en la raíz del proyecto (nuam_project/) con el siguiente contenido:
 
 ```bash
