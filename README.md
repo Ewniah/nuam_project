@@ -93,3 +93,140 @@ DB_PASSWORD=tu-password-de-postgres-aqui
 DB_HOST=localhost
 DB_PORT=5432
 ```
+
+    IMPORTANTE: El archivo .env ya está incluido en .gitignore para evitar que se suba a GitHub.
+
+### 5. Crear la base de datos
+
+Asegúrate de tener PostgreSQL en ejecución. Puedes usar psql o un cliente gráfico (como pgAdmin) para ejecutar:
+
+```bash
+CREATE DATABASE nuam_calificaciones_db;
+```
+
+### 6. Ejecutar migraciones
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+### 7. Crear datos iniciales y superusuario
+
+```bash
+# Carga los roles iniciales y otros datos necesarios
+python manage.py crear_datos_iniciales
+
+python manage.py poblar_sistema.py
+
+# Crea tu cuenta de administrador
+python manage.py createsuperuser
+```
+
+### 8. Asignar perfil al superusuario
+
+El sistema requiere que cada User tenga un PerfilUsuario asociado. Ejecuta el shell de Django:
+
+```bash
+python manage.py shell
+```
+
+Y luego ejecuta el siguiente código Python (reemplaza 'tu_superusuario' con el username que creaste):
+
+```bash
+from django.contrib.auth.models import User
+from calificaciones.models import PerfilUsuario, Rol
+
+# --- Reemplaza 'tu_superusuario' con el nombre de usuario que creaste ---
+try:
+    admin = User.objects.get(username='tu_superusuario')
+
+    rol_admin, created = Rol.objects.get_or_create(
+        nombre_rol='Administrador',
+        defaults={'descripcion': 'Acceso completo al sistema'}
+    )
+
+    PerfilUsuario.objects.create(
+        usuario=admin,
+        rol=rol_admin,
+        departamento='Administración'
+    )
+    print(f"Perfil de Administrador creado exitosamente para {admin.username}.")
+
+except User.DoesNotExist:
+    print("Error: No se encontró el superusuario. Asegúrate de haberlo creado.")
+
+exit()
+```
+
+### 9. Iniciar el servidor
+
+```bash
+python manage.py runserver
+```
+
+¡Listo! Accede al sistema en http://127.0.0.1:8000/.
+
+👥 Usuarios de Prueba
+Puedes usar las siguientes credenciales para probar los diferentes roles:
+
+Usuario Contraseña Rol
+admin admin123 Administrador
+analista1 nuam2025 Analista Financiero
+auditor1 nuam2025 Auditor
+
+🔐 Roles y Permisos
+
+- Administrador: Acceso completo al sistema, incluyendo gestión de usuarios y registro de auditoría.
+
+- Analista Financiero: Puede crear y editar calificaciones e instrumentos, pero no puede eliminar.
+
+- \*Auditor: Acceso de solo lectura a la mayoría del sistema, pero con acceso completo a los logs de auditoría.
+
+🌐 URLs Principales
+
+- Login: /login/
+
+- Dashboard: / (Ruta raíz)
+
+- Registro de Usuarios: /registro/
+
+- Calificaciones: /calificaciones/
+
+- Instrumentos: /instrumentos/
+
+- Carga Masiva: /carga-masiva/
+
+- Auditoría: /auditoria/
+
+🌍 Deployment (Producción)
+Para un despliegue en producción, recuerda:
+
+1. Cambiar DEBUG=False en tu archivo .env.
+
+2. Configurar ALLOWED_HOSTS con tu dominio real.
+
+3. Configurar una base de datos de producción (PostgreSQL en RDS, etc.).
+
+4. Ejecutar python manage.py collectstatic para recopilar archivos estáticos.
+
+5. Usar un servidor WSGI (como Gunicorn) y un servidor web (como Nginx).
+
+🔄 Changelog
+Versión 2.0 (13 Nov 2025) \* Agregado registro de usuarios con asignación de roles.
+
+    * Agregado registro de auditoría completo con filtros.
+
+    * Implementado django-environ para gestión segura de variables.
+
+    * Mejorada navegación con link de auditoría en navbar.
+
+    * Actualizado README con nuevas funcionalidades.
+
+Versión 1.0 (Inicial) \* CRUD de calificaciones e instrumentos.
+
+    * Sistema de roles y permisos.
+
+    * Dashboard con estadísticas.
+
+    * Carga masiva y exportación.
