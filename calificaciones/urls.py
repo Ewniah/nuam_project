@@ -30,4 +30,10 @@ urlpatterns = [
     # Perfil de usuario
     path('mi-perfil/', views.mi_perfil, name='mi_perfil'),
 
+    # Registro de usuarios
+    path('registro/', views.registro_usuario, name='registro_usuario'),
+    
+    # Registro de auditoría
+    path('auditoria/', views.registro_auditoria, name='registro_auditoria'),
+
 ]

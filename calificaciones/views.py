@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Q, Count, Sum
 from django.http import HttpResponse
-from .models import CalificacionTributaria, InstrumentoFinanciero, CargaMasiva, LogAuditoria
+from .models import CalificacionTributaria, InstrumentoFinanciero, CargaMasiva, LogAuditoria, PerfilUsuario, Rol
 from .forms import CalificacionTributariaForm, InstrumentoFinancieroForm, CargaMasivaForm
 from .permissions import (
     requiere_administrador,
@@ -24,6 +24,9 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib.auth import login
+from .forms import RegistroUsuarioForm
+
 
 
 # ==================== DASHBOARD ====================
@@ -563,3 +566,114 @@ def mi_perfil(request):
     }
     
     return render(request, 'calificaciones/mi_perfil.html', context)
+
+# ==================== REGISTRO DE USUARIOS ====================
+def registro_usuario(request):
+    """Vista para registro de nuevos usuarios"""
+    if request.method == 'POST':
+        form = RegistroUsuarioForm(request.POST)
+        if form.is_valid():
+            # Crear usuario
+            user = form.save(commit=False)
+            user.email = form.cleaned_data['email']
+            user.first_name = form.cleaned_data['first_name']
+            user.last_name = form.cleaned_data['last_name']
+            user.save()
+            
+            # Crear perfil de usuario
+            PerfilUsuario.objects.create(
+                usuario=user,
+                rol=form.cleaned_data['rol'],
+                telefono=form.cleaned_data.get('telefono', ''),
+                departamento=form.cleaned_data.get('departamento', '')
+            )
+            
+            # Registrar en auditoría
+            LogAuditoria.objects.create(
+                usuario=user,
+                accion='CREATE',
+                detalles=f'Nuevo usuario registrado: {user.username}',  # ✅ CORRECTO
+                tabla_afectada='User',
+                registro_id=user.id
+            )
+            
+            messages.success(request, f'¡Cuenta creada exitosamente para {user.username}! Ya puedes iniciar sesión.')
+            return redirect('login')
+    else:
+        form = RegistroUsuarioForm()
+    
+    return render(request, 'calificaciones/registro.html', {'form': form})
+
+
+
+# ==================== REGISTRO DE AUDITORÍA ====================
+@login_required
+@requiere_permiso_lectura
+def registro_auditoria(request):
+    """Vista completa del registro de auditoría con filtros"""
+    # Obtener perfil del usuario
+    try:
+        perfil = request.user.perfilusuario
+        rol_usuario = perfil.rol.nombre_rol if perfil.rol else None
+    except:
+        messages.error(request, 'No tienes un perfil asociado.')
+        return redirect('dashboard')
+    
+    # Solo Admin y Auditor pueden ver auditoría completa
+    if rol_usuario not in ['Administrador', 'Auditor']:
+        messages.error(request, 'No tienes permisos para acceder al registro de auditoría.')
+        return redirect('dashboard')
+    
+    # Obtener logs
+    logs = LogAuditoria.objects.all().select_related('usuario').order_by('-fecha_hora')
+    
+    # Filtros
+    accion = request.GET.get('accion', '')
+    usuario_filtro = request.GET.get('usuario', '')
+    tabla = request.GET.get('tabla', '')
+    fecha_desde = request.GET.get('fecha_desde', '')
+    fecha_hasta = request.GET.get('fecha_hasta', '')
+    
+    if accion:
+        logs = logs.filter(accion=accion)
+    if usuario_filtro:
+        logs = logs.filter(usuario__username__icontains=usuario_filtro)
+    if tabla:
+        logs = logs.filter(tabla_afectada__icontains=tabla)
+    if fecha_desde:
+        logs = logs.filter(fecha_hora__date__gte=fecha_desde)
+    if fecha_hasta:
+        logs = logs.filter(fecha_hora__date__lte=fecha_hasta)
+    
+    # Paginación
+    paginator = Paginator(logs, 50)  # 50 logs por página
+    page_number = request.GET.get('page')
+    try:
+        logs_page = paginator.page(page_number)
+    except PageNotAnInteger:
+        logs_page = paginator.page(1)
+    except EmptyPage:
+        logs_page = paginator.page(paginator.num_pages)
+    
+    # Registrar acceso a auditoría - COMENTADO TEMPORALMENTE
+    # LogAuditoria.objects.create(
+    #     usuario=request.user,
+    #     accion='READ',
+    #     detalles='Acceso al registro de auditoría completo',
+    #     tabla_afectada='LogAuditoria'
+    # )
+    
+    context = {
+        'logs': logs_page,
+        'total_logs': logs.count(),
+        'acciones': LogAuditoria.ACCIONES,
+        'filtros': {
+            'accion': accion,
+            'usuario': usuario_filtro,
+            'tabla': tabla,
+            'fecha_desde': fecha_desde,
+            'fecha_hasta': fecha_hasta,
+        }
+    }
+    
+    return render(request, 'calificaciones/registro_auditoria.html', context)

@@ -10,18 +10,26 @@ venv/
 env/
 ENV/
 .venv
+env.bak/
+venv.bak/
 
 # Django
 *.log
+*.pot
 db.sqlite3
 db.sqlite3-journal
 /media
 /staticfiles
 local_settings.py
-*.pot
+
+# Environment variables - IMPORTANTE para django-environ
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
 
 # Distribution / packaging
-.Python
 build/
 develop-eggs/
 dist/
@@ -61,16 +69,9 @@ coverage.xml
 *.swp
 *.swo
 *~
-.DS_Store
-Thumbs.db
 
 # Jupyter Notebook
 .ipynb_checkpoints
-
-# Environment variables
-.env
-.env.local
-.env.*.local
 
 # Database
 *.db
@@ -81,14 +82,17 @@ Thumbs.db
 logs/
 *.log
 
-# OS
+# OS - MacOS
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
+
+# OS - Windows
 ehthumbs.db
 Thumbs.db
+desktop.ini
 
 # Project specific
 uploads/

@@ -53,6 +53,13 @@
                             <i class="bi bi-upload"></i> Carga Masiva
                         </a>
                     </li>
+                    {% if request.user.is_authenticated and request.user.perfilusuario.rol.nombre_rol in 'Administrador,Auditor' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'registro_auditoria' %}">
+                            <i class="bi bi-file-text"></i> Auditoría
+                        </a>
+                    </li>
+                    {% endif %}
                     {% endif %}
                     {% endif %}
                 </ul>

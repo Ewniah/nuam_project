@@ -5,6 +5,9 @@ Formularios para el sistema de calificaciones tributarias
 from django import forms
 from .models import CalificacionTributaria, InstrumentoFinanciero
 from decimal import Decimal
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from .models import PerfilUsuario, Rol
 
 
 class CalificacionTributariaForm(forms.ModelForm):
@@ -78,3 +81,59 @@ class CargaMasivaForm(forms.Form):
         help_text='Formato permitido: CSV o Excel (.xlsx)',
         widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.csv,.xlsx'})
     )
+
+class RegistroUsuarioForm(UserCreationForm):
+    """Formulario para registro de nuevos usuarios"""
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'correo@ejemplo.com'})
+    )
+    first_name = forms.CharField(
+        max_length=30,
+        required=True,
+        label='Nombre',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Juan'})
+    )
+    last_name = forms.CharField(
+        max_length=30,
+        required=True,
+        label='Apellido',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Pérez'})
+    )
+    telefono = forms.CharField(
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+56 9 1234 5678'})
+    )
+    departamento = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Finanzas'})
+    )
+    rol = forms.ModelChoiceField(
+        queryset=Rol.objects.all(),
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        help_text='Seleccione el rol del usuario'
+    )
+    
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'password1', 'password2']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'usuario123'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Personalizar mensajes de ayuda
+        self.fields['username'].help_text = 'Requerido. 150 caracteres o menos. Solo letras, números y @/./+/-/_'
+        self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': '••••••••'})
+        self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': '••••••••'})
+    
+    def clean_email(self):
+        """Validar que el email no esté registrado"""
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError('Este correo electrónico ya está registrado.')
+        return email

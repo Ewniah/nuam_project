@@ -11,22 +11,30 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import environ
+
+# Inicializar environ
+env = environ.Env(
+    # Valores por defecto
+    DEBUG=(bool, False)
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Leer archivo .env
+environ.Env.read_env(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=q(5q#d86quah6^@48zd&f+i38$=0k8kme8=26^)um@&))8bq2'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 # Application definition
 
@@ -38,7 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',  # Se agrega humanize para formatos legibles
-    'calificaciones', # Se agrega la aplicación de calificaciones
+    'calificaciones',  # Se agrega la aplicación de calificaciones
 ]
 
 MIDDLEWARE = [
@@ -56,7 +64,7 @@ ROOT_URLCONF = 'nuam_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # ← Agrega esta línea
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -69,25 +77,22 @@ TEMPLATES = [
     },
 ]
 
-
 WSGI_APPLICATION = 'nuam_project.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 # Se configura la base de datos PostgreSQL
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'nuam_calificaciones_db',
-        'USER': 'postgres',
-        'PASSWORD': 'Admin1234.',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': env('DB_ENGINE'),
+        'NAME': env('DB_NAME'),
+        'USER': env('DB_USER'),
+        'PASSWORD': env('DB_PASSWORD'),
+        'HOST': env('DB_HOST'),
+        'PORT': env('DB_PORT'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -107,11 +112,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 # Se configura el idioma y la zona horaria para Chile
+
 LANGUAGE_CODE = 'es-cl'
 
 # Zona horaria de Santiago, Chile
@@ -122,18 +126,18 @@ USE_I18N = True
 USE_TZ = True
 
 USE_L10N = True
+
 USE_THOUSAND_SEPARATOR = True
+
 # Opcional: Para forzar separadores
 DECIMAL_SEPARATOR = ','
 THOUSAND_SEPARATOR = '.'
 NUMBER_GROUPING = 3
 
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 # Configuración de archivos estáticos
+
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
