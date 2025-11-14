@@ -62,3 +62,34 @@ python -m venv venv
   ```bash
   venv\Scripts\activate
   ```
+
+* En Linux/Mac:
+
+  ```bash
+  source venv/bin/activate
+  ```
+
+### 3. Instalar dependencias
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configurar variables de entorno
+
+Crea un archivo .env en la raíz del proyecto (nuam_project/) con el siguiente contenido:
+
+```bash
+# Configuración de Django
+SECRET_KEY=tu-secret-key-muy-segura-aqui
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Configuración de la Base de Datos (PostgreSQL)
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=nuam_calificaciones_db
+DB_USER=postgres
+DB_PASSWORD=tu-password-de-postgres-aqui
+DB_HOST=localhost
+DB_PORT=5432
+```
