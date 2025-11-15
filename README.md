@@ -243,6 +243,15 @@ Para un despliegue en producción, recuerda:
 5. Usar un servidor WSGI (como Gunicorn) y un servidor web (como Nginx).
 
 🔄 Changelog
+
+Versión 2.1 (14 Nov 2025) \* Actualizado sistema de login con bloqueo automático y actualización de auditoría.
+
+    * Actualizado sistema de logeo con mensajes de alertas.
+
+    * Implementación de registro en auditoría para inicios de sesión maliciosos.
+
+    * Mejoras en panel de Administración.
+
 Versión 2.0 (13 Nov 2025) \* Agregado registro de usuarios con asignación de roles.
 
     * Agregado registro de auditoría completo con filtros.
