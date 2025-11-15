@@ -90,6 +90,16 @@
         .login-footer small {
             color: #6c757d;
         }
+        
+        /* ✅ ESTILOS PARA ALERTAS */
+        .alert {
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert i {
+            margin-right: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -104,11 +114,31 @@
             <div class="login-body">
                 <h4 class="text-center mb-4">Iniciar Sesión</h4>
                 
+                <!-- ✅ BLOQUE DE MENSAJES DE DJANGO -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {% if message.tags == 'error' %}
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                            {% elif message.tags == 'warning' %}
+                                <i class="bi bi-exclamation-circle-fill"></i>
+                            {% elif message.tags == 'success' %}
+                                <i class="bi bi-check-circle-fill"></i>
+                            {% else %}
+                                <i class="bi bi-info-circle-fill"></i>
+                            {% endif %}
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- Errores del formulario (solo para referencia, ya no se usa) -->
                 {% if form.errors %}
-                <div class="alert alert-danger" role="alert">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    Usuario o contraseña incorrectos. Por favor, inténtelo de nuevo.
-                </div>
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Usuario o contraseña incorrectos. Por favor, inténtelo de nuevo.
+                    </div>
                 {% endif %}
                 
                 <form method="post">
@@ -119,8 +149,8 @@
                                class="form-control" 
                                id="id_username" 
                                name="username" 
-                               placeholder="Usuario"
-                               required
+                               placeholder="Usuario" 
+                               required 
                                autofocus>
                         <label for="id_username">
                             <i class="bi bi-person"></i> Usuario
@@ -132,7 +162,7 @@
                                class="form-control" 
                                id="id_password" 
                                name="password" 
-                               placeholder="Contraseña"
+                               placeholder="Contraseña" 
                                required>
                         <label for="id_password">
                             <i class="bi bi-lock"></i> Contraseña
@@ -150,19 +180,18 @@
                         <i class="bi bi-box-arrow-in-right"></i> Ingresar al Sistema
                     </button>
                 </form>
+                
                 <div class="text-center mt-3">
                     <p>¿No tienes cuenta?</p>
                     <a href="{% url 'registro_usuario' %}" class="btn btn-outline-primary">
                         <i class="bi bi-person-plus"></i> Registrarse
                     </a>
                 </div>
-
             </div>
             
             <div class="login-footer">
-                <small>© 2025 NUAM Exchange - Todos los derechos reservados</small>
+                <small>&copy; 2025 NUAM Exchange - Todos los derechos reservados</small>
             </div>
-            
         </div>
     </div>
     

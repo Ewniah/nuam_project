@@ -18,7 +18,7 @@ class Command(BaseCommand):
         # 1. Obtener o crear usuarios
         admin_user = User.objects.filter(is_superuser=True).first()
         if not admin_user:
-            admin_user = User.objects.create_superuser('admin', 'admin@nuam.cl', 'admin123')
+            admin_user = User.objects.create_superuser('admin', 'admin@nuam.cl', 'Admin1234.')
             self.stdout.write('  ✓ Superusuario creado')
         
         # 2. Crear roles
