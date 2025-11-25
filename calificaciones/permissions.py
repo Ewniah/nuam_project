@@ -66,13 +66,17 @@ def requiere_permiso(accion):
                 messages.error(request, 'Debes iniciar sesión para acceder.')
                 return redirect('login')
             
+            # Superusers bypass role checks
+            if request.user.is_superuser:
+                return view_func(request, *args, **kwargs)
+
             # Obtener el rol del usuario
             try:
                 perfil = request.user.perfilusuario
                 rol = perfil.rol.nombre_rol if perfil.rol else None
             except:
                 messages.error(request, 'No tienes un perfil de usuario asignado.')
-                return redirect('dashboard')
+                return redirect('home')
             
             # Verificar permisos según acción
             if accion == 'consultar':

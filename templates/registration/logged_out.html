@@ -1,106 +1,126 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sesión Cerrada - NUAM</title>
-    
+    <title>Sesión Cerrada - NUAM Exchange</title>
+
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
+
+    <!-- Font Awesome & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom NUAM CSS -->
+    <link href="{% static 'css/custom_nuam.css' %}" rel="stylesheet">
+
     <style>
         body {
-            background: linear-gradient(135deg, #1a5490 0%, #0d6efd 100%);
+            background-color: var(--nuam-bg);
+            background-image: radial-gradient(circle at 50% 50%, rgba(0, 178, 255, 0.05) 0%, rgba(0, 0, 0, 0) 50%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: 'Inter', sans-serif;
         }
-        
+
         .logout-card {
             max-width: 500px;
+            width: 100%;
             animation: fadeInUp 0.5s ease;
         }
-        
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
+
         .success-icon {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+            background: rgba(0, 178, 255, 0.1);
+            color: var(--nuam-primary);
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 2rem;
-            box-shadow: 0 10px 30px rgba(25, 135, 84, 0.3);
         }
-        
+
         .success-icon i {
-            font-size: 4rem;
+            font-size: 3.5rem;
+        }
+
+        .btn-login {
+            background-color: var(--nuam-primary);
+            border-color: var(--nuam-primary);
             color: white;
+            font-weight: 600;
+            padding: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background-color: #0099db;
+            border-color: #0099db;
+            color: white;
+            transform: translateY(-1px);
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="logout-card">
-            <div class="card border-0 shadow-lg">
+            <div class="card card-nuam border-0 shadow-lg">
                 <div class="card-body text-center p-5">
                     <div class="success-icon">
-                        <i class="bi bi-check-circle"></i>
+                        <i class="fas fa-check"></i>
                     </div>
-                    
-                    <h2 class="mb-3">¡Sesión Cerrada Exitosamente!</h2>
+
+                    <h2 class="mb-3 fw-bold text-nuam-secondary">¡Sesión Cerrada!</h2>
                     <p class="text-muted mb-4">
-                        Has cerrado sesión de forma segura del Sistema NUAM de Calificaciones Tributarias
+                        Has cerrado sesión de forma segura del Sistema NUAM.
                     </p>
-                    
-                    <div class="alert alert-success border-0 mb-4">
-                        <i class="bi bi-shield-check"></i> 
-                        Todos tus cambios han sido guardados correctamente
+
+                    <div class="alert alert-success border-0 mb-4 bg-opacity-10 bg-success text-success">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Tus datos están seguros.
                     </div>
-                    
-                    <div class="d-grid gap-2">
-                        <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
-                            <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión Nuevamente
+
+                    <div class="d-grid gap-3">
+                        <a href="{% url 'login' %}" class="btn btn-login btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i> Iniciar Sesión Nuevamente
                         </a>
-                        <a href="/" class="btn btn-outline-secondary">
-                            <i class="bi bi-house"></i> Ir al Inicio
+                        <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-home me-2"></i> Ir al Inicio
                         </a>
-                    </div>
-                    
-                    <hr class="my-4">
-                    
-                    <div class="text-muted small">
-                        <p class="mb-0">
-                            <i class="bi bi-info-circle"></i> 
-                            Si no cerraste sesión, contacta al administrador inmediatamente
-                        </p>
                     </div>
                 </div>
-                
+
                 <div class="card-footer bg-light text-center border-top-0 py-3">
-                    <small class="text-muted">© 2025 NUAM Exchange - Todos los derechos reservados</small>
+                    <small class="text-muted">© {% now "Y" %} NUAM Exchange</small>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

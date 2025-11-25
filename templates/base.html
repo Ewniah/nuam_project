@@ -1,100 +1,81 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Sistema NUAM - Calificaciones Tributarias{% endblock %}</title>
-    
-    <!-- Bootstrap 5 CSS -->
+    <title>{% block title %}NUAM - Calificaciones Tributarias{% endblock %}</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    
-    <!-- CSS Personalizado -->
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom NUAM CSS -->
+    <link href="{% static 'css/custom_nuam.css' %}" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block extra_css %}{% endblock %}
 </head>
-<body>
-    
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- Navbar NUAM -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-nuam">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'dashboard' %}">
-                <i class="bi bi-bank"></i> NUAM Exchange
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <img src="{% static 'img/nuam_logo.png' %}" alt="NUAM Logo">
+                <span>Calificaciones Tributarias</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav ms-auto align-items-center">
                     {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'dashboard' %}">
-                            <i class="bi bi-speedometer2"></i> Dashboard
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+                            href="{% url 'dashboard' %}">
+                            <i class="fas fa-chart-line me-1"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if 'calificaciones' in request.path %}active{% endif %}" href="{% url 'listar_calificaciones' %}">
-                            <i class="bi bi-file-earmark-text"></i> Calificaciones
+                        <a class="nav-link {% if request.resolver_match.url_name == 'listar_calificaciones' %}active{% endif %}"
+                            href="{% url 'listar_calificaciones' %}">
+                            <i class="fas fa-list me-1"></i> Calificaciones
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if 'instrumentos' in request.path %}active{% endif %}" href="{% url 'listar_instrumentos' %}">
-                            <i class="bi bi-graph-up"></i> Instrumentos
+                        <a class="nav-link {% if request.resolver_match.url_name == 'carga_masiva' %}active{% endif %}"
+                            href="{% url 'carga_masiva' %}">
+                            <i class="fas fa-upload me-1"></i> Carga Masiva
                         </a>
                     </li>
-                    {% if user.perfilusuario.rol.nombre_rol == 'Administrador' or user.perfilusuario.rol.nombre_rol == 'Analista Financiero' or user.is_superuser %}
+                    {% if user.is_staff %}
                     <li class="nav-item">
-                        <a class="nav-link {% if 'carga-masiva' in request.path %}active{% endif %}" href="{% url 'carga_masiva' %}">
-                            <i class="bi bi-upload"></i> Carga Masiva
-                        </a>
-                    </li>
-                    {% if request.user.is_authenticated and request.user.perfilusuario.rol.nombre_rol in 'Administrador,Auditor' %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'registro_auditoria' %}">
-                            <i class="bi bi-file-text"></i> Auditoría
+                        <a class="nav-link {% if 'admin' in request.path %}active{% endif %}"
+                            href="{% url 'admin_gestionar_usuarios' %}">
+                            <i class="fas fa-users-cog me-1"></i> Admin
                         </a>
                     </li>
                     {% endif %}
-                    {% endif %}
-                    {% endif %}
-                </ul>
-                
-                <ul class="navbar-nav">
-                    {% if user.is_authenticated %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle"></i> {{ user.username }}
-                            {% if user.perfilusuario.rol %}
-                                <span class="badge bg-light text-dark ms-1">{{ user.perfilusuario.rol.nombre_rol }}</span>
-                            {% elif user.is_superuser %}
-                                <span class="badge bg-danger ms-1">Admin</span>
-                            {% endif %}
+                    <li class="nav-item dropdown ms-lg-3">
+                        <a class="nav-link dropdown-toggle btn btn-outline-light btn-sm px-3 rounded-pill" href="#"
+                            id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> {{ user.username }}
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                            <li><a class="dropdown-item" href="{% url 'mi_perfil' %}"><i
+                                        class="fas fa-cog me-2 text-muted"></i>Configuración</a></li>
                             <li>
-                                <a class="dropdown-item" href="{% url 'mi_perfil' %}">
-                                    <i class="bi bi-person"></i> Mi Perfil
-                                </a>
+                                <hr class="dropdown-divider">
                             </li>
-                            {% if user.is_superuser %}
-                            <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item" href="/admin/">
-                                    <i class="bi bi-gear"></i> Panel Admin
-                                </a>
-                            </li>
-                            {% endif %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form method="post" action="{% url 'logout' %}" id="logout-form">
+                                <form action="{% url 'logout' %}" method="post" class="d-inline w-100">
                                     {% csrf_token %}
                                     <button type="submit" class="dropdown-item text-danger">
-                                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
                                     </button>
                                 </form>
                             </li>
@@ -102,93 +83,64 @@
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'login' %}">
-                            <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
-                        </a>
+                        <a class="nav-link" href="{% url 'login' %}">Iniciar Sesión</a>
                     </li>
                     {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
-    
-    <!-- Contenido Principal -->
-    <main class="container mt-4">
-        
-        <!-- Mensajes del sistema -->
-        {% if messages %}
-            <div class="messages-container">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
-                        {% if message.tags == 'success' %}
-                            <i class="bi bi-check-circle"></i>
-                        {% elif message.tags == 'error' or message.tags == 'danger' %}
-                            <i class="bi bi-exclamation-triangle"></i>
-                        {% elif message.tags == 'warning' %}
-                            <i class="bi bi-exclamation-circle"></i>
-                        {% else %}
-                            <i class="bi bi-info-circle"></i>
-                        {% endif %}
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
+
+    <!-- Main Content -->
+    <main class="flex-grow-1 py-4">
+        <div class="container">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-        {% endif %}
-        
-        <!-- Contenido de cada página -->
-        {% block content %}{% endblock %}
-        
+            {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
     </main>
-    
-    <!-- Footer -->
-    <footer class="text-center mt-5">
-        <div class="container py-4">
+
+    <!-- Footer NUAM -->
+    <footer class="footer-nuam mt-auto">
+        <div class="container text-center">
             <div class="row">
-                <div class="col-md-4 mb-3">
-                    <h6 class="text-white">NUAM Exchange</h6>
-                    <p class="small mb-0">Sistema de Gestión de Calificaciones Tributarias</p>
+                <div class="col-md-4 mb-3 mb-md-0 text-md-start">
+                    <h5 class="text-white mb-3">NUAM Exchange</h5>
+                    <p class="small text-white-50">La fusión de las Bolsas de Santiago, Lima y Colombia.</p>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <h6 class="text-white">Enlaces Rápidos</h6>
-                    <ul class="list-unstyled small">
-                        <li><a href="{% url 'dashboard' %}" class="text-muted">Dashboard</a></li>
-                        <li><a href="{% url 'listar_calificaciones' %}" class="text-muted">Calificaciones</a></li>
-                        <li><a href="{% url 'listar_instrumentos' %}" class="text-muted">Instrumentos</a></li>
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h6 class="text-uppercase fw-bold mb-3">Enlaces Rápidos</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'home' %}" class="text-decoration-none small">Inicio</a></li>
+                        <li><a href="#" class="text-decoration-none small">Sobre Nosotros</a></li>
+                        <li><a href="#" class="text-decoration-none small">Contacto</a></li>
                     </ul>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <h6 class="text-white">Contacto</h6>
-                    <p class="small mb-0">
-                        <i class="bi bi-envelope"></i> contacto@nuam.cl<br>
-                        <i class="bi bi-telephone"></i> +56 2 2345 6789
-                    </p>
+                <div class="col-md-4 text-md-end">
+                    <p class="small mb-0">&copy; {% now "Y" %} NUAM. Todos los derechos reservados.</p>
+                    <div class="mt-2">
+                        <a href="#" class="me-2"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="me-2"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
                 </div>
             </div>
-            <hr class="bg-secondary">
-            <p class="mb-1 small">© 2025 NUAM Exchange - Sistema de Gestión de Calificaciones Tributarias</p>
-            <small class="text-muted">Desarrollado por [Tu Nombre] - Proyecto Integrado 2025</small>
         </div>
     </footer>
-    
-    <!-- Bootstrap JS -->
+
+    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Scripts adicionales -->
+    <!-- jQuery (Required for some plugins) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     {% block extra_js %}{% endblock %}
-    
-    <!-- Script para auto-ocultar mensajes -->
-    <script>
-        // Auto-cerrar alertas después de 5 segundos
-        document.addEventListener('DOMContentLoaded', function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
-                setTimeout(function() {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }, 5000);
-            });
-        });
-    </script>
 </body>
+
 </html>

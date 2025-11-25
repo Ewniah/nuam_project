@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calculadora de Factores - NUAM Exchange{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="mb-1 fw-bold text-nuam-secondary">
+                <i class="fas fa-calculator text-nuam-primary me-2"></i>Cálculo de Factores
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"
+                            class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Calculadora</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Columna Izquierda: Formulario -->
+    <div class="col-lg-6">
+        <div class="card card-nuam border-0 shadow-sm mb-4">
+            <div class="card-header card-header-nuam bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-bold text-nuam-secondary">
+                    <i class="fas fa-edit me-2"></i>Ingreso de Montos
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form id="formFactores" method="post">
+                    {% csrf_token %}
+
+                    <!-- Campos Generales (Renderizados desde el form de Django) -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="{{ form.instrumento.id_for_label }}"
+                                class="form-label fw-medium text-muted">Instrumento Financiero</label>
+                            {{ form.instrumento }}
+                            {% if form.instrumento.errors %}
+                            <div class="text-danger small">{{ form.instrumento.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium text-muted">Tipo de Instrumento</label>
+                            <input type="text" class="form-control bg-light" id="tipoInstrumento" readonly
+                                placeholder="Seleccione un instrumento">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.fecha_informe.id_for_label }}"
+                                class="form-label fw-medium text-muted">Fecha Informe</label>
+                            {{ form.fecha_informe }}
+                            {% if form.fecha_informe.errors %}
+                            <div class="text-danger small">{{ form.fecha_informe.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.numero_dj.id_for_label }}"
+                                class="form-label fw-medium text-muted">Número DJ</label>
+                            {{ form.numero_dj }}
+                            {% if form.numero_dj.errors %}
+                            <div class="text-danger small">{{ form.numero_dj.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium text-muted">Método de Cálculo</label>
+                            <input type="text" class="form-control bg-light" value="Ingreso por Montos Detallados"
+                                readonly>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="{{ form.observaciones.id_for_label }}"
+                                class="form-label fw-medium text-muted">Observaciones</label>
+                            {{ form.observaciones }}
+                        </div>
+                    </div>
+
+                    <hr class="text-muted opacity-25">
+
+                    <!-- Sección de Factores Específicos -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-nuam-secondary mb-0">Detalle de Montos</h6>
+                        <span class="badge bg-light text-dark border">
+                            Total: <span id="montoTotalDisplay" class="fw-bold">$0</span>
+                        </span>
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- Factor 8 -->
+                        <div class="col-12">
+                            <label for="id_monto_8" class="form-label fw-medium text-muted">Monto Factor 8</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">$</span>
+                                <input type="number" class="form-control monto-input border-start-0 ps-0"
+                                    id="id_monto_8" name="monto_8" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Factor 9 -->
+                        <div class="col-12">
+                            <label for="id_monto_9" class="form-label fw-medium text-muted">Monto Factor 9</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">$</span>
+                                <input type="number" class="form-control monto-input border-start-0 ps-0"
+                                    id="id_monto_9" name="monto_9" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Factor 10 -->
+                        <div class="col-12">
+                            <label for="id_monto_10" class="form-label fw-medium text-muted">Monto Factor 10</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">$</span>
+                                <input type="number" class="form-control monto-input border-start-0 ps-0"
+                                    id="id_monto_10" name="monto_10" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Factor 11 -->
+                        <div class="col-12">
+                            <label for="id_monto_11" class="form-label fw-medium text-muted">Monto Factor 11</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">$</span>
+                                <input type="number" class="form-control monto-input border-start-0 ps-0"
+                                    id="id_monto_11" name="monto_11" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Factor 12 -->
+                        <div class="col-12">
+                            <label for="id_monto_12" class="form-label fw-medium text-muted">Monto Factor 12</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">$</span>
+                                <input type="number" class="form-control monto-input border-start-0 ps-0"
+                                    id="id_monto_12" name="monto_12" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="button" id="btnCalcular" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-calculator me-2"></i>Calcular Factores
+                        </button>
+                        <button type="submit" class="btn btn-nuam-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>Guardar Calificación
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna Derecha: Resultados -->
+    <div class="col-lg-6">
+        <div class="card card-nuam border-0 shadow-sm mb-4 h-100">
+            <div class="card-header card-header-nuam bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-bold text-nuam-secondary">
+                    <i class="fas fa-chart-pie me-2"></i>Resultados
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div id="factoresResultado">
+                    <div class="text-center py-5 text-muted opacity-50">
+                        <i class="fas fa-calculator fa-3x mb-3"></i>
+                        <p>Ingrese los montos y presione calcular para ver los factores resultantes.</p>
+                    </div>
+                </div>
+
+                <div id="validacionSuma" style="display: none;" class="mt-3 pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 text-nuam-secondary">Suma de Factores:</h6>
+                        <span id="sumaFactores" class="fw-bold fs-5"></span>
+                    </div>
+                    <div id="mensajeValidacion" class="mt-2 text-end"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        // Lógica para actualizar el Total visualmente (Opcional, agregado para funcionalidad completa)
+        $('.monto-input').on('input', function () {
+            let total = 0;
+            $('.monto-input').each(function () {
+                const val = parseFloat($(this).val()) || 0;
+                total += val;
+            });
+            $('#montoTotalDisplay').text('$' + total.toLocaleString('es-CL', { minimumFractionDigits: 2 }));
+        });
+
+        $('#btnCalcular').click(function () {
+            const montos = {
+                monto_8: $('#id_monto_8').val() || '0',
+                monto_9: $('#id_monto_9').val() || '0',
+                monto_10: $('#id_monto_10').val() || '0',
+                monto_11: $('#id_monto_11').val() || '0',
+                monto_12: $('#id_monto_12').val() || '0'
+            };
+
+            // Mostrar loading
+            $('#factoresResultado').html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border text-nuam-primary" role="status">
+                        <span class="visually-hidden">Calculando...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Calculando factores...</p>
+                </div>
+            `);
+            $('#validacionSuma').hide();
+
+            // Llamar al endpoint AJAX
+            $.ajax({
+                url: '{% url "calcular_factores_ajax" %}',
+                method: 'POST',
+                data: {
+                    ...montos,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function (response) {
+                    if (response.success) {
+                        mostrarFactores(response);
+                    } else {
+                        mostrarError(response.error || 'Error al calcular factores');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    mostrarError('Error de conexión: ' + error);
+                }
+            });
+        });
+
+        function mostrarFactores(data) {
+            const factores = data.factores;
+            const nombres = data.nombres;
+
+            let html = '<div class="list-group">';
+
+            for (let i = 8; i <= 12; i++) {
+                const factorKey = `factor_${i}`;
+                const factorValue = factores[factorKey];
+                const nombre = nombres[factorKey] || `Factor ${i}`;
+
+                html += `
+                <div class="list-group-item border-start-0 border-end-0 px-3 py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="text-nuam-secondary">Factor ${i}</strong>
+                            <br>
+                            <small class="text-muted">${nombre}</small>
+                        </div>
+                        <span class="badge bg-nuam-primary rounded-pill fs-6 font-monospace">${factorValue}</span>
+                    </div>
+                </div>`;
+            }
+
+            html += '</div>';
+
+            $('#factoresResultado').html(html);
+
+            // Mostrar validación de suma
+            $('#validacionSuma').show();
+            $('#sumaFactores').text(data.suma_factores);
+
+            if (data.es_valido) {
+                $('#mensajeValidacion').html('<small class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i> La suma es válida (≤ 1)</small>');
+            } else {
+                $('#mensajeValidacion').html(`<small class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> ${data.mensaje_error}</small>`);
+            }
+        }
+
+        function mostrarError(mensaje) {
+            $('#factoresResultado').html(`
+                <div class="alert alert-danger border-0 shadow-sm">
+                    <i class="fas fa-exclamation-circle me-2"></i> ${mensaje}
+                </div>
+            `);
+            $('#validacionSuma').hide();
+        }
+    });
+</script>
+{% endblock %}

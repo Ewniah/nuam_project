@@ -99,3 +99,8 @@ uploads/
 downloads/
 temp/
 tmp/
+
+# Test outputs and temporary scripts
+test_output.txt
+debug_template.py
+extract_colors.py

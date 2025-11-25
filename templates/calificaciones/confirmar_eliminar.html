@@ -1,50 +1,67 @@
 {% extends 'base.html' %}
 
-{% block title %}Confirmar Eliminación - NUAM{% endblock %}
+{% block title %}Confirmar Eliminación - NUAM Exchange{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center mt-5">
     <div class="col-md-6">
-        <div class="card border-0 shadow-lg">
-            <div class="card-header bg-danger text-white">
-                <h4 class="mb-0">
-                    <i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación
+        <div class="card card-nuam border-0 shadow-lg">
+            <div class="card-header bg-danger text-white py-3">
+                <h4 class="mb-0 fw-bold">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
                 </h4>
             </div>
             <div class="card-body p-4">
                 <div class="text-center mb-4">
-                    <i class="bi bi-trash" style="font-size: 4rem; color: #dc3545;"></i>
+                    <div class="text-danger opacity-75">
+                        <i class="fas fa-trash-alt fa-4x"></i>
+                    </div>
                 </div>
-                
-                <div class="alert alert-warning border-0">
-                    <h5 class="alert-heading">
-                        <i class="bi bi-info-circle"></i> ¿Está seguro?
+
+                <div class="alert alert-warning bg-opacity-10 border-warning border-opacity-25 mb-4">
+                    <h5 class="alert-heading fw-bold text-warning">
+                        <i class="fas fa-question-circle me-2"></i>¿Está seguro?
                     </h5>
-                    <p class="mb-0">
-                        Esta acción marcará el registro como inactivo. No se eliminará permanentemente de la base de datos.
+                    <p class="mb-0 text-dark">
+                        Esta acción marcará el registro como inactivo. No se eliminará permanentemente de la base de
+                        datos.
                     </p>
                 </div>
-                
-                <div class="bg-light p-3 rounded mb-4">
-                    <h6 class="fw-bold mb-2">Registro a eliminar:</h6>
-                    <p class="mb-1"><strong>Tipo:</strong> {{ tipo }}</p>
-                    <p class="mb-0"><strong>ID:</strong> {{ objeto.id }}</p>
-                    {% if objeto.instrumento %}
-                        <p class="mb-0"><strong>Instrumento:</strong> {{ objeto.instrumento.codigo_instrumento }}</p>
-                    {% endif %}
-                    {% if objeto.codigo_instrumento %}
-                        <p class="mb-0"><strong>Código:</strong> {{ objeto.codigo_instrumento }}</p>
-                    {% endif %}
+
+                <div class="bg-light p-4 rounded mb-4 border">
+                    <h6 class="fw-bold mb-3 text-nuam-secondary text-uppercase small">Registro a eliminar</h6>
+                    <div class="d-flex flex-column gap-2">
+                        <div class="d-flex justify-content-between border-bottom pb-2">
+                            <span class="text-muted">Tipo</span>
+                            <span class="fw-bold">{{ tipo }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-bottom pb-2">
+                            <span class="text-muted">ID</span>
+                            <span class="fw-bold">{{ objeto.id }}</span>
+                        </div>
+                        {% if objeto.instrumento %}
+                        <div class="d-flex justify-content-between border-bottom pb-2">
+                            <span class="text-muted">Instrumento</span>
+                            <span class="fw-bold">{{ objeto.instrumento.codigo_instrumento }}</span>
+                        </div>
+                        {% endif %}
+                        {% if objeto.codigo_instrumento %}
+                        <div class="d-flex justify-content-between border-bottom pb-2">
+                            <span class="text-muted">Código</span>
+                            <span class="fw-bold">{{ objeto.codigo_instrumento }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
-                
+
                 <form method="post">
                     {% csrf_token %}
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-danger btn-lg">
-                            <i class="bi bi-trash"></i> Sí, Eliminar Registro
+                            <i class="fas fa-trash-alt me-2"></i>Sí, Eliminar Registro
                         </button>
                         <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-secondary btn-lg">
-                            <i class="bi bi-x-circle"></i> Cancelar
+                            <i class="fas fa-times me-2"></i>Cancelar
                         </a>
                     </div>
                 </form>

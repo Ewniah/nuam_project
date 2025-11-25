@@ -1,0 +1,131 @@
+:root {
+    --nuam-primary: #00b2ff; /* Cyan NUAM */
+    --nuam-secondary: #23282f; /* Dark Navy */
+    --nuam-text: #23282f;
+    --nuam-bg: #f8f9fa;
+    --nuam-white: #ffffff;
+    --nuam-gray: #6c757d;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: var(--nuam-text);
+    background-color: var(--nuam-bg);
+}
+
+/* Navbar Overrides */
+.navbar-nuam {
+    background-color: var(--nuam-secondary);
+    padding: 1rem 2rem;
+}
+
+.navbar-nuam .navbar-brand {
+    color: var(--nuam-white);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-nuam .navbar-brand img {
+    height: 40px;
+    width: auto;
+}
+
+.navbar-nuam .nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.navbar-nuam .nav-link:hover,
+.navbar-nuam .nav-link.active {
+    color: var(--nuam-primary) !important;
+}
+
+/* Buttons */
+.btn-nuam-primary {
+    background-color: var(--nuam-primary);
+    border-color: var(--nuam-primary);
+    color: var(--nuam-white);
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 0.5rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-nuam-primary:hover {
+    background-color: #0099db;
+    border-color: #0099db;
+    color: var(--nuam-white);
+    transform: translateY(-1px);
+}
+
+.btn-nuam-secondary {
+    background-color: var(--nuam-secondary);
+    border-color: var(--nuam-secondary);
+    color: var(--nuam-white);
+}
+
+.btn-nuam-secondary:hover {
+    background-color: #1a1e23;
+    border-color: #1a1e23;
+    color: var(--nuam-white);
+}
+
+/* Cards */
+.card-nuam {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: var(--nuam-white);
+}
+
+.card-nuam:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header-nuam {
+    background-color: var(--nuam-white);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    font-weight: 700;
+    color: var(--nuam-secondary);
+    padding: 1.25rem;
+}
+
+/* Footer */
+.footer-nuam {
+    background-color: var(--nuam-secondary);
+    color: var(--nuam-white);
+    padding: 3rem 0;
+    margin-top: auto;
+}
+
+.footer-nuam a {
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-nuam a:hover {
+    color: var(--nuam-primary);
+}
+
+/* Utilities */
+.text-nuam-primary {
+    color: var(--nuam-primary) !important;
+}
+
+.text-nuam-secondary {
+    color: var(--nuam-secondary) !important;
+}
+
+.bg-nuam-primary {
+    background-color: var(--nuam-primary) !important;
+}
+
+.bg-nuam-secondary {
+    background-color: var(--nuam-secondary) !important;
+}

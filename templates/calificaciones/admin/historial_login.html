@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historial de Login - {{ usuario.username }} - NUAM Exchange{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="mb-1 fw-bold text-nuam-secondary">
+                <i class="fas fa-history text-nuam-primary me-2"></i>Historial de Login
+            </h2>
+            <p class="text-muted mb-0">Usuario: <strong>{{ usuario.username }}</strong></p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'admin_gestionar_usuarios' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Información del usuario -->
+<div class="card card-nuam border-0 shadow-sm mb-4">
+    <div class="card-header card-header-nuam bg-white border-bottom py-3">
+        <h5 class="mb-0 fw-bold text-nuam-secondary">
+            <i class="fas fa-user-circle me-2"></i>Información del Usuario
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small">USUARIO</div>
+                <div class="fw-bold">{{ usuario.username }}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">EMAIL</div>
+                <div>{{ usuario.email }}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">NOMBRE</div>
+                <div>{{ usuario.get_full_name|default:"-" }}</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">ESTADO</div>
+                {% if usuario.is_active %}
+                <span class="badge bg-success">Activo</span>
+                {% else %}
+                <span class="badge bg-danger">Inactivo</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Intentos de Login -->
+    <div class="col-lg-7">
+        <div class="card card-nuam border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-bottom py-3">
+                <h6 class="mb-0 fw-bold text-nuam-secondary">
+                    <i class="fas fa-sign-in-alt me-2"></i>Intentos de Login (Últimos 50)
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="border-0 ps-4">Fecha/Hora</th>
+                                <th class="border-0">IP</th>
+                                <th class="border-0">Resultado</th>
+                                <th class="border-0 pe-4">Detalles</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for intento in intentos %}
+                            <tr {% if not intento.exitoso %}class="table-warning bg-opacity-10" {% endif %}>
+                                <td class="ps-4">{{ intento.fecha_hora|date:"d/m/Y H:i:s" }}</td>
+                                <td><code class="text-muted">{{ intento.ip_address }}</code></td>
+                                <td>
+                                    {% if intento.exitoso %}
+                                    <span
+                                        class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                                        <i class="fas fa-check me-1"></i>Exitoso
+                                    </span>
+                                    {% else %}
+                                    <span
+                                        class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">
+                                        <i class="fas fa-times me-1"></i>Fallido
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="pe-4 small text-muted">{{ intento.detalles|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">
+                                    No hay intentos de login registrados
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs de Auditoría -->
+    <div class="col-lg-5">
+        <div class="card card-nuam border-0 shadow-sm">
+            <div class="card-header bg-light border-bottom py-3">
+                <h6 class="mb-0 fw-bold text-nuam-secondary">
+                    <i class="fas fa-clipboard-list me-2"></i>Logs de Auditoría Relacionados
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="border-0 ps-4">Fecha</th>
+                                <th class="border-0">Acción</th>
+                                <th class="border-0 pe-4">Detalles</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs_login %}
+                            <tr>
+                                <td class="ps-4 small">{{ log.fecha_hora|date:"d/m H:i" }}</td>
+                                <td>
+                                    {% if log.accion == 'LOGIN' %}
+                                    <span class="badge bg-success">LOGIN</span>
+                                    {% elif log.accion == 'LOGOUT' %}
+                                    <span class="badge bg-info">LOGOUT</span>
+                                    {% elif log.accion == 'ACCOUNT_LOCKED' %}
+                                    <span class="badge bg-danger">BLOQUEADA</span>
+                                    {% elif log.accion == 'ACCOUNT_UNLOCKED' %}
+                                    <span class="badge bg-warning text-dark">DESBLOQUEADA</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ log.accion }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="pe-4 small text-muted">{{ log.detalles|truncatechars:30 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-4 text-muted">
+                                    No hay logs de auditoría
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

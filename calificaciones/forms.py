@@ -199,3 +199,118 @@ class RegistroForm(UserCreationForm):
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError('Este correo electrónico ya está registrado')
         return email
+
+
+# ==========================================
+# NUEVO: Formulario Simple de Factores (Demo)
+# ==========================================
+
+class CalificacionFactoresSimpleForm(forms.ModelForm):
+    """
+    Formulario simplificado para ingreso de calificaciones con 5 factores.
+    Permite ingresar montos y calcular factores automáticamente.
+    """
+    
+    class Meta:
+        model = CalificacionTributaria
+        fields = [
+            'instrumento',
+            'numero_dj',
+            'fecha_informe',
+            'monto_8',
+            'monto_9',
+            'monto_10',
+            'monto_11',
+            'monto_12',
+            'observaciones',
+            'activo'
+        ]
+        widgets = {
+            'instrumento': forms.Select(attrs={
+                'class': 'form-select',
+                'required': True
+            }),
+            'numero_dj': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: 1949 o 1922'
+            }),
+            'fecha_informe': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'monto_8': forms.NumberInput(attrs={
+                'class': 'form-control monto-input',
+                'placeholder': '0.00',
+                'step': '0.0001',
+                'min': '0',
+                'data-factor': '8'
+            }),
+            'monto_9': forms.NumberInput(attrs={
+                'class': 'form-control monto-input',
+                'placeholder': '0.00',
+                'step': '0.0001',
+                'min': '0',
+                'data-factor': '9'
+            }),
+            'monto_10': forms.NumberInput(attrs={
+                'class': 'form-control monto-input',
+                'placeholder': '0.00',
+                'step': '0.0001',
+                'min': '0',
+                'data-factor': '10'
+            }),
+            'monto_11': forms.NumberInput(attrs={
+                'class': 'form-control monto-input',
+                'placeholder': '0.00',
+                'step': '0.0001',
+                'min': '0',
+                'data-factor': '11'
+            }),
+            'monto_12': forms.NumberInput(attrs={
+                'class': 'form-control monto-input',
+                'placeholder': '0.00',
+                'step': '0.0001',
+                'min': '0',
+                'data-factor': '12'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Observaciones adicionales...'
+            }),
+            'activo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            })
+        }
+        labels = {
+            'instrumento': 'Instrumento Financiero',
+            'numero_dj': 'Número DJ',
+            'fecha_informe': 'Fecha del Informe',
+            'monto_8': 'Monto Factor 8 (Con crédito IDPC ≥ 01.01.2017)',
+            'monto_9': 'Monto Factor 9 (Con crédito IDPC ≤ 31.12.2016)',
+            'monto_10': 'Monto Factor 10',
+            'monto_11': 'Monto Factor 11',
+            'monto_12': 'Monto Factor 12',
+            'observaciones': 'Observaciones',
+            'activo': 'Activo'
+        }
+    
+    def clean(self):
+        """Validación: al menos un monto debe ser ingresado"""
+        cleaned_data = super().clean()
+        
+        montos = [
+            cleaned_data.get('monto_8'),
+            cleaned_data.get('monto_9'),
+            cleaned_data.get('monto_10'),
+            cleaned_data.get('monto_11'),
+            cleaned_data.get('monto_12'),
+        ]
+        
+        # Verificar que al menos un monto sea mayor que 0
+        if not any(m and m > 0 for m in montos):
+            raise forms.ValidationError(
+                'Debe ingresar al menos un monto mayor que 0'
+            )
+        
+        return cleaned_data

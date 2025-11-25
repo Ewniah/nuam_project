@@ -2,164 +2,219 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}Registro de Auditoría - Sistema NUAM{% endblock %}
+{% block title %}Registro de Auditoría - NUAM Exchange{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="row mb-4">
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <div class="row align-items-center">
         <div class="col">
-            <h2><i class="bi bi-file-text"></i> Registro de Auditoría</h2>
-            <p class="text-muted">Total de registros: <strong>{{ total_logs|intcomma }}</strong></p>
+            <h2 class="mb-1 fw-bold text-nuam-secondary">
+                <i class="fas fa-clipboard-list text-nuam-primary me-2"></i>Registro de Auditoría
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"
+                            class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Auditoría</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-auto">
+            <span class="badge bg-light text-dark border px-3 py-2">
+                <i class="fas fa-database me-2"></i>Total: <strong>{{ total_logs|intcomma }}</strong>
+            </span>
         </div>
     </div>
+</div>
 
-    <!-- Filtros -->
-    <div class="card mb-4">
-        <div class="card-header bg-secondary text-white">
-            <i class="bi bi-funnel"></i> Filtros de Búsqueda
-        </div>
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-2">
-                    <label class="form-label">Acción</label>
-                    <select name="accion" class="form-select">
-                        <option value="">Todas</option>
-                        {% for codigo, nombre in acciones %}
-                            <option value="{{ codigo }}" {% if filtros.accion == codigo %}selected{% endif %}>
-                                {{ nombre }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="col-md-3">
-                    <label class="form-label">Usuario</label>
-                    <input type="text" name="usuario" class="form-control" 
-                           placeholder="Buscar por usuario" value="{{ filtros.usuario }}">
-                </div>
-                
-                <div class="col-md-2">
-                    <label class="form-label">Tabla</label>
-                    <input type="text" name="tabla" class="form-control" 
-                           placeholder="Tabla afectada" value="{{ filtros.tabla }}">
-                </div>
-                
-                <div class="col-md-2">
-                    <label class="form-label">Desde</label>
-                    <input type="date" name="fecha_desde" class="form-control" value="{{ filtros.fecha_desde }}">
-                </div>
-                
-                <div class="col-md-2">
-                    <label class="form-label">Hasta</label>
-                    <input type="date" name="fecha_hasta" class="form-control" value="{{ filtros.fecha_hasta }}">
-                </div>
-                
-                <div class="col-md-1 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search"></i>
-                    </button>
-                </div>
-            </form>
-        </div>
+<!-- Filtros -->
+<div class="card card-nuam border-0 shadow-sm mb-4">
+    <div class="card-header card-header-nuam bg-white border-bottom py-3">
+        <h6 class="mb-0 fw-bold text-nuam-secondary">
+            <i class="fas fa-filter me-2"></i>Filtros de Búsqueda
+        </h6>
     </div>
-
-    <!-- Tabla de auditoría -->
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover table-sm">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Fecha/Hora</th>
-                            <th>Usuario</th>
-                            <th>Acción</th>
-                            <th>Tabla</th>
-                            <th>ID</th>
-                            <th>Descripción</th>
-                            <th>IP</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for log in logs %}
-                        <tr>
-                            <td>
-                                <small>{{ log.fecha_hora|date:"d/m/Y H:i:s" }}</small>
-                            </td>
-                            <td>
-                                <span class="badge bg-info">
-                                    {{ log.usuario.username }}
-                                </span>
-                            </td>
-                            <td>
-                                {% if log.accion == 'CREATE' %}
-                                    <span class="badge bg-success">{{ log.get_accion_display }}</span>
-                                {% elif log.accion == 'UPDATE' %}
-                                    <span class="badge bg-warning text-dark">{{ log.get_accion_display }}</span>
-                                {% elif log.accion == 'DELETE' %}
-                                    <span class="badge bg-danger">{{ log.get_accion_display }}</span>
-                                {% elif log.accion == 'LOGIN' %}
-                                    <span class="badge bg-primary">{{ log.get_accion_display }}</span>
-                                {% elif log.accion == 'LOGOUT' %}
-                                    <span class="badge bg-secondary">{{ log.get_accion_display }}</span>
-                                {% else %}
-                                    <span class="badge bg-info">{{ log.get_accion_display }}</span>
-                                {% endif %}
-                            </td>
-                            <td><small>{{ log.tabla_afectada|default:"-" }}</small></td>
-                            <td><small>{{ log.registro_id|default:"-" }}</small></td>
-                            <td><small>{{ log.detalles }}</small></td>
-                            <td><small>{{ log.direccion_ip|default:"-" }}</small></td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="7" class="text-center text-muted">
-                                No hay registros de auditoría con los filtros aplicados.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-2">
+                <label class="form-label small text-muted text-uppercase fw-bold">Acción</label>
+                <select name="accion" class="form-select">
+                    <option value="">Todas</option>
+                    {% for codigo, nombre in acciones %}
+                    <option value="{{ codigo }}" {% if filtros.accion==codigo %}selected{% endif %}>
+                        {{ nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
             </div>
 
-            <!-- Paginación -->
-            {% if logs.has_other_pages %}
+            <div class="col-md-3">
+                <label class="form-label small text-muted text-uppercase fw-bold">Usuario</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-user"></i></span>
+                    <input type="text" name="usuario" class="form-control border-start-0 ps-0"
+                        placeholder="Buscar por usuario" value="{{ filtros.usuario }}">
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small text-muted text-uppercase fw-bold">Tabla</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-table"></i></span>
+                    <input type="text" name="tabla" class="form-control border-start-0 ps-0"
+                        placeholder="Tabla afectada" value="{{ filtros.tabla }}">
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small text-muted text-uppercase fw-bold">Desde</label>
+                <input type="date" name="fecha_desde" class="form-control" value="{{ filtros.fecha_desde }}">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small text-muted text-uppercase fw-bold">Hasta</label>
+                <input type="date" name="fecha_hasta" class="form-control" value="{{ filtros.fecha_hasta }}">
+            </div>
+
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-nuam-primary w-100">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de auditoría -->
+<div class="card card-nuam border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="border-0 ps-4">Fecha/Hora</th>
+                        <th class="border-0">Usuario</th>
+                        <th class="border-0">Acción</th>
+                        <th class="border-0">Tabla</th>
+                        <th class="border-0">ID</th>
+                        <th class="border-0">Descripción</th>
+                        <th class="border-0 pe-4">IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="ps-4 text-nowrap">
+                            <small class="text-muted"><i class="far fa-clock me-1"></i>{{ log.fecha_hora|date:"d/m/Y
+                                H:i:s" }}</small>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-xs me-2 bg-light rounded-circle d-flex align-items-center justify-content-center"
+                                    style="width: 24px; height: 24px;">
+                                    <i class="fas fa-user-circle text-secondary" style="font-size: 14px;"></i>
+                                </div>
+                                <span class="fw-medium text-dark">{{ log.usuario.username }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if log.accion == 'CREATE' %}
+                            <span
+                                class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">
+                                <i class="fas fa-plus-circle me-1"></i>{{ log.get_accion_display }}
+                            </span>
+                            {% elif log.accion == 'UPDATE' %}
+                            <span
+                                class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1">
+                                <i class="fas fa-pencil-alt me-1"></i>{{ log.get_accion_display }}
+                            </span>
+                            {% elif log.accion == 'DELETE' %}
+                            <span
+                                class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">
+                                <i class="fas fa-trash-alt me-1"></i>{{ log.get_accion_display }}
+                            </span>
+                            {% elif log.accion == 'LOGIN' %}
+                            <span
+                                class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1">
+                                <i class="fas fa-sign-in-alt me-1"></i>{{ log.get_accion_display }}
+                            </span>
+                            {% elif log.accion == 'LOGOUT' %}
+                            <span
+                                class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">
+                                <i class="fas fa-sign-out-alt me-1"></i>{{ log.get_accion_display }}
+                            </span>
+                            {% else %}
+                            <span
+                                class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-2 py-1">
+                                <i class="fas fa-info-circle me-1"></i>{{ log.get_accion_display }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td><code class="text-nuam-primary">{{ log.tabla_afectada|default:"-" }}</code></td>
+                        <td><small class="text-muted font-monospace">{{ log.registro_id|default:"-" }}</small></td>
+                        <td><small class="text-dark">{{ log.detalles|truncatechars:50 }}</small></td>
+                        <td class="pe-4"><small class="text-muted font-monospace">{{ log.direccion_ip|default:"-"
+                                }}</small></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="text-muted opacity-50 mb-3">
+                                <i class="fas fa-search fa-3x"></i>
+                            </div>
+                            <p class="text-muted mt-3 mb-0">No hay registros de auditoría con los filtros aplicados.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if logs.has_other_pages %}
+        <div class="card-footer bg-white border-top py-3">
             <nav aria-label="Paginación">
-                <ul class="pagination justify-content-center">
+                <ul class="pagination justify-content-center mb-0">
                     {% if logs.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page=1{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                Primera
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ logs.previous_page_number }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                Anterior
-                            </a>
-                        </li>
+                    <li class="page-item">
+                        <a class="page-link border-0 text-muted"
+                            href="?page=1{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link border-0 text-muted"
+                            href="?page={{ logs.previous_page_number }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
                     {% endif %}
 
-                    <li class="page-item active">
-                        <span class="page-link">
+                    <li class="page-item disabled">
+                        <span class="page-link border-0 text-dark fw-bold">
                             Página {{ logs.number }} de {{ logs.paginator.num_pages }}
                         </span>
                     </li>
 
                     {% if logs.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ logs.next_page_number }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                Siguiente
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ logs.paginator.num_pages }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                                Última
-                            </a>
-                        </li>
+                    <li class="page-item">
+                        <a class="page-link border-0 text-muted"
+                            href="?page={{ logs.next_page_number }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link border-0 text-muted"
+                            href="?page={{ logs.paginator.num_pages }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
                     {% endif %}
                 </ul>
             </nav>
-            {% endif %}
         </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

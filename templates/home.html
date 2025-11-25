@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inicio - NUAM Exchange{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, var(--nuam-secondary) 0%, #1a1e23 100%);
+        color: var(--nuam-white);
+        padding: 5rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50%;
+        height: 100%;
+        background: radial-gradient(circle, rgba(0, 178, 255, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+        pointer-events: none;
+    }
+
+    .feature-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        border-color: var(--nuam-primary);
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        color: var(--nuam-primary);
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="hero-section rounded-3 p-5">
+            <div class="row align-items-center position-relative" style="z-index: 1;">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-3">Sistema de Calificaciones Tributarias</h1>
+                    <p class="lead mb-4 text-white-50">
+                        Gestión integral, cálculo de factores y auditoría para el mercado integrado.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="{% url 'dashboard' %}" class="btn btn-nuam-primary btn-lg">
+                            <i class="fas fa-chart-line me-2"></i>Ir al Dashboard
+                        </a>
+                        <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-list me-2"></i>Ver Calificaciones
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-4 d-none d-lg-block text-center">
+                    <i class="fas fa-shield-alt fa-10x text-white-50 opacity-25"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Access Cards -->
+<div class="row g-4 mb-5">
+    <!-- Card 1 -->
+    <div class="col-md-4">
+        <div class="card card-nuam feature-card p-4 text-center">
+            <div class="feature-icon">
+                <i class="fas fa-calculator"></i>
+            </div>
+            <h3 class="h4 fw-bold mb-3">Cálculo de Factores</h3>
+            <p class="text-muted mb-4">
+                Ingrese montos y calcule automáticamente los factores tributarios con validación en tiempo real.
+            </p>
+            <a href="{% url 'crear_calificacion_factores' %}" class="btn btn-outline-primary stretched-link">
+                Nueva Calificación
+            </a>
+        </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="col-md-4">
+        <div class="card card-nuam feature-card p-4 text-center">
+            <div class="feature-icon">
+                <i class="fas fa-file-upload"></i>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-4 mb-3 mb-md-0">
+                    <h2 class="display-6 fw-bold text-nuam-secondary">SHA-256</h2>
+                    <p class="text-muted text-uppercase small fw-bold">Seguridad de Datos</p>
+                </div>
+                <div class="col-4 mb-3 mb-md-0">
+                    <h2 class="display-6 fw-bold text-nuam-primary">24/7</h2>
+                    <p class="text-muted text-uppercase small fw-bold">Disponibilidad</p>
+                </div>
+                <div class="col-4">
+                    <h2 class="display-6 fw-bold text-nuam-secondary">v2.1</h2>
+                    <p class="text-muted text-uppercase small fw-bold">Versión Actual</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

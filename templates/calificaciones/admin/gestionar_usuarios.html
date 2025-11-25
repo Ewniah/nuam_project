@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Usuarios - NUAM Exchange{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h2 class="mb-1 fw-bold text-nuam-secondary">
+                <i class="fas fa-users-cog text-nuam-primary me-2"></i>Gestión de Usuarios
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none">Inicio</a></li>
+                    <li class="breadcrumb-item active">Admin Usuarios</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="d-inline-flex gap-2">
+                <span class="badge bg-nuam-primary p-2 fs-6">Total: {{ total_usuarios }}</span>
+                <span class="badge bg-danger p-2 fs-6">Bloqueados: {{ usuarios_bloqueados }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card card-nuam border-0 shadow-sm mb-4">
+    <div class="card-header card-header-nuam bg-white border-bottom py-3">
+        <h5 class="mb-0 fw-bold text-nuam-secondary">
+            <i class="fas fa-list me-2"></i>Listado de Usuarios
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="tablaUsuarios">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="border-0 ps-4">Usuario</th>
+                        <th class="border-0">Nombre Completo</th>
+                        <th class="border-0">Email</th>
+                        <th class="border-0">Rol</th>
+                        <th class="border-0">Estado</th>
+                        <th class="border-0 text-center">Intentos (7d)</th>
+                        <th class="border-0 text-center">Fallidos (7d)</th>
+                        <th class="border-0 text-center pe-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr {% if usuario.cuenta_bloqueada %}class="table-danger bg-opacity-10" {% endif %}>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-light p-2 me-3 text-nuam-primary">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div>
+                                    <strong class="text-dark">{{ usuario.username }}</strong>
+                                    {% if usuario.is_superuser %}
+                                    <span class="badge bg-warning text-dark ms-1"
+                                        style="font-size: 0.7em;">Superuser</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ usuario.get_full_name|default:"-" }}</td>
+                        <td>{{ usuario.email }}</td>
+                        <td>
+                            {% if usuario.perfilusuario and usuario.perfilusuario.rol %}
+                            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">{{
+                                usuario.perfilusuario.rol.nombre_rol }}</span>
+                            {% else %}
+                            <span
+                                class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">Sin
+                                rol</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if usuario.cuenta_bloqueada %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-lock me-1"></i>Bloqueada
+                            </span>
+                            <div class="small text-muted mt-1">
+                                {{ usuario.cuenta_bloqueada.fecha_bloqueo|date:"d/m H:i" }}
+                            </div>
+                            {% elif not usuario.is_active %}
+                            <span class="badge bg-warning text-dark">Inactivo</span>
+                            {% else %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>Activo
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-light text-dark border">{{ usuario.intentos_recientes }}</span>
+                        </td>
+                        <td class="text-center">
+                            {% if usuario.intentos_fallidos_recientes > 0 %}
+                            <span class="badge bg-danger">{{ usuario.intentos_fallidos_recientes }}</span>
+                            {% else %}
+                            <span class="badge bg-success">0</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center pe-4">
+                            <div class="btn-group btn-group-sm">
+                                {% if usuario.cuenta_bloqueada %}
+                                <a href="{% url 'desbloquear_cuenta' usuario.id %}" class="btn btn-success"
+                                    onclick="return confirm('¿Está seguro de desbloquear la cuenta de {{ usuario.username }}?')"
+                                    title="Desbloquear">
+                                    <i class="fas fa-unlock"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'ver_historial_login' usuario.id %}" class="btn btn-outline-info"
+                                    title="Ver Historial">
+                                    <i class="fas fa-history"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="text-muted opacity-50 mb-3">
+                                <i class="fas fa-users-slash fa-3x"></i>
+                            </div>
+                            <p class="text-muted mb-0">No hay usuarios registrados</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Información adicional -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card card-nuam border-0 shadow-sm h-100">
+            <div class="card-header bg-light border-bottom py-3">
+                <h6 class="mb-0 fw-bold text-nuam-secondary"><i class="fas fa-info-circle me-2"></i>Información del
+                    Sistema</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0 small">
+                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Las cuentas se bloquean
+                        automáticamente tras 5 intentos fallidos</li>
+                    <li class="mb-2"><i class="fas fa-clock text-warning me-2"></i>El desbloqueo automático ocurre
+                        después de 30 minutos</li>
+                    <li class="mb-2"><i class="fas fa-user-shield text-primary me-2"></i>Los administradores pueden
+                        desbloquear manualmente</li>
+                    <li><i class="fas fa-file-alt text-info me-2"></i>Todas las acciones se registran en auditoría</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card card-nuam border-0 shadow-sm h-100">
+            <div class="card-header bg-light border-bottom py-3">
+                <h6 class="mb-0 fw-bold text-nuam-secondary"><i class="fas fa-tags me-2"></i>Leyenda de Estados</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-success">Activo</span>
+                    <span class="small text-muted me-3">Usuario puede iniciar sesión</span>
+
+                    <span class="badge bg-danger">Bloqueada</span>
+                    <span class="small text-muted me-3">Cuenta bloqueada por intentos fallidos</span>
+
+                    <span class="badge bg-warning text-dark">Inactivo</span>
+                    <span class="small text-muted me-3">Usuario desactivado manualmente</span>
+
+                    <span class="badge bg-warning text-dark">Superuser</span>
+                    <span class="small text-muted">Acceso total al sistema</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Inicializar DataTables para búsqueda y paginación
+    $(document).ready(function () {
+        $('#tablaUsuarios').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+            },
+            order: [[0, 'asc']],
+            pageLength: 25,
+            dom: '<"row mb-3"<"col-md-6"f><"col-md-6"p>>rt<"row"<"col-md-6"i><"col-md-6"p>>',
+            initComplete: function () {
+                $('.dataTables_filter input').addClass('form-control').attr('placeholder', 'Buscar usuario...');
+                $('.dataTables_paginate .pagination').addClass('pagination-sm');
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,26 +1,27 @@
 {% extends 'base.html' %}
 {% load formatos %}
 
-{% block title %}Mi Perfil - NUAM{% endblock %}
+{% block title %}Mi Perfil - NUAM Exchange{% endblock %}
 
 {% block content %}
 <!-- Page Header -->
 <div class="page-header mb-4">
     <div class="row align-items-center">
         <div class="col">
-            <h2 class="mb-1">
-                <i class="bi bi-person-circle text-primary"></i> Mi Perfil
+            <h2 class="mb-1 fw-bold text-nuam-secondary">
+                <i class="fas fa-user-circle text-nuam-primary me-2"></i>Mi Perfil
             </h2>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"
+                            class="text-decoration-none">Dashboard</a></li>
                     <li class="breadcrumb-item active">Mi Perfil</li>
                 </ol>
             </nav>
         </div>
         <div class="col-auto">
             <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Volver
+                <i class="fas fa-arrow-left me-2"></i>Volver
             </a>
         </div>
     </div>
@@ -29,142 +30,149 @@
 <div class="row g-4">
     <!-- Información del Usuario -->
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm mb-4">
+        <div class="card card-nuam border-0 shadow-sm mb-4">
             <div class="card-body text-center p-4">
-                <div class="avatar-circle mb-3">
-                    <i class="bi bi-person-fill"></i>
+                <div class="avatar-circle mb-3 mx-auto">
+                    <i class="fas fa-user"></i>
                 </div>
-                <h4 class="mb-1">{{ user.get_full_name|default:user.username }}</h4>
+                <h4 class="mb-1 fw-bold text-nuam-secondary">{{ user.get_full_name|default:user.username }}</h4>
                 <p class="text-muted mb-3">@{{ user.username }}</p>
-                
+
                 {% if user.is_superuser %}
-                    <span class="badge bg-danger mb-3">
-                        <i class="bi bi-shield-fill"></i> Administrador del Sistema
-                    </span>
+                <span class="badge bg-danger mb-3 px-3 py-2">
+                    <i class="fas fa-shield-alt me-1"></i>Administrador del Sistema
+                </span>
                 {% elif perfil and perfil.rol %}
-                    <span class="badge bg-primary mb-3">
-                        <i class="bi bi-person-badge"></i> {{ perfil.rol.nombre_rol }}
-                    </span>
+                <span class="badge bg-nuam-primary mb-3 px-3 py-2">
+                    <i class="fas fa-id-badge me-1"></i>{{ perfil.rol.nombre_rol }}
+                </span>
                 {% endif %}
-                
+
                 <div class="text-start mt-4">
                     <div class="mb-3">
-                        <small class="text-muted d-block mb-1">
-                            <i class="bi bi-envelope"></i> Email
+                        <small class="text-muted d-block mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">
+                            <i class="fas fa-envelope me-1"></i>Email
                         </small>
-                        <strong>{{ user.email|default:"No especificado" }}</strong>
+                        <strong class="text-dark">{{ user.email|default:"No especificado" }}</strong>
                     </div>
-                    
+
                     {% if perfil %}
                     <div class="mb-3">
-                        <small class="text-muted d-block mb-1">
-                            <i class="bi bi-building"></i> Departamento
+                        <small class="text-muted d-block mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">
+                            <i class="fas fa-building me-1"></i>Departamento
                         </small>
-                        <strong>{{ perfil.departamento|default:"No especificado" }}</strong>
+                        <strong class="text-dark">{{ perfil.departamento|default:"No especificado" }}</strong>
                     </div>
-                    
+
                     {% if perfil.telefono %}
                     <div class="mb-3">
-                        <small class="text-muted d-block mb-1">
-                            <i class="bi bi-telephone"></i> Teléfono
+                        <small class="text-muted d-block mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">
+                            <i class="fas fa-phone me-1"></i>Teléfono
                         </small>
-                        <strong>{{ perfil.telefono }}</strong>
+                        <strong class="text-dark">{{ perfil.telefono }}</strong>
                     </div>
                     {% endif %}
                     {% endif %}
-                    
+
                     <div class="mb-3">
-                        <small class="text-muted d-block mb-1">
-                            <i class="bi bi-calendar-check"></i> Fecha de registro
+                        <small class="text-muted d-block mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">
+                            <i class="fas fa-calendar-check me-1"></i>Fecha de registro
                         </small>
-                        <strong>{{ user.date_joined|date:"d/m/Y" }}</strong>
+                        <strong class="text-dark">{{ user.date_joined|date:"d/m/Y" }}</strong>
                     </div>
-                    
+
                     <div class="mb-3">
-                        <small class="text-muted d-block mb-1">
-                            <i class="bi bi-clock-history"></i> Último acceso
+                        <small class="text-muted d-block mb-1 text-uppercase fw-bold" style="font-size: 0.75rem;">
+                            <i class="fas fa-clock me-1"></i>Último acceso
                         </small>
-                        <strong>{{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</strong>
+                        <strong class="text-dark">{{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</strong>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Estadísticas Rápidas -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-bottom">
-                <h6 class="mb-0">
-                    <i class="bi bi-bar-chart"></i> Mis Estadísticas
+        <div class="card card-nuam border-0 shadow-sm">
+            <div class="card-header card-header-nuam bg-white border-bottom py-3">
+                <h6 class="mb-0 fw-bold text-nuam-secondary">
+                    <i class="fas fa-chart-bar me-2"></i>Mis Estadísticas
                 </h6>
             </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
                     <div>
-                        <small class="text-muted d-block">Calificaciones Creadas</small>
-                        <h4 class="mb-0 text-primary">{{ calificaciones_creadas }}</h4>
+                        <small class="text-muted d-block text-uppercase fw-bold"
+                            style="font-size: 0.75rem;">Calificaciones Creadas</small>
+                        <h4 class="mb-0 text-nuam-primary fw-bold">{{ calificaciones_creadas }}</h4>
                     </div>
-                    <div class="stats-icon bg-primary bg-opacity-10 text-primary">
-                        <i class="bi bi-file-earmark-text"></i>
+                    <div class="rounded-circle bg-light p-3 text-nuam-primary">
+                        <i class="fas fa-file-alt fa-lg"></i>
                     </div>
                 </div>
-                
+
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <small class="text-muted d-block">Acciones Registradas</small>
-                        <h4 class="mb-0 text-success">{{ logs_usuario|length }}</h4>
+                        <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Acciones
+                            Registradas</small>
+                        <h4 class="mb-0 text-success fw-bold">{{ logs_usuario|length }}</h4>
                     </div>
-                    <div class="stats-icon bg-success bg-opacity-10 text-success">
-                        <i class="bi bi-activity"></i>
+                    <div class="rounded-circle bg-light p-3 text-success">
+                        <i class="fas fa-history fa-lg"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Actividad Reciente -->
     <div class="col-lg-8">
         <!-- Mis Calificaciones -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white border-bottom">
+        <div class="card card-nuam border-0 shadow-sm mb-4">
+            <div class="card-header card-header-nuam bg-white border-bottom py-3">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="bi bi-clock-history"></i> Mis Últimas Calificaciones
+                    <h5 class="mb-0 fw-bold text-nuam-secondary">
+                        <i class="fas fa-history me-2"></i>Mis Últimas Calificaciones
                     </h5>
-                    <a href="{% url 'listar_calificaciones' %}" class="btn btn-sm btn-outline-primary">
-                        Ver Todas <i class="bi bi-arrow-right"></i>
+                    <a href="{% url 'listar_calificaciones' %}"
+                        class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                        Ver Todas <i class="fas fa-arrow-right ms-1"></i>
                     </a>
                 </div>
             </div>
             <div class="card-body p-0">
                 {% if ultimas_calificaciones %}
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th class="border-0">Instrumento</th>
+                                <th class="border-0 ps-4">Instrumento</th>
                                 <th class="border-0">Método</th>
                                 <th class="border-0 text-end">Monto</th>
                                 <th class="border-0 text-end">Factor</th>
-                                <th class="border-0">Fecha</th>
+                                <th class="border-0 pe-4">Fecha</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for cal in ultimas_calificaciones %}
                             <tr>
-                                <td>
-                                    <strong>{{ cal.instrumento.codigo_instrumento }}</strong>
-                                    <br><small class="text-muted">{{ cal.instrumento.nombre_instrumento|truncatewords:3 }}</small>
+                                <td class="ps-4">
+                                    <strong class="text-dark">{{ cal.instrumento.codigo_instrumento }}</strong>
+                                    <br><small class="text-muted">{{ cal.instrumento.nombre_instrumento|truncatewords:3
+                                        }}</small>
                                 </td>
                                 <td>
                                     {% if cal.metodo_ingreso == 'MONTO' %}
-                                        <span class="badge bg-primary">Monto</span>
+                                    <span
+                                        class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">Monto</span>
                                     {% else %}
-                                        <span class="badge bg-info">Factor</span>
+                                    <span
+                                        class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">Factor</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-end">{{ cal.monto|formato_clp:2 }}</td>
-                                <td class="text-end"><code>{{ cal.factor|formato_factor:8 }}</code></td>
-                                <td><small>{{ cal.fecha_informe|date:"d/m/Y" }}</small></td>
+                                <td class="text-end font-monospace">{{ cal.monto|formato_clp:2 }}</td>
+                                <td class="text-end font-monospace">{{ cal.factor|formato_factor:8 }}</td>
+                                <td class="pe-4"><small class="text-muted">{{ cal.fecha_informe|date:"d/m/Y" }}</small>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -172,51 +180,53 @@
                 </div>
                 {% else %}
                 <div class="text-center py-5">
-                    <i class="bi bi-inbox" style="font-size: 3rem; color: #dee2e6;"></i>
+                    <div class="text-muted opacity-50 mb-3">
+                        <i class="fas fa-inbox fa-3x"></i>
+                    </div>
                     <p class="text-muted mt-3 mb-0">No has creado calificaciones todavía</p>
                 </div>
                 {% endif %}
             </div>
         </div>
-        
+
         <!-- Registro de Actividad -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-bottom">
-                <h5 class="mb-0">
-                    <i class="bi bi-activity"></i> Mi Actividad Reciente
+        <div class="card card-nuam border-0 shadow-sm">
+            <div class="card-header card-header-nuam bg-white border-bottom py-3">
+                <h5 class="mb-0 fw-bold text-nuam-secondary">
+                    <i class="fas fa-clipboard-list me-2"></i>Mi Actividad Reciente
                 </h5>
             </div>
             <div class="card-body p-0">
                 {% if logs_usuario %}
                 <div class="list-group list-group-flush">
                     {% for log in logs_usuario %}
-                    <div class="list-group-item">
+                    <div class="list-group-item border-start-0 border-end-0 px-4 py-3">
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center mb-1">
                                     {% if log.accion == 'CREATE' %}
-                                        <span class="badge bg-success me-2">
-                                            <i class="bi bi-plus-circle"></i> Crear
-                                        </span>
+                                    <span class="badge bg-success me-2">
+                                        <i class="fas fa-plus-circle me-1"></i>Crear
+                                    </span>
                                     {% elif log.accion == 'UPDATE' %}
-                                        <span class="badge bg-warning me-2">
-                                            <i class="bi bi-pencil"></i> Actualizar
-                                        </span>
+                                    <span class="badge bg-warning text-dark me-2">
+                                        <i class="fas fa-pencil-alt me-1"></i>Actualizar
+                                    </span>
                                     {% elif log.accion == 'DELETE' %}
-                                        <span class="badge bg-danger me-2">
-                                            <i class="bi bi-trash"></i> Eliminar
-                                        </span>
+                                    <span class="badge bg-danger me-2">
+                                        <i class="fas fa-trash-alt me-1"></i>Eliminar
+                                    </span>
                                     {% else %}
-                                        <span class="badge bg-info me-2">
-                                            <i class="bi bi-info-circle"></i> {{ log.accion }}
-                                        </span>
+                                    <span class="badge bg-info me-2">
+                                        <i class="fas fa-info-circle me-1"></i>{{ log.accion }}
+                                    </span>
                                     {% endif %}
-                                    <strong>{{ log.tabla_afectada }}</strong>
+                                    <strong class="text-dark">{{ log.tabla_afectada }}</strong>
                                 </div>
                                 <p class="mb-0 small text-muted">{{ log.detalles|truncatewords:15 }}</p>
                             </div>
                             <small class="text-muted text-nowrap ms-3">
-                                <i class="bi bi-clock"></i> {{ log.fecha_hora|date:"d/m/Y H:i" }}
+                                <i class="fas fa-clock me-1"></i>{{ log.fecha_hora|date:"d/m/Y H:i" }}
                             </small>
                         </div>
                     </div>
@@ -224,7 +234,9 @@
                 </div>
                 {% else %}
                 <div class="text-center py-5">
-                    <i class="bi bi-activity" style="font-size: 3rem; color: #dee2e6;"></i>
+                    <div class="text-muted opacity-50 mb-3">
+                        <i class="fas fa-history fa-3x"></i>
+                    </div>
                     <p class="text-muted mt-3 mb-0">No hay actividad registrada</p>
                 </div>
                 {% endif %}
@@ -237,31 +249,20 @@
 
 {% block extra_js %}
 <style>
-.avatar-circle {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-    box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3);
-}
+    .avatar-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--nuam-primary) 0%, #0090cc 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 20px rgba(0, 178, 255, 0.3);
+    }
 
-.avatar-circle i {
-    font-size: 4rem;
-    color: white;
-}
-
-.stats-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-}
+    .avatar-circle i {
+        font-size: 4rem;
+        color: white;
+    }
 </style>
 {% endblock %}
