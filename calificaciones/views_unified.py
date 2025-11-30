@@ -536,7 +536,95 @@ def eliminar_calificacion(request, pk):
     return render(request, 'calificaciones/confirmar_eliminar.html', {'objeto': calificacion})
 
 
-# [Factor-based functions will be migrated here in Step 8]
+@login_required
+@requiere_permiso('crear')
+def crear_calificacion_factores(request):
+    """Vista para crear calificaciones con el formulario simplificado de 5 factores"""
+    if request.method == 'POST':
+        form = CalificacionFactoresSimpleForm(request.POST)
+        
+        if form.is_valid():
+            calificacion = form.save(commit=False)
+            calificacion.usuario_creador = request.user
+            
+            try:
+                calificacion.save()
+                
+                ip_address = obtener_ip_cliente(request)
+                LogAuditoria.objects.create(
+                    usuario=request.user,
+                    accion='CREATE',
+                    tabla_afectada='CalificacionTributaria',
+                    registro_id=calificacion.id,
+                    ip_address=ip_address,
+                    detalles=f'Calificación creada con factores: {calificacion.instrumento.codigo_instrumento}'
+                )
+                
+                messages.success(
+                    request,
+                    'Calificación creada exitosamente. Factores calculados automáticamente.'
+                )
+                return redirect('listar_calificaciones')
+                
+            except Exception as e:
+                messages.error(request, f'Error al guardar la calificación: {str(e)}')
+        else:
+            messages.error(request, 'Por favor corrija los errores en el formulario.')
+    else:
+        form = CalificacionFactoresSimpleForm()
+    
+    instrumentos = InstrumentoFinanciero.objects.filter(activo=True)
+    tipos_instrumentos = {inst.id: inst.tipo_instrumento for inst in instrumentos}
+    
+    context = {
+        'form': form,
+        'titulo': 'Nueva Calificación con Factores',
+        'accion': 'Crear',
+        'tipos_instrumentos_json': json.dumps(tipos_instrumentos)
+    }
+    
+    return render(request, 'calificaciones/form_factores_simple.html', context)
+
+
+@login_required
+@requiere_permiso('modificar')
+def editar_calificacion_factores(request, pk):
+    """Vista para editar calificaciones con el formulario simplificado de 5 factores"""
+    calificacion = get_object_or_404(CalificacionTributaria, pk=pk, activo=True)
+    
+    if request.method == 'POST':
+        form = CalificacionFactoresSimpleForm(request.POST, instance=calificacion)
+        if form.is_valid():
+            calificacion = form.save(commit=False)
+            calificacion.usuario_creador = request.user
+            calificacion.save()
+            
+            ip_address = obtener_ip_cliente(request)
+            LogAuditoria.objects.create(
+                usuario=request.user,
+                accion='UPDATE',
+                tabla_afectada='CalificacionTributaria',
+                registro_id=calificacion.id,
+                ip_address=ip_address,
+                detalles=f'Calificación editada: {calificacion.instrumento.codigo_instrumento}'
+            )
+            
+            messages.success(request, 'Calificación actualizada exitosamente.')
+            return redirect('listar_calificaciones')
+    else:
+        form = CalificacionFactoresSimpleForm(instance=calificacion)
+    
+    instrumentos = InstrumentoFinanciero.objects.filter(activo=True)
+    tipos_instrumentos = {inst.id: inst.tipo_instrumento for inst in instrumentos}
+    
+    context = {
+        'form': form,
+        'calificacion': calificacion,
+        'titulo': 'Editar Calificación',
+        'accion': 'Actualizar',
+        'tipos_instrumentos_json': json.dumps(tipos_instrumentos)
+    }
+    return render(request, 'calificaciones/form_factores_simple.html', context)
 
 
 # ============================================================================
