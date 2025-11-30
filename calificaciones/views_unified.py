@@ -1157,17 +1157,119 @@ def ver_historial_login_usuario(request, user_id):
 # SECTION 8: AUDITING AND COMPLIANCE
 # ============================================================================
 # Functions: registro_auditoria
-# Lines: 1551-1650 (approx. 100 lines)
+# Lines: 1301-1350 (approx. 50 lines)
 # ============================================================================
 
-# [Functions will be migrated here in Step 13]
+@login_required
+@requiere_permiso('consultar')
+def registro_auditoria(request):
+    """Muestra el registro completo de auditoría (solo para Administrador y Auditor)"""
+    logs = LogAuditoria.objects.all().select_related('usuario').order_by('-fecha_hora')
+    
+    # Filtros
+    usuario_id = request.GET.get('usuario')
+    accion = request.GET.get('accion')
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+    
+    if usuario_id:
+        logs = logs.filter(usuario_id=usuario_id)
+    
+    if accion:
+        logs = logs.filter(accion=accion)
+    
+    if fecha_desde:
+        logs = logs.filter(fecha_hora__date__gte=fecha_desde)
+    
+    if fecha_hasta:
+        logs = logs.filter(fecha_hora__date__lte=fecha_hasta)
+    
+    # Limitar a últimos 1000 registros para performance
+    logs = logs[:1000]
+    
+    # Lista de usuarios para filtro
+    usuarios = User.objects.filter(is_active=True).order_by('username')
+    
+    # ✅ Lista de acciones disponibles
+    acciones = LogAuditoria.ACCIONES
+    
+    context = {
+        'logs': logs,
+        'usuarios': usuarios,
+        'acciones': acciones,
+        'usuario_filtro': usuario_id,
+        'accion_filtro': accion,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+    }
+    
+    return render(request, 'calificaciones/registro_auditoria.html', context)
 
 
 # ============================================================================
 # SECTION 9: API ENDPOINTS AND MISCELLANEOUS
 # ============================================================================
 # Functions: calcular_factores_ajax, home
-# Lines: 1651-1750 (approx. 100 lines)
+# Lines: 1351-1480 (approx. 130 lines)
 # ============================================================================
 
-# [Functions will be migrated here in Step 13]
+def calcular_factores_ajax(request):
+    """API endpoint para calcular factores automáticamente vía AJAX"""
+    try:
+        montos = {
+            'monto_8': request.GET.get('monto_8', '0'),
+            'monto_9': request.GET.get('monto_9', '0'),
+            'monto_10': request.GET.get('monto_10', '0'),
+            'monto_11': request.GET.get('monto_11', '0'),
+            'monto_12': request.GET.get('monto_12', '0'),
+        }
+        
+        # Convertir a Decimal
+        montos_decimal = {}
+        for key, value in montos.items():
+            try:
+                montos_decimal[key] = Decimal(value) if value else Decimal('0')
+            except:
+                montos_decimal[key] = Decimal('0')
+        
+        # Calcular suma total
+        suma_montos = sum(montos_decimal.values())
+        
+        # Calcular factores
+        factores = {}
+        for key, monto in montos_decimal.items():
+            factor_key = key.replace('monto', 'factor')
+            if suma_montos > 0:
+                factores[factor_key] = str(round(monto / suma_montos, 8))
+            else:
+                factores[factor_key] = '0.00000000'
+        
+        # Calcular suma de factores
+        suma_factores = sum(Decimal(f) for f in factores.values())
+        
+        return JsonResponse({
+            'success': True,
+            'factores': factores,
+            'suma_montos': str(suma_montos),
+            'suma_factores': str(suma_factores),
+            'es_valido': abs(suma_factores - Decimal('1.0')) < Decimal('0.00000001'),
+            'mensaje_error': '',
+            'nombres': {
+                'factor_8': 'Factor 8',
+                'factor_9': 'Factor 9',
+                'factor_10': 'Factor 10',
+                'factor_11': 'Factor 11',
+                'factor_12': 'Factor 12',
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+
+def home(request):
+    """Vista para la página de inicio"""
+    return render(request, 'home.html')
