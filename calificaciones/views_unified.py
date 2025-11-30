@@ -300,10 +300,102 @@ def logout_view(request):
 # SECTION 3: DASHBOARD AND REPORTING
 # ============================================================================
 # Functions: dashboard
-# Lines: 351-500 (approx. 150 lines)
+# Lines: 371-470 (approx. 100 lines)
 # ============================================================================
 
-# [Functions will be migrated here in Step 6]
+@login_required
+@requiere_permiso('consultar')
+def dashboard(request):
+    """Dashboard principal con estadísticas del sistema"""
+    from datetime import datetime
+    
+    # Mensaje de bienvenida según hora del día
+    hora_actual = datetime.now().hour
+    if hora_actual < 12:
+        saludo = "Buenos días"
+        icono_saludo = "☀️"
+    elif hora_actual < 19:
+        saludo = "Buenas tardes"
+        icono_saludo = "🌤️"
+    else:
+        saludo = "Buenas noches"
+        icono_saludo = "🌙"
+    
+    # Estadísticas generales
+    total_calificaciones = CalificacionTributaria.objects.filter(activo=True).count()
+    total_instrumentos = InstrumentoFinanciero.objects.filter(activo=True).count()
+    total_usuarios = User.objects.filter(is_active=True).count()
+    
+    # Calificaciones por método
+    calificaciones_por_metodo = list(
+        CalificacionTributaria.objects.filter(activo=True)
+        .values('metodo_ingreso')
+        .annotate(total=Count('id'))
+    )
+    
+    # Instrumentos por tipo
+    instrumentos_por_tipo = list(
+        InstrumentoFinanciero.objects.filter(activo=True)
+        .values('tipo_instrumento')
+        .annotate(total=Count('id'))
+    )
+    
+    # Actividad reciente (últimos 30 días)
+    fecha_limite = datetime.now().date() - timedelta(days=30)
+    calificaciones_recientes_30d = CalificacionTributaria.objects.filter(
+        activo=True,
+        fecha_creacion__gte=fecha_limite
+    ).count()
+    
+    # ✅ CORRECCIÓN: Usar el mismo nombre que en el template
+    calificaciones_recientes = CalificacionTributaria.objects.filter(
+        activo=True
+    ).select_related('instrumento', 'usuario_creador').order_by('-fecha_creacion')[:5]
+    
+    # Logs de auditoría recientes (solo para admin y auditor)
+    logs_recientes = None
+    try:
+        if request.user.is_superuser:
+            logs_recientes = LogAuditoria.objects.all().order_by('-fecha_hora')[:5]
+        elif hasattr(request.user, 'perfilusuario') and request.user.perfilusuario.rol:
+            if request.user.perfilusuario.rol.nombre_rol in ['Administrador', 'Auditor']:
+                logs_recientes = LogAuditoria.objects.all().order_by('-fecha_hora')[:5]
+    except:
+        logs_recientes = None
+    
+    # Top 5 instrumentos más utilizados
+    top_instrumentos = list(
+        CalificacionTributaria.objects.filter(activo=True)
+        .values(
+            'instrumento__codigo_instrumento',
+            'instrumento__nombre_instrumento'
+        )
+        .annotate(total=Count('id'))
+        .order_by('-total')[:5]
+    )
+    
+    # Estadísticas de cargas masivas
+    cargas_exitosas = CargaMasiva.objects.filter(estado='EXITOSO').count()
+    cargas_fallidas = CargaMasiva.objects.filter(estado='FALLIDO').count()
+    
+    context = {
+        'total_calificaciones': total_calificaciones,
+        'total_instrumentos': total_instrumentos,
+        'total_usuarios': total_usuarios,
+        'calificaciones_recientes_30d': calificaciones_recientes_30d,
+        'calificaciones_por_metodo': calificaciones_por_metodo,
+        'instrumentos_por_tipo': instrumentos_por_tipo,
+        'calificaciones_recientes': calificaciones_recientes,  # ✅ Nombre correcto
+        'logs_recientes': logs_recientes,
+        'top_instrumentos': top_instrumentos,
+        'today': datetime.now(),
+        'saludo': saludo,
+        'icono_saludo': icono_saludo,
+        'cargas_exitosas': cargas_exitosas,
+        'cargas_fallidas': cargas_fallidas,
+    }
+    
+    return render(request, 'calificaciones/dashboard.html', context)
 
 
 # ============================================================================
