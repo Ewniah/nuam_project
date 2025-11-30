@@ -758,10 +758,214 @@ def eliminar_instrumento(request, pk):
 # SECTION 6: BULK OPERATIONS
 # ============================================================================
 # Functions: carga_masiva, exportar_excel, exportar_csv
-# Lines: 1051-1300 (approx. 250 lines)
+# Lines: 861-1100 (approx. 240 lines)
 # ============================================================================
 
-# [Functions will be migrated here in Step 10]
+@login_required
+@requiere_permiso('crear')
+def carga_masiva(request):
+    """Procesa carga masiva de calificaciones desde CSV/Excel"""
+    if request.method == 'POST':
+        form = CargaMasivaForm(request.POST, request.FILES)
+        if form.is_valid():
+            archivo = request.FILES['archivo']
+            
+            # Crear registro de carga
+            carga = CargaMasiva.objects.create(
+                usuario=request.user,
+                archivo_nombre=archivo.name,
+                archivo=archivo,
+                estado='PROCESANDO'
+            )
+            
+            try:
+                # Detectar tipo de archivo
+                if archivo.name.endswith('.xlsx'):
+                    registros = procesar_excel(archivo)
+                elif archivo.name.endswith('.csv'):
+                    registros = procesar_csv(archivo)
+                else:
+                    raise ValueError('Formato de archivo no soportado')
+                
+                # Procesar registros
+                exitosos = 0
+                fallidos = 0
+                errores = []
+                
+                for i, registro in enumerate(registros, start=1):
+                    try:
+                        # Buscar o crear instrumento
+                        instrumento, created = InstrumentoFinanciero.objects.get_or_create(
+                            codigo_instrumento=registro['codigo_instrumento'],
+                            defaults={
+                                'nombre_instrumento': registro.get('nombre_instrumento', ''),
+                                'tipo_instrumento': registro.get('tipo_instrumento', 'Otro')
+                            }
+                        )
+                        
+                        # Crear calificación
+                        CalificacionTributaria.objects.create(
+                            instrumento=instrumento,
+                            usuario_creador=request.user,
+                            monto=Decimal(str(registro['monto'])) if registro.get('monto') else None,
+                            factor=Decimal(str(registro['factor'])) if registro.get('factor') else None,
+                            metodo_ingreso=registro.get('metodo_ingreso', 'MONTO'),
+                            numero_dj=registro.get('numero_dj', ''),
+                            fecha_informe=registro['fecha_informe'],
+                            observaciones=registro.get('observaciones', '')
+                        )
+                        
+                        exitosos += 1
+                    except Exception as e:
+                        fallidos += 1
+                        errores.append(f'Fila {i}: {str(e)}')
+                
+                # Actualizar registro de carga
+                carga.registros_procesados = len(registros)
+                carga.registros_exitosos = exitosos
+                carga.registros_fallidos = fallidos
+                carga.errores_detalle = '\n'.join(errores)
+                
+                if fallidos == 0:
+                    carga.estado = 'EXITOSO'
+                elif exitosos > 0:
+                    carga.estado = 'PARCIAL'
+                else:
+                    carga.estado = 'FALLIDO'
+                
+                carga.save()
+                
+                # Registrar en auditoría
+                ip_address = obtener_ip_cliente(request)
+                LogAuditoria.objects.create(
+                    usuario=request.user,
+                    accion='CREATE',
+                    tabla_afectada='CargaMasiva',
+                    registro_id=carga.id,
+                    ip_address=ip_address,
+                    detalles=f'Carga masiva: {exitosos} exitosos, {fallidos} fallidos'
+                )
+                
+                messages.success(
+                    request,
+                    f'Procesados {exitosos} registros correctamente. {fallidos} con errores.'
+                )
+                
+            except Exception as e:
+                carga.estado = 'FALLIDO'
+                carga.errores_detalle = str(e)
+                carga.save()
+                messages.error(request, f'Error al procesar archivo: {str(e)}')
+            
+            return redirect('dashboard')
+    else:
+        form = CargaMasivaForm()
+    
+    return render(request, 'calificaciones/carga_masiva.html', {'form': form})
+
+
+@login_required
+@requiere_permiso('consultar')
+def exportar_excel(request):
+    """Exporta calificaciones a Excel"""
+    calificaciones = CalificacionTributaria.objects.filter(
+        activo=True
+    ).select_related('instrumento', 'usuario_creador')
+    
+    # Crear libro de Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Calificaciones"
+    
+    # Encabezados
+    headers = [
+        'ID', 'Código Instrumento', 'Nombre Instrumento', 'Monto', 
+        'Factor', 'Método Ingreso', 'Número DJ', 'Fecha Informe', 
+        'Usuario Creador', 'Fecha Creación', 'Observaciones'
+    ]
+    ws.append(headers)
+    
+    # Datos
+    for cal in calificaciones:
+        ws.append([
+            cal.id,
+            cal.instrumento.codigo_instrumento,
+            cal.instrumento.nombre_instrumento,
+            float(cal.monto) if cal.monto else None,
+            float(cal.factor) if cal.factor else None,
+            cal.metodo_ingreso,
+            cal.numero_dj,
+            cal.fecha_informe.strftime('%Y-%m-%d'),
+            cal.usuario_creador.username if cal.usuario_creador else '',
+            cal.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S'),
+            cal.observaciones
+        ])
+    
+    # Preparar respuesta
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=calificaciones_{timezone.now().strftime("%Y%m%d")}.xlsx'
+    
+    wb.save(response)
+    
+    # Registrar en auditoría
+    ip_address = obtener_ip_cliente(request)
+    LogAuditoria.objects.create(
+        usuario=request.user,
+        accion='READ',
+        tabla_afectada='CalificacionTributaria',
+        ip_address=ip_address,
+        detalles='Exportación de calificaciones a Excel'
+    )
+    
+    return response
+
+
+@login_required
+@requiere_permiso('consultar')
+def exportar_csv(request):
+    """Exporta calificaciones a CSV"""
+    calificaciones = CalificacionTributaria.objects.filter(
+        activo=True
+    ).select_related('instrumento', 'usuario_creador')
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename=calificaciones_{timezone.now().strftime("%Y%m%d")}.csv'
+    
+    writer = csv.writer(response)
+    writer.writerow([
+        'ID', 'Código Instrumento', 'Nombre Instrumento', 'Monto', 
+        'Factor', 'Método Ingreso', 'Número DJ', 'Fecha Informe', 
+        'Usuario Creador', 'Fecha Creación', 'Observaciones'
+    ])
+    
+    for cal in calificaciones:
+        writer.writerow([
+            cal.id,
+            cal.instrumento.codigo_instrumento,
+            cal.instrumento.nombre_instrumento,
+            cal.monto,
+            cal.factor,
+            cal.metodo_ingreso,
+            cal.numero_dj,
+            cal.fecha_informe,
+            cal.usuario_creador.username if cal.usuario_creador else '',
+            cal.fecha_creacion,
+            cal.observaciones
+        ])
+    
+    # Registrar en auditoría
+    ip_address = obtener_ip_cliente(request)
+    LogAuditoria.objects.create(
+        usuario=request.user,
+        accion='READ',
+        tabla_afectada='CalificacionTributaria',
+        ip_address=ip_address,
+        detalles='Exportación de calificaciones a CSV'
+    )
+    
+    return response
 
 
 # ============================================================================
