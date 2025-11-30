@@ -1,11 +1,9 @@
 from django.urls import path
 from . import views
-from . import views_factores
-from . import views_admin
 
 urlpatterns = [
     # Home
-    path('', views_factores.home, name='home'),
+    path('', views.home, name='home'),
     
     # Dashboard
     path('dashboard/', views.dashboard, name='dashboard'),
@@ -39,14 +37,14 @@ urlpatterns = [
     path('registro/', views.registro, name='registro_usuario'),
     
     # Gestión de Usuarios
-    path('gestion/usuarios/', views_admin.admin_gestionar_usuarios, name='admin_gestionar_usuarios'),
-    path('gestion/usuarios/desbloquear/<int:user_id>/', views_admin.desbloquear_cuenta_manual, name='desbloquear_cuenta'),
-    path('gestion/usuarios/historial/<int:user_id>/', views_admin.ver_historial_login_usuario, name='ver_historial_login'),
+    path('gestion/usuarios/', views.admin_gestionar_usuarios, name='admin_gestionar_usuarios'),
+    path('gestion/usuarios/desbloquear/<int:user_id>/', views.desbloquear_cuenta_manual, name='desbloquear_cuenta'),
+    path('gestion/usuarios/historial/<int:user_id>/', views.ver_historial_login_usuario, name='ver_historial_login'),
     
     # Factores - Formulario Simplificado
-    path('calificaciones/factores/crear/', views_factores.crear_calificacion_factores, name='crear_calificacion_factores'),
-    path('calificaciones/factores/editar/<int:pk>/', views_factores.editar_calificacion_factores, name='editar_calificacion_factores'),
+    path('calificaciones/factores/crear/', views.crear_calificacion_factores, name='crear_calificacion_factores'),
+    path('calificaciones/factores/editar/<int:pk>/', views.editar_calificacion_factores, name='editar_calificacion_factores'),
     
     # API
-    path('api/calcular-factores/', views_factores.calcular_factores_ajax, name='calcular_factores_ajax'),
+    path('api/calcular-factores/', views.calcular_factores_ajax, name='calcular_factores_ajax'),
 ]
