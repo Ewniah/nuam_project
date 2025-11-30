@@ -973,10 +973,74 @@ def exportar_csv(request):
 # ============================================================================
 # Functions: mi_perfil, registro, admin_gestionar_usuarios,
 #            desbloquear_cuenta_manual, ver_historial_login_usuario
-# Lines: 1301-1550 (approx. 250 lines)
+# Lines: 1101-1300 (approx. 200 lines)
 # ============================================================================
 
-# [Functions will be migrated here in Steps 11-12]
+@login_required
+def mi_perfil(request):
+    """Muestra y permite editar el perfil del usuario actual"""
+    try:
+        perfil = request.user.perfilusuario
+    except PerfilUsuario.DoesNotExist:
+        # Crear perfil si no existe
+        perfil = PerfilUsuario.objects.create(usuario=request.user)
+    
+    if request.method == 'POST':
+        # Actualizar información básica
+        request.user.first_name = request.POST.get('first_name', '')
+        request.user.last_name = request.POST.get('last_name', '')
+        request.user.email = request.POST.get('email', '')
+        request.user.save()
+        
+        # Actualizar perfil
+        perfil.telefono = request.POST.get('telefono', '')
+        perfil.departamento = request.POST.get('departamento', '')
+        perfil.save()
+        
+        messages.success(request, 'Perfil actualizado exitosamente.')
+        return redirect('mi_perfil')
+    
+    context = {
+        'perfil': perfil,
+    }
+    
+    return render(request, 'calificaciones/mi_perfil.html', context)
+
+
+def registro(request):
+    """Permite el registro de nuevos usuarios"""
+    if request.method == 'POST':
+        form = RegistroForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            
+            # Crear perfil de usuario con rol por defecto (Auditor)
+            rol_auditor = Rol.objects.get(nombre_rol='Auditor')
+            PerfilUsuario.objects.create(
+                usuario=user,
+                rol=rol_auditor
+            )
+            
+            # Registrar en auditoría
+            ip_address = obtener_ip_cliente(request)
+            LogAuditoria.objects.create(
+                usuario=user,
+                accion='CREATE',
+                tabla_afectada='User',
+                registro_id=user.id,
+                ip_address=ip_address,
+                detalles=f'Usuario registrado: {user.username}'
+            )
+            
+            messages.success(request, 'Registro exitoso. Ya puedes iniciar sesión.')
+            return redirect('login')
+    else:
+        form = RegistroForm()
+    
+    return render(request, 'calificaciones/registro.html', {'form': form})
+
+
+# [Admin functions will be migrated here in Step 12]
 
 
 # ============================================================================
