@@ -195,10 +195,105 @@ def procesar_csv(archivo):
 # SECTION 2: AUTHENTICATION AND SECURITY
 # ============================================================================
 # Functions: login_view, logout_view
-# Lines: 151-350 (approx. 200 lines)
+# Lines: 251-370 (approx. 120 lines)
 # ============================================================================
 
-# [Functions will be migrated here in Step 5]
+def login_view(request):
+    """Vista de login con auditoría completa y sistema de bloqueo"""
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        ip_address = obtener_ip_cliente(request)
+        
+        # 1. Verificar si la cuenta está bloqueada
+        bloqueada, mensaje_bloqueo, minutos = verificar_cuenta_bloqueada(username)
+        if bloqueada:
+            messages.error(request, mensaje_bloqueo)
+            registrar_intento_login(username, ip_address, False, "Intento en cuenta bloqueada")
+            return render(request, 'registration/login.html')
+        
+        # 2. Intentar autenticar
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            # Login exitoso
+            login(request, user)
+            
+            # Registrar intento exitoso
+            registrar_intento_login(username, ip_address, True, "Login exitoso")
+            
+            # Registrar en auditoría
+            LogAuditoria.objects.create(
+                usuario=user,
+                accion='LOGIN',
+                tabla_afectada='User',
+                registro_id=user.id,
+                ip_address=ip_address,
+                detalles=f'Login exitoso desde {ip_address}'
+            )
+            
+            # Limpiar bloqueo si existía
+            CuentaBloqueada.objects.filter(usuario=user).update(
+                bloqueada=False,
+                intentos_fallidos=0,
+                fecha_desbloqueo=timezone.now()
+            )
+            
+            messages.success(request, f'¡Bienvenido {user.first_name or user.username}!')
+            return redirect('dashboard')
+        else:
+            # Login fallido
+            registrar_intento_login(username, ip_address, False, "Credenciales incorrectas")
+            
+            # Registrar en auditoría (sin usuario porque falló)
+            LogAuditoria.objects.create(
+                usuario=None,
+                accion='LOGIN_FAILED',
+                tabla_afectada='User',
+                ip_address=ip_address,
+                detalles=f'Intento fallido para usuario: {username}'
+            )
+            
+            # Verificar si debe bloquearse la cuenta
+            debe_bloquear, intentos = verificar_intentos_fallidos(username, ip_address)
+            
+            if debe_bloquear:
+                messages.error(
+                    request, 
+                    f'Cuenta bloqueada por múltiples intentos fallidos. '
+                    f'Intente nuevamente en 30 minutos.'
+                )
+            else:
+                intentos_restantes = 5 - intentos
+                if intentos_restantes <= 2:
+                    messages.warning(
+                        request, 
+                        f'Credenciales incorrectas. Le quedan {intentos_restantes} intentos '
+                        f'antes de que su cuenta sea bloqueada.'
+                    )
+                else:
+                    messages.error(request, 'Credenciales incorrectas. Intente nuevamente.')
+    
+    return render(request, 'registration/login.html')
+
+
+@login_required
+def logout_view(request):
+    """Cierra sesión y registra en auditoría"""
+    ip_address = obtener_ip_cliente(request)
+    
+    LogAuditoria.objects.create(
+        usuario=request.user,
+        accion='LOGOUT',
+        tabla_afectada='User',
+        registro_id=request.user.id,
+        ip_address=ip_address,
+        detalles=f'Logout desde {ip_address}'
+    )
+    
+    logout(request)
+    messages.info(request, 'Sesión cerrada correctamente.')
+    return redirect('login')
 
 
 # ============================================================================
