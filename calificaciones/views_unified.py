@@ -632,10 +632,126 @@ def editar_calificacion_factores(request, pk):
 # ============================================================================
 # Functions: listar_instrumentos, crear_instrumento, editar_instrumento,
 #            eliminar_instrumento
-# Lines: 851-1050 (approx. 200 lines)
+# Lines: 740-860 (approx. 120 lines)
 # ============================================================================
 
-# [Functions will be migrated here in Step 9]
+@login_required
+@requiere_permiso('consultar')
+def listar_instrumentos(request):
+    """Lista todos los instrumentos financieros"""
+    instrumentos = InstrumentoFinanciero.objects.filter(activo=True)
+    
+    # Búsqueda
+    busqueda = request.GET.get('busqueda')
+    if busqueda:
+        instrumentos = instrumentos.filter(
+            Q(codigo_instrumento__icontains=busqueda) |
+            Q(nombre_instrumento__icontains=busqueda) |
+            Q(tipo_instrumento__icontains=busqueda)
+        )
+    
+    instrumentos = instrumentos.order_by('codigo_instrumento')
+    
+    return render(request, 'calificaciones/listar_instrumentos.html', {'instrumentos': instrumentos})
+
+
+@login_required
+@requiere_permiso('crear')
+def crear_instrumento(request):
+    """Crea un nuevo instrumento financiero"""
+    if request.method == 'POST':
+        form = InstrumentoFinancieroForm(request.POST)
+        if form.is_valid():
+            instrumento = form.save()
+            
+            # Registrar en auditoría
+            ip_address = obtener_ip_cliente(request)
+            LogAuditoria.objects.create(
+                usuario=request.user,
+                accion='CREATE',
+                tabla_afectada='InstrumentoFinanciero',
+                registro_id=instrumento.id,
+                ip_address=ip_address,
+                detalles=f'Instrumento creado: {instrumento.codigo_instrumento}'
+            )
+            
+            messages.success(request, 'Instrumento creado exitosamente.')
+            return redirect('listar_instrumentos')
+    else:
+        form = InstrumentoFinancieroForm()
+    
+    return render(request, 'calificaciones/form_instrumento.html', {'form': form})
+
+
+@login_required
+@requiere_permiso('modificar')
+def editar_instrumento(request, pk):
+    """Edita un instrumento existente"""
+    instrumento = get_object_or_404(InstrumentoFinanciero, pk=pk, activo=True)
+    
+    if request.method == 'POST':
+        form = InstrumentoFinancieroForm(request.POST, instance=instrumento)
+        if form.is_valid():
+            instrumento = form.save()
+            
+            # Registrar en auditoría
+            ip_address = obtener_ip_cliente(request)
+            LogAuditoria.objects.create(
+                usuario=request.user,
+                accion='UPDATE',
+                tabla_afectada='InstrumentoFinanciero',
+                registro_id=instrumento.id,
+                ip_address=ip_address,
+                detalles=f'Instrumento editado: {instrumento.codigo_instrumento}'
+            )
+            
+            messages.success(request, 'Instrumento actualizado exitosamente.')
+            return redirect('listar_instrumentos')
+    else:
+        form = InstrumentoFinancieroForm(instance=instrumento)
+    
+    context = {'form': form, 'instrumento': instrumento}
+    return render(request, 'calificaciones/form_instrumento.html', context)
+
+
+@login_required
+@requiere_permiso('eliminar')
+def eliminar_instrumento(request, pk):
+    """Eliminación lógica de un instrumento"""
+    instrumento = get_object_or_404(InstrumentoFinanciero, pk=pk, activo=True)
+    
+    # Verificar si tiene calificaciones asociadas
+    tiene_calificaciones = CalificacionTributaria.objects.filter(
+        instrumento=instrumento, 
+        activo=True
+    ).exists()
+    
+    if tiene_calificaciones:
+        messages.error(
+            request, 
+            'No se puede eliminar el instrumento porque tiene calificaciones asociadas.'
+        )
+        return redirect('listar_instrumentos')
+    
+    if request.method == 'POST':
+        instrumento.activo = False
+        instrumento.save()
+        
+        # Registrar en auditoría
+        ip_address = obtener_ip_cliente(request)
+        LogAuditoria.objects.create(
+            usuario=request.user,
+            accion='DELETE',
+            tabla_afectada='InstrumentoFinanciero',
+            registro_id=instrumento.id,
+            ip_address=ip_address,
+            detalles=f'Instrumento eliminado: {instrumento.codigo_instrumento}'
+        )
+        
+        messages.success(request, 'Instrumento eliminado exitosamente.')
+        return redirect('listar_instrumentos')
+    
+    return render(request, 'calificaciones/confirmar_eliminar.html', {'objeto': instrumento})
 
 
 # ============================================================================
