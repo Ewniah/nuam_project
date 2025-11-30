@@ -404,10 +404,139 @@ def dashboard(request):
 # Functions: listar_calificaciones, crear_calificacion, editar_calificacion,
 #            eliminar_calificacion, crear_calificacion_factores,
 #            editar_calificacion_factores
-# Lines: 501-850 (approx. 350 lines)
+# Lines: 471-650 (approx. 180 lines)
 # ============================================================================
 
-# [Functions will be migrated here in Steps 7-8]
+@login_required
+@requiere_permiso('consultar')
+def listar_calificaciones(request):
+    """Lista todas las calificaciones con filtros y búsqueda"""
+    calificaciones = CalificacionTributaria.objects.filter(
+        activo=True
+    ).select_related('instrumento', 'usuario_creador')
+    
+    # Filtros
+    codigo_instrumento = request.GET.get('codigo_instrumento')
+    fecha_desde = request.GET.get('fecha_desde')
+    fecha_hasta = request.GET.get('fecha_hasta')
+    numero_dj = request.GET.get('numero_dj')
+    
+    if codigo_instrumento:
+        calificaciones = calificaciones.filter(
+            instrumento__codigo_instrumento__icontains=codigo_instrumento
+        )
+    
+    if fecha_desde:
+        calificaciones = calificaciones.filter(fecha_informe__gte=fecha_desde)
+    
+    if fecha_hasta:
+        calificaciones = calificaciones.filter(fecha_informe__lte=fecha_hasta)
+    
+    if numero_dj:
+        calificaciones = calificaciones.filter(numero_dj__icontains=numero_dj)
+    
+    calificaciones = calificaciones.order_by('-fecha_creacion')
+    
+    context = {
+        'calificaciones': calificaciones,
+        'codigo_instrumento': codigo_instrumento,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'numero_dj': numero_dj,
+    }
+    
+    return render(request, 'calificaciones/listar_calificaciones.html', context)
+
+
+@login_required
+@requiere_permiso('crear')
+def crear_calificacion(request):
+    """Crea una nueva calificación tributaria"""
+    if request.method == 'POST':
+        form = CalificacionTributariaForm(request.POST)
+        if form.is_valid():
+            calificacion = form.save(commit=False)
+            calificacion.usuario_creador = request.user
+            calificacion.save()
+            
+            # Registrar en auditoría
+            ip_address = obtener_ip_cliente(request)
+            LogAuditoria.objects.create(
+                usuario=request.user,
+                accion='CREATE',
+                tabla_afectada='CalificacionTributaria',
+                registro_id=calificacion.id,
+                ip_address=ip_address,
+                detalles=f'Calificación creada: {calificacion.instrumento.codigo_instrumento}'
+            )
+            
+            messages.success(request, 'Calificación creada exitosamente.')
+            return redirect('listar_calificaciones')
+    else:
+        form = CalificacionTributariaForm()
+    
+    return render(request, 'calificaciones/form_calificacion.html', {'form': form})
+
+
+@login_required
+@requiere_permiso('modificar')
+def editar_calificacion(request, pk):
+    """Edita una calificación existente"""
+    calificacion = get_object_or_404(CalificacionTributaria, pk=pk, activo=True)
+    
+    if request.method == 'POST':
+        form = CalificacionTributariaForm(request.POST, instance=calificacion)
+        if form.is_valid():
+            calificacion = form.save()
+            
+            # Registrar en auditoría
+            ip_address = obtener_ip_cliente(request)
+            LogAuditoria.objects.create(
+                usuario=request.user,
+                accion='UPDATE',
+                tabla_afectada='CalificacionTributaria',
+                registro_id=calificacion.id,
+                ip_address=ip_address,
+                detalles=f'Calificación editada: {calificacion.instrumento.codigo_instrumento}'
+            )
+            
+            messages.success(request, 'Calificación actualizada exitosamente.')
+            return redirect('listar_calificaciones')
+    else:
+        form = CalificacionTributariaForm(instance=calificacion)
+    
+    context = {'form': form, 'calificacion': calificacion}
+    return render(request, 'calificaciones/form_calificacion.html', context)
+
+
+@login_required
+@requiere_permiso('eliminar')
+def eliminar_calificacion(request, pk):
+    """Eliminación lógica de una calificación"""
+    calificacion = get_object_or_404(CalificacionTributaria, pk=pk, activo=True)
+    
+    if request.method == 'POST':
+        calificacion.activo = False
+        calificacion.save()
+        
+        # Registrar en auditoría
+        ip_address = obtener_ip_cliente(request)
+        LogAuditoria.objects.create(
+            usuario=request.user,
+            accion='DELETE',
+            tabla_afectada='CalificacionTributaria',
+            registro_id=calificacion.id,
+            ip_address=ip_address,
+            detalles=f'Calificación eliminada: {calificacion.instrumento.codigo_instrumento}'
+        )
+        
+        messages.success(request, 'Calificación eliminada exitosamente.')
+        return redirect('listar_calificaciones')
+    
+    return render(request, 'calificaciones/confirmar_eliminar.html', {'objeto': calificacion})
+
+
+# [Factor-based functions will be migrated here in Step 8]
 
 
 # ============================================================================
