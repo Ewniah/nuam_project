@@ -282,9 +282,21 @@
             </h2>
             <p class="text-muted mb-0">Gestión completa de calificaciones tributarias con 30 factores</p>
         </div>
-        <a href="{% url 'crear_calificacion' %}" class="btn btn-filter-primary">
-            <i class="fas fa-plus-circle me-2"></i>Nueva Calificación
-        </a>
+        <!-- Botones de Acciones -->
+        <div class="d-flex gap-2">
+            <a href="{% url 'carga_masiva' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-upload me-1"></i>Carga Masiva
+            </a>
+            <a href="{% url 'crear_calificacion' %}" class="btn btn-success btn-sm">
+                <i class="fas fa-plus-circle me-1"></i>Ingresar
+            </a>
+            <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                <i class="fas fa-edit me-1"></i>Modificar Selección
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm" disabled>
+                <i class="fas fa-trash-alt me-1"></i>Eliminar Selección
+            </button>
+        </div>
     </div>
 
     <!-- ZONA A - FILTROS -->
@@ -507,22 +519,6 @@
             </ul>
         </nav>
         {% endif %}
-    </div>
-
-    <!-- ZONA C - ACCIONES GLOBALES -->
-    <div class="actions-zone">
-        <a href="{% url 'carga_masiva' %}" class="btn btn-primary">
-            <i class="fas fa-upload me-2"></i>Carga Masiva
-        </a>
-        <a href="{% url 'crear_calificacion' %}" class="btn btn-success">
-            <i class="fas fa-plus-circle me-2"></i>Ingresar
-        </a>
-        <button type="button" class="btn btn-outline-secondary" disabled>
-            <i class="fas fa-edit me-2"></i>Modificar Selección
-        </button>
-        <button type="button" class="btn btn-outline-danger" disabled>
-            <i class="fas fa-trash-alt me-2"></i>Eliminar Selección
-        </button>
     </div>
 
 </div>
