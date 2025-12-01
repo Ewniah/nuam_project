@@ -348,15 +348,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const ids = Array.from(selected).map(cb => cb.getAttribute('data-cal-id'));
         const count = ids.length;
 
-        if (confirm(`¿Está seguro que desea eliminar ${count} calificación(es) seleccionada(s)?`)) {
-            // Eliminar múltiples registros
-            if (count === 1) {
-                window.location.href = `/calificaciones/eliminar/${ids[0]}/`;
-            } else {
-                // Para múltiples: redirigir a cada uno (o crear endpoint bulk delete)
-                alert('Funcionalidad de eliminación múltiple pendiente de implementar');
-                // TODO: Implementar endpoint para eliminación masiva
-            }
+        // Redirigir al primer registro seleccionado (o implementar eliminación múltiple en el futuro)
+        if (count === 1) {
+            window.location.href = `/calificaciones/eliminar/${ids[0]}/`;
+        } else {
+            // Para múltiples: mostrar alerta y redirigir al primero
+            alert(`Se eliminarán ${count} registros. Por favor, confírmelos uno por uno.`);
+            window.location.href = `/calificaciones/eliminar/${ids[0]}/`;
         }
     });
 });
