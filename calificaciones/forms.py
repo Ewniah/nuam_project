@@ -10,7 +10,7 @@ class CalificacionTributariaForm(forms.ModelForm):
     class Meta:
         model = CalificacionTributaria
         fields = '__all__'
-        exclude = ['usuario_creador', 'fecha_creacion', 'fecha_modificacion', 'metodo_ingreso', 'monto', 'factor']
+        exclude = ['usuario_creador', 'fecha_creacion', 'fecha_modificacion', 'metodo_ingreso', 'factor']
         
         widgets = {
             'instrumento': forms.Select(attrs={
@@ -54,6 +54,12 @@ class CalificacionTributariaForm(forms.ModelForm):
                 'rows': 3,
                 'placeholder': 'Observaciones adicionales...'
             }),
+            'monto': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': 'Ej: 1000000.00'
+            }),
             'activo': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             })
@@ -70,6 +76,7 @@ class CalificacionTributariaForm(forms.ModelForm):
             'mercado': 'Mercado',
             'ejercicio': 'Ejercicio',
             'observaciones': 'Observaciones',
+            'monto': 'Monto Base / Total',
             'activo': 'Activo'
         }
     

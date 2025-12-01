@@ -223,6 +223,32 @@
         border-left: 4px solid var(--nuam-orange);
         color: #e65100;
     }
+    
+    /* Campos bloqueados / readonly */
+    .form-control[readonly],
+    .form-select[disabled] {
+        background-color: #f8f9fa !important;
+        cursor: not-allowed !important;
+        opacity: 0.7;
+        border-color: #ced4da;
+    }
+    
+    .form-control[readonly]:focus,
+    .form-select[disabled]:focus {
+        box-shadow: none;
+        border-color: #ced4da;
+    }
+    
+    /* Badge para campos protegidos */
+    .badge-locked {
+        display: inline-block;
+        background: #6c757d;
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        margin-left: 0.5rem;
+    }
 </style>
 {% endblock %}
 
@@ -288,8 +314,18 @@
                     <div class="col-md-4">
                         <label for="{{ form.instrumento.id_for_label }}" class="form-label required">
                             {{ form.instrumento.label }}
+                            {% if calificacion.pk %}
+                            <span class="badge-locked">
+                                <i class="fas fa-lock me-1"></i>Bloqueado en edición
+                            </span>
+                            {% endif %}
                         </label>
                         {{ form.instrumento }}
+                        {% if calificacion.pk %}
+                        <small class="form-text text-muted">
+                            <i class="fas fa-shield-alt text-warning"></i> No puede modificar el instrumento en modo edición (integridad de datos)
+                        </small>
+                        {% endif %}
                         {% if form.instrumento.errors %}
                             <div class="text-danger small mt-1">{{ form.instrumento.errors.0 }}</div>
                         {% endif %}
@@ -347,11 +383,13 @@
                     <div class="col-md-4">
                         <label for="{{ form.numero_dj.id_for_label }}" class="form-label">
                             {{ form.numero_dj.label }}
-                            <i class="fas fa-magic text-primary ms-1" title="Selección automática según tipo de instrumento"></i>
+                            <span class="badge-locked">
+                                <i class="fas fa-lock me-1"></i>Bloqueado
+                            </span>
                         </label>
                         {{ form.numero_dj }}
                         <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Se asigna automáticamente según el instrumento
+                            <i class="fas fa-magic text-primary"></i> Se asigna automáticamente según el tipo de instrumento
                         </small>
                     </div>
                     
@@ -415,7 +453,38 @@
                         Ingreso de Montos para Cálculo Automático
                     </h6>
                     <p class="text-muted small mb-3">
-                        Ingrese los montos correspondientes a cada factor. El sistema calculará automáticamente los factores proporcionales.
+                        Ingrese el monto base y los montos correspondientes a cada factor. El sistema calculará automáticamente los factores proporcionales.
+                    </p>
+                    
+                    <!-- Monto Base -->
+                    <div class="mb-4 p-3 bg-light border rounded">
+                        <div class="row align-items-end">
+                            <div class="col-md-8">
+                                <label for="{{ form.monto.id_for_label }}" class="form-label fw-bold">
+                                    <i class="fas fa-dollar-sign text-success me-2"></i>
+                                    {{ form.monto.label }} ($)
+                                </label>
+                                {{ form.monto }}
+                                <small class="form-text text-muted d-block mt-1">
+                                    Monto total base para el cálculo de factores proporcionales
+                                </small>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" id="btn-calcular-simple" class="btn btn-success w-100">
+                                    <i class="fas fa-calculator me-2"></i>Calcular desde Base
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h6 class="mb-3 text-muted">
+                        <i class="fas fa-list-ol me-2"></i>
+                        Desglose de Montos por Factor (Opcional)
+                    </h6>
+                    <p class="text-muted small mb-3">
+                        O ingrese montos individuales para cada factor si necesita un cálculo más detallado.
                     </p>
                     
                     <!-- Grid de inputs de montos (generados dinámicamente) -->
@@ -671,10 +740,38 @@
         console.log('🚀 Inicializando formulario de calificación...');
         
         // ========================================
-        // 1. AUTOSELECCIÓN DE DJ BASADO EN INSTRUMENTO
+        // 0. SECURITY: BLOQUEAR CAMPOS CRÍTICOS
         // ========================================
         const instrumentoSelect = document.getElementById('id_instrumento');
         const numeroDjInput = document.getElementById('id_numero_dj');
+        const esEdicion = {{ calificacion.pk|yesno:"true,false" }};
+        
+        // BLOQUEAR número DJ (siempre readonly - se calcula automáticamente)
+        if (numeroDjInput) {
+            numeroDjInput.readOnly = true;
+            numeroDjInput.classList.add('bg-light');
+            numeroDjInput.style.cursor = 'not-allowed';
+        }
+        
+        // BLOQUEAR instrumento en modo EDICIÓN (integridad de datos)
+        if (esEdicion && instrumentoSelect) {
+            instrumentoSelect.disabled = true;
+            instrumentoSelect.classList.add('bg-light');
+            instrumentoSelect.style.cursor = 'not-allowed';
+            
+            // Agregar campo hidden para enviar el valor
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'instrumento';
+            hiddenInput.value = instrumentoSelect.value;
+            instrumentoSelect.parentNode.appendChild(hiddenInput);
+            
+            console.log('🔒 Instrumento bloqueado en modo edición (ID:', instrumentoSelect.value, ')');
+        }
+        
+        // ========================================
+        // 1. AUTOSELECCIÓN DE DJ BASADO EN INSTRUMENTO
+        // ========================================
         
         if (instrumentoSelect && numeroDjInput) {
             instrumentoSelect.addEventListener('change', function() {
@@ -775,7 +872,80 @@
         }
         
         // ========================================
-        // 3. CALCULAR FACTORES (AJAX)
+        // 3A. CALCULAR DESDE MONTO BASE (SIMPLE)
+        // ========================================
+        const btnCalcularSimple = document.getElementById('btn-calcular-simple');
+        const montoBaseInput = document.getElementById('id_monto');
+        
+        if (btnCalcularSimple && montoBaseInput) {
+            btnCalcularSimple.addEventListener('click', async function() {
+                const montoBase = parseFloat(montoBaseInput.value);
+                
+                if (!montoBase || montoBase <= 0) {
+                    mostrarNotificacion('Por favor, ingrese un Monto Base válido', 'error');
+                    return;
+                }
+                
+                console.log('🧮 Calculando factores desde monto base:', montoBase);
+                
+                // UI: Mostrar loading
+                btnCalcularSimple.disabled = true;
+                btnCalcularSimple.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Calculando...';
+                
+                // Distribuir el monto base equitativamente entre los 30 factores
+                const montoPorFactor = montoBase / 30;
+                
+                // Recopilar montos distribuidos
+                const formData = new FormData();
+                for (let i = 8; i <= 37; i++) {
+                    formData.append(`monto_${i}`, montoPorFactor.toString());
+                }
+                
+                try {
+                    const response = await fetch(AJAX_URL, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': CSRF_TOKEN
+                        },
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        console.log('✅ Factores calculados desde base:', data);
+                        
+                        // Poblar factores
+                        for (let i = 8; i <= 37; i++) {
+                            const factorInput = document.getElementById(`id_factor_${i}`);
+                            if (factorInput && data.factores[`factor_${i}`]) {
+                                factorInput.value = data.factores[`factor_${i}`];
+                            }
+                        }
+                        
+                        // Actualizar suma de críticos
+                        actualizarSumaCriticos();
+                        
+                        // Mensaje de éxito
+                        mostrarNotificacion(`Factores calculados desde monto base: $${montoBase.toLocaleString()}`, 'success');
+                    } else {
+                        console.error('❌ Error en cálculo:', data.error);
+                        mostrarNotificacion(data.error, 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Error de red:', error);
+                    mostrarNotificacion('Error al comunicarse con el servidor', 'error');
+                } finally {
+                    // Restaurar botón
+                    btnCalcularSimple.disabled = false;
+                    btnCalcularSimple.innerHTML = '<i class="fas fa-calculator me-2"></i>Calcular desde Base';
+                }
+            });
+        }
+        
+        // ========================================
+        // 3B. CALCULAR FACTORES DETALLADO (AJAX)
         // ========================================
         const btnCalcular = document.getElementById('btn-calcular');
         const btnTexto = document.getElementById('btn-calcular-text');
