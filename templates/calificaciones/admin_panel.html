@@ -410,9 +410,10 @@
                                            title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="{% url 'confirmar_eliminar' calif.id %}" 
+                                        <a href="{% url 'eliminar_calificacion' calif.id %}" 
                                            class="action-icon bg-danger bg-opacity-10 text-danger"
-                                           title="Eliminar">
+                                           title="Eliminar"
+                                           onclick="return confirm('¿Está seguro de eliminar esta calificación?');">
                                             <i class="fas fa-trash"></i>
                                         </a>
                                     </div>
