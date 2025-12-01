@@ -122,7 +122,7 @@
         vertical-align: middle;
     }
 
-    /* Sticky Columns - First 2 columns (Ejercicio, Instrumento) */
+    /* Sticky Columns - First 3 columns (Checkbox, Ejercicio, Instrumento) */
     .data-grid th:nth-child(1),
     .data-grid td:nth-child(1) {
         position: sticky;
@@ -130,19 +130,30 @@
         z-index: 5;
         background-color: #ffffff;
         box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        text-align: center;
     }
 
     .data-grid th:nth-child(2),
     .data-grid td:nth-child(2) {
         position: sticky;
-        left: 80px; /* Width of first column */
+        left: 50px; /* Width of checkbox column */
+        z-index: 5;
+        background-color: #ffffff;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .data-grid th:nth-child(3),
+    .data-grid td:nth-child(3) {
+        position: sticky;
+        left: 130px; /* Checkbox + Ejercicio */
         z-index: 5;
         background-color: #ffffff;
         box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     }
 
     .data-grid thead th:nth-child(1),
-    .data-grid thead th:nth-child(2) {
+    .data-grid thead th:nth-child(2),
+    .data-grid thead th:nth-child(3) {
         background-color: #002A4E;
         color: white !important;
         z-index: 15;
@@ -153,7 +164,8 @@
     }
 
     .data-grid tbody tr:hover td:nth-child(1),
-    .data-grid tbody tr:hover td:nth-child(2) {
+    .data-grid tbody tr:hover td:nth-child(2),
+    .data-grid tbody tr:hover td:nth-child(3) {
         background-color: rgba(0, 181, 226, 0.08);
     }
 
@@ -265,10 +277,86 @@
         
         .data-grid th:nth-child(2),
         .data-grid td:nth-child(2) {
-            left: 60px;
+            left: 40px;
+        }
+
+        .data-grid th:nth-child(3),
+        .data-grid td:nth-child(3) {
+            left: 100px;
         }
     }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    const btnModificar = document.getElementById('btnModificar');
+    const btnEliminar = document.getElementById('btnEliminar');
+
+    // Seleccionar/Deseleccionar todos
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateButtons();
+        });
+    }
+
+    // Actualizar estado de botones al cambiar selección
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateButtons);
+    });
+
+    function updateButtons() {
+        const selected = document.querySelectorAll('.row-checkbox:checked');
+        const count = selected.length;
+
+        if (count === 0) {
+            btnModificar.disabled = true;
+            btnEliminar.disabled = true;
+        } else if (count === 1) {
+            btnModificar.disabled = false;
+            btnEliminar.disabled = false;
+        } else {
+            btnModificar.disabled = true; // Solo permite editar uno a la vez
+            btnEliminar.disabled = false;
+        }
+    }
+
+    // Modificar (solo si hay 1 seleccionado)
+    btnModificar.addEventListener('click', function() {
+        const selected = document.querySelectorAll('.row-checkbox:checked');
+        if (selected.length === 1) {
+            const calId = selected[0].getAttribute('data-cal-id');
+            window.location.href = `/calificaciones/editar/${calId}/`;
+        }
+    });
+
+    // Eliminar (permite múltiple selección)
+    btnEliminar.addEventListener('click', function() {
+        const selected = document.querySelectorAll('.row-checkbox:checked');
+        if (selected.length === 0) return;
+
+        const ids = Array.from(selected).map(cb => cb.getAttribute('data-cal-id'));
+        const count = ids.length;
+
+        if (confirm(`¿Está seguro que desea eliminar ${count} calificación(es) seleccionada(s)?`)) {
+            // Eliminar múltiples registros
+            if (count === 1) {
+                window.location.href = `/calificaciones/eliminar/${ids[0]}/`;
+            } else {
+                // Para múltiples: redirigir a cada uno (o crear endpoint bulk delete)
+                alert('Funcionalidad de eliminación múltiple pendiente de implementar');
+                // TODO: Implementar endpoint para eliminación masiva
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
 
 {% block content %}
@@ -290,10 +378,10 @@
             <a href="{% url 'crear_calificacion' %}" class="btn btn-success btn-sm">
                 <i class="fas fa-plus-circle me-1"></i>Ingresar
             </a>
-            <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnModificar" disabled>
                 <i class="fas fa-edit me-1"></i>Modificar Selección
             </button>
-            <button type="button" class="btn btn-outline-danger btn-sm" disabled>
+            <button type="button" class="btn btn-outline-danger btn-sm" id="btnEliminar" disabled>
                 <i class="fas fa-trash-alt me-1"></i>Eliminar Selección
             </button>
         </div>
@@ -403,6 +491,9 @@
             <table class="table table-striped table-hover table-sm data-grid">
                 <thead>
                     <tr>
+                        <th style="min-width: 50px;">
+                            <input type="checkbox" id="selectAll" title="Seleccionar todo">
+                        </th>
                         <th style="min-width: 80px;">Ejercicio</th>
                         <th style="min-width: 150px;">Instrumento</th>
                         <th style="min-width: 110px;">Fecha Pago</th>
@@ -421,6 +512,9 @@
                 <tbody>
                     {% for cal in calificaciones %}
                     <tr>
+                        <td>
+                            <input type="checkbox" class="row-checkbox" value="{{ cal.id }}" data-cal-id="{{ cal.id }}">
+                        </td>
                         <td>{{ cal.ejercicio|default:"-" }}</td>
                         <td class="text-start">{{ cal.instrumento.codigo_instrumento }}</td>
                         <td>{{ cal.fecha_informe|date:"d/m/Y" }}</td>
@@ -471,7 +565,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="38" class="text-center py-4">
+                        <td colspan="39" class="text-center py-4">
                             <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
                             <p class="text-muted mb-0">No se encontraron calificaciones con los filtros seleccionados</p>
                         </td>
