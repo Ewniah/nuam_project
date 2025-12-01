@@ -1628,37 +1628,69 @@ def carga_masiva(request):
 @requiere_permiso("consultar")
 def exportar_excel(request):
     """
-    Exporta todas las calificaciones activas a formato Excel (.xlsx).
+    Exporta calificaciones a formato Excel (.xlsx) con todos los 30 factores.
 
-    Genera archivo Excel con todas las calificaciones tributarias activas incluyendo
-    datos del instrumento asociado y usuario creador. Optimizado con select_related.
+    Genera archivo Excel con todas las calificaciones tributarias aplicando los mismos
+    filtros que la vista de listado. Incluye metadata completa y 30 factores (8-37).
 
     Parámetros:
-        request (HttpRequest): Solicitud HTTP del usuario autenticado.
+        request (HttpRequest): Solicitud HTTP con filtros opcionales en GET:
+            - codigo_instrumento: Búsqueda parcial por código/nombre
+            - mercado: ACN, CFI, FFM
+            - tipo_sociedad: A (Corredora), C (Bolsa)
+            - ejercicio: Año (int)
+            - numero_dj: Número de DJ
 
     Retorna:
         HttpResponse: Archivo Excel descargable con:
             - Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-            - Filename: calificaciones_YYYYMMDD.xlsx (fecha actual)
-            - Columnas: ID, Código Instrumento, Nombre Instrumento, Monto, Factor,
-              Método Ingreso, Número DJ, Fecha Informe, Usuario Creador, Fecha Creación,
-              Observaciones
+            - Filename: calificaciones_YYYYMMDD_HHMMSS.xlsx
+            - Columnas: 41+ campos (ID, Instrumento, Metadata, 30 Factores, Observaciones)
 
     Notas:
         - Requiere permiso: 'consultar'
         - Librería: openpyxl
         - Solo exporta registros activos (activo=True)
+        - Aplica mismos filtros que listar_calificaciones
         - Query optimizado con select_related('instrumento', 'usuario_creador')
-        - Logging: INFO con username y conteo de registros
-        - Formato de fechas: YYYY-MM-DD
     """
+    # Aplicar filtros (misma lógica que listar_calificaciones)
     calificaciones = CalificacionTributaria.objects.filter(activo=True).select_related(
         "instrumento", "usuario_creador"
     )
 
+    # FILTROS PRINCIPALES
+    mercado = request.GET.get("mercado", "").strip()
+    tipo_sociedad = request.GET.get("tipo_sociedad", "").strip()
+    ejercicio = request.GET.get("ejercicio", "").strip()
+    codigo_instrumento = request.GET.get("codigo_instrumento", "").strip()
+    numero_dj = request.GET.get("numero_dj", "").strip()
+
+    if mercado:
+        calificaciones = calificaciones.filter(mercado__iexact=mercado)
+    
+    if tipo_sociedad:
+        calificaciones = calificaciones.filter(tipo_sociedad__iexact=tipo_sociedad)
+    
+    if ejercicio:
+        try:
+            ejercicio_int = int(ejercicio)
+            calificaciones = calificaciones.filter(ejercicio=ejercicio_int)
+        except ValueError:
+            pass
+    
+    if codigo_instrumento:
+        calificaciones = calificaciones.filter(
+            Q(instrumento__codigo_instrumento__icontains=codigo_instrumento) |
+            Q(instrumento__nombre_instrumento__icontains=codigo_instrumento)
+        )
+    
+    if numero_dj:
+        calificaciones = calificaciones.filter(numero_dj__icontains=numero_dj)
+
     logger.info(
-        f"Excel export initiated - User: {request.user.username}, "
-        f"Total records: {calificaciones.count()}"
+        f"Excel export - User: {request.user.username}, Records: {calificaciones.count()}, "
+        f"Filters: mercado={mercado}, tipo_sociedad={tipo_sociedad}, ejercicio={ejercicio}"
     )
 
     # Crear libro de Excel
@@ -1666,47 +1698,70 @@ def exportar_excel(request):
     ws = wb.active
     ws.title = "Calificaciones"
 
-    # Encabezados
+    # Encabezados dinámicos con 30 factores
     headers = [
         "ID",
         "Código Instrumento",
         "Nombre Instrumento",
-        "Monto",
-        "Factor",
-        "Método Ingreso",
-        "Número DJ",
         "Fecha Informe",
+        "Mercado",
+        "Secuencia",
+        "Origen (Tipo Soc)",
+        "N° DJ",
+        "Ejercicio",
+        "Valor Histórico",
+        "Monto",
+    ]
+    
+    # Agregar headers de 30 factores dinámicamente
+    for i in range(8, 38):
+        headers.append(f"Factor {i}")
+    
+    headers.extend([
+        "Método Ingreso",
         "Usuario Creador",
         "Fecha Creación",
-        "Observaciones",
-    ]
+        "Observaciones"
+    ])
+    
     ws.append(headers)
 
     # Datos
     for cal in calificaciones:
-        ws.append(
-            [
-                cal.id,
-                cal.instrumento.codigo_instrumento,
-                cal.instrumento.nombre_instrumento,
-                float(cal.monto) if cal.monto else None,
-                float(cal.factor) if cal.factor else None,
-                cal.metodo_ingreso,
-                cal.numero_dj,
-                cal.fecha_informe.strftime("%Y-%m-%d"),
-                cal.usuario_creador.username if cal.usuario_creador else "",
-                cal.fecha_creacion.strftime("%Y-%m-%d %H:%M:%S"),
-                cal.observaciones,
-            ]
-        )
+        row = [
+            cal.id,
+            cal.instrumento.codigo_instrumento,
+            cal.instrumento.nombre_instrumento,
+            cal.fecha_informe.strftime("%Y-%m-%d") if cal.fecha_informe else "",
+            cal.mercado or "",
+            cal.secuencia if cal.secuencia else "",
+            cal.tipo_sociedad or "",
+            cal.numero_dj,
+            cal.ejercicio if cal.ejercicio else "",
+            float(cal.valor_historico) if cal.valor_historico else None,
+            float(cal.monto) if cal.monto else None,
+        ]
+        
+        # Agregar 30 factores dinámicamente
+        for i in range(8, 38):
+            factor_value = getattr(cal, f"factor_{i}", None)
+            row.append(float(factor_value) if factor_value else None)
+        
+        row.extend([
+            cal.metodo_ingreso or "",
+            cal.usuario_creador.username if cal.usuario_creador else "",
+            cal.fecha_creacion.strftime("%Y-%m-%d %H:%M:%S") if cal.fecha_creacion else "",
+            cal.observaciones or "",
+        ])
+        
+        ws.append(row)
 
     # Preparar respuesta
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    response["Content-Disposition"] = (
-        f'attachment; filename=calificaciones_{timezone.now().strftime("%Y%m%d")}.xlsx'
-    )
+    timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+    response["Content-Disposition"] = f'attachment; filename=calificaciones_{timestamp}.xlsx'
 
     wb.save(response)
 
@@ -1717,7 +1772,7 @@ def exportar_excel(request):
         accion="READ",
         tabla_afectada="CalificacionTributaria",
         ip_address=ip_address,
-        detalles="Exportación de calificaciones a Excel",
+        detalles=f"Exportación Excel: {calificaciones.count()} registros con filtros aplicados",
     )
 
     return response
@@ -1727,79 +1782,136 @@ def exportar_excel(request):
 @requiere_permiso("consultar")
 def exportar_csv(request):
     """
-    Exporta todas las calificaciones activas a formato CSV.
+    Exporta calificaciones a formato CSV con todos los 30 factores.
 
-    Genera archivo CSV compatible con Excel y otras herramientas. Formato más liviano
-    que Excel, ideal para importación en otros sistemas.
+    Genera archivo CSV compatible con Excel y otras herramientas. Incluye metadata
+    completa y 30 factores (8-37). Aplica los mismos filtros que la vista de listado.
 
     Parámetros:
-        request (HttpRequest): Solicitud HTTP del usuario autenticado.
+        request (HttpRequest): Solicitud HTTP con filtros opcionales en GET:
+            - codigo_instrumento: Búsqueda parcial por código/nombre
+            - mercado: ACN, CFI, FFM
+            - tipo_sociedad: A (Corredora), C (Bolsa)
+            - ejercicio: Año (int)
+            - numero_dj: Número de DJ
 
     Retorna:
         HttpResponse: Archivo CSV descargable con:
             - Content-Type: text/csv
             - Encoding: UTF-8 (compatible con caracteres especiales)
-            - Filename: calificaciones_YYYYMMDD.csv (fecha actual)
-            - Columnas: ID, Código Instrumento, Nombre Instrumento, Monto, Factor,
-              Método Ingreso, Número DJ, Fecha Informe, Usuario Creador, Fecha Creación,
-              Observaciones
+            - Filename: calificaciones_YYYYMMDD_HHMMSS.csv
+            - Columnas: 41+ campos (ID, Instrumento, Metadata, 30 Factores, Observaciones)
 
     Notas:
         - Requiere permiso: 'consultar'
         - Librería: csv (stdlib)
         - Solo exporta registros activos (activo=True)
+        - Aplica mismos filtros que listar_calificaciones
         - Query optimizado con select_related('instrumento', 'usuario_creador')
-        - Logging: INFO con username y conteo de registros
-        - Formato de fechas: YYYY-MM-DD
         - Separador: coma (,)
     """
+    # Aplicar filtros (misma lógica que listar_calificaciones)
     calificaciones = CalificacionTributaria.objects.filter(activo=True).select_related(
         "instrumento", "usuario_creador"
     )
 
+    # FILTROS PRINCIPALES
+    mercado = request.GET.get("mercado", "").strip()
+    tipo_sociedad = request.GET.get("tipo_sociedad", "").strip()
+    ejercicio = request.GET.get("ejercicio", "").strip()
+    codigo_instrumento = request.GET.get("codigo_instrumento", "").strip()
+    numero_dj = request.GET.get("numero_dj", "").strip()
+
+    if mercado:
+        calificaciones = calificaciones.filter(mercado__iexact=mercado)
+    
+    if tipo_sociedad:
+        calificaciones = calificaciones.filter(tipo_sociedad__iexact=tipo_sociedad)
+    
+    if ejercicio:
+        try:
+            ejercicio_int = int(ejercicio)
+            calificaciones = calificaciones.filter(ejercicio=ejercicio_int)
+        except ValueError:
+            pass
+    
+    if codigo_instrumento:
+        calificaciones = calificaciones.filter(
+            Q(instrumento__codigo_instrumento__icontains=codigo_instrumento) |
+            Q(instrumento__nombre_instrumento__icontains=codigo_instrumento)
+        )
+    
+    if numero_dj:
+        calificaciones = calificaciones.filter(numero_dj__icontains=numero_dj)
+
     logger.info(
-        f"CSV export initiated - User: {request.user.username}, "
-        f"Total records: {calificaciones.count()}"
+        f"CSV export - User: {request.user.username}, Records: {calificaciones.count()}, "
+        f"Filters: mercado={mercado}, tipo_sociedad={tipo_sociedad}, ejercicio={ejercicio}"
     )
 
     response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = (
-        f'attachment; filename=calificaciones_{timezone.now().strftime("%Y%m%d")}.csv'
-    )
+    timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+    response["Content-Disposition"] = f'attachment; filename=calificaciones_{timestamp}.csv'
 
     writer = csv.writer(response)
-    writer.writerow(
-        [
-            "ID",
-            "Código Instrumento",
-            "Nombre Instrumento",
-            "Monto",
-            "Factor",
-            "Método Ingreso",
-            "Número DJ",
-            "Fecha Informe",
-            "Usuario Creador",
-            "Fecha Creación",
-            "Observaciones",
-        ]
-    )
+    
+    # Encabezados dinámicos con 30 factores
+    headers = [
+        "ID",
+        "Código Instrumento",
+        "Nombre Instrumento",
+        "Fecha Informe",
+        "Mercado",
+        "Secuencia",
+        "Origen (Tipo Soc)",
+        "N° DJ",
+        "Ejercicio",
+        "Valor Histórico",
+        "Monto",
+    ]
+    
+    # Agregar headers de 30 factores dinámicamente
+    for i in range(8, 38):
+        headers.append(f"Factor {i}")
+    
+    headers.extend([
+        "Método Ingreso",
+        "Usuario Creador",
+        "Fecha Creación",
+        "Observaciones"
+    ])
+    
+    writer.writerow(headers)
 
+    # Datos
     for cal in calificaciones:
-        writer.writerow(
-            [
-                cal.id,
-                cal.instrumento.codigo_instrumento,
-                cal.instrumento.nombre_instrumento,
-                cal.monto,
-                cal.factor,
-                cal.metodo_ingreso,
-                cal.numero_dj,
-                cal.fecha_informe,
-                cal.usuario_creador.username if cal.usuario_creador else "",
-                cal.fecha_creacion,
-                cal.observaciones,
-            ]
-        )
+        row = [
+            cal.id,
+            cal.instrumento.codigo_instrumento,
+            cal.instrumento.nombre_instrumento,
+            cal.fecha_informe.strftime("%Y-%m-%d") if cal.fecha_informe else "",
+            cal.mercado or "",
+            cal.secuencia if cal.secuencia else "",
+            cal.tipo_sociedad or "",
+            cal.numero_dj,
+            cal.ejercicio if cal.ejercicio else "",
+            cal.valor_historico if cal.valor_historico else "",
+            cal.monto if cal.monto else "",
+        ]
+        
+        # Agregar 30 factores dinámicamente
+        for i in range(8, 38):
+            factor_value = getattr(cal, f"factor_{i}", None)
+            row.append(factor_value if factor_value else "")
+        
+        row.extend([
+            cal.metodo_ingreso or "",
+            cal.usuario_creador.username if cal.usuario_creador else "",
+            cal.fecha_creacion.strftime("%Y-%m-%d %H:%M:%S") if cal.fecha_creacion else "",
+            cal.observaciones or "",
+        ])
+        
+        writer.writerow(row)
 
     # Registrar en auditoría
     ip_address = obtener_ip_cliente(request)
@@ -1808,7 +1920,7 @@ def exportar_csv(request):
         accion="READ",
         tabla_afectada="CalificacionTributaria",
         ip_address=ip_address,
-        detalles="Exportación de calificaciones a CSV",
+        detalles=f"Exportación CSV: {calificaciones.count()} registros con filtros aplicados",
     )
 
     return response
