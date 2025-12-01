@@ -1,18 +1,23 @@
+# Core Django
 asgiref==3.10.0
 Django==5.2.8
-django-environ==0.12.0
-et_xmlfile==2.0.0
-numpy==2.3.4
-openpyxl==3.1.5
-pandas==2.3.3
-psycopg2-binary==2.9.11
-python-dateutil==2.9.0.post0
-pytz==2025.2
-six==1.17.0
 sqlparse==0.5.3
 tzdata==2025.2
 
-# Testing dependencies
+# Database
+psycopg2-binary==2.9.11
+
+# Configuration
+django-environ==0.12.0
+
+# Excel/File Processing
+openpyxl==3.1.5
+et_xmlfile==2.0.0
+
+# Code Quality
+black==24.10.0
+
+# Testing
 pytest==8.3.4
 pytest-django==4.9.0
 pytest-cov==6.0.0
