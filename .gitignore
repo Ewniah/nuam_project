@@ -98,6 +98,9 @@ ehthumbs.db
 Thumbs.db
 desktop.ini
 
+# Estado del proyecto (uso interno)
+.project_state
+
 # Project specific
 uploads/
 downloads/
