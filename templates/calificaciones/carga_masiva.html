@@ -69,18 +69,23 @@
     }
 
     .history-table {
-        font-size: 0.8rem;
+        font-size: 0.9rem;
     }
 
     .history-table td {
-        padding: 0.4rem 0.5rem !important;
+        padding: 0.75rem 0.75rem !important;
+    }
+
+    .history-table th {
+        font-size: 0.9rem;
+        font-weight: 600;
     }
 
     .status-badge {
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
+        padding: 0.4rem 0.75rem;
+        border-radius: 6px;
         font-weight: 500;
-        font-size: 0.75rem;
+        font-size: 0.85rem;
     }
 </style>
 {% endblock %}
@@ -225,98 +230,178 @@
         <div class="col-12">
             <!-- ZONE B: Upload History -->
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-white border-bottom py-2">
-                    <h6 class="mb-0 fw-semibold" style="color: #002A4E; font-size: 0.95rem;">
-                        <i class="fas fa-history me-2" style="color: #F37021;"></i>Últimas 5 Cargas
-                    </h6>
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 fw-semibold" style="color: #002A4E;">
+                        <i class="fas fa-history me-2" style="color: #F37021;"></i>Historial de Cargas Recientes
+                    </h5>
                 </div>
                 <div class="card-body p-0">
                     {% if cargas_anteriores %}
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover history-table mb-0">
+                        <table class="table table-hover history-table mb-0">
                             <thead class="bg-light">
                                 <tr>
-                                    <th class="border-0 ps-2 py-2" style="font-size: 0.8rem;">Fecha</th>
-                                    <th class="border-0 py-2" style="font-size: 0.8rem;">Archivo</th>
-                                    <th class="border-0 py-2" style="font-size: 0.8rem;">Estado</th>
-                                    <th class="border-0 py-2 text-center" style="font-size: 0.8rem;">Resumen</th>
+                                    <th class="border-0 ps-3 py-3">Fecha y Hora</th>
+                                    <th class="border-0 py-3">Archivo</th>
+                                    <th class="border-0 py-3 text-center">Estado</th>
+                                    <th class="border-0 py-3 text-center">Resumen</th>
+                                    <th class="border-0 py-3 text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for carga in cargas_anteriores|slice:":5" %}
                                 <tr>
-                                <td class="ps-2">
-                                    <small class="text-muted" style="font-size: 0.75rem;">{{ carga.fecha_carga|date:"d/m/y H:i" }}</small>
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-calendar-alt text-muted me-2"></i>
+                                        <span>{{ carga.fecha_carga|date:"d/m/Y H:i" }}</span>
+                                    </div>
                                 </td>
                                 <td>
-                                    <small class="text-dark" style="font-size: 0.75rem;">{{ carga.archivo_nombre|truncatechars:25 }}</small>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-excel text-success me-2"></i>
+                                        <span class="text-dark">{{ carga.archivo_nombre }}</span>
+                                    </div>
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     {% if carga.estado == 'EXITOSO' %}
                                     <span class="badge bg-success status-badge">
-                                        <i class="fas fa-check me-1"></i>OK
+                                        <i class="fas fa-check-circle me-1"></i>Exitoso
                                     </span>
                                     {% elif carga.estado == 'PARCIAL' %}
                                     <span class="badge bg-warning text-dark status-badge">
-                                        <i class="fas fa-exclamation me-1"></i>Errores
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Con Errores
                                     </span>
                                     {% elif carga.estado == 'FALLIDO' %}
                                     <span class="badge bg-danger status-badge">
-                                        <i class="fas fa-times me-1"></i>Falló
+                                        <i class="fas fa-times-circle me-1"></i>Fallido
                                     </span>
                                     {% else %}
                                     <span class="badge bg-secondary status-badge">{{ carga.estado }}</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-center">
-                                        <small class="d-block" style="font-size: 0.75rem;">
-                                            <span class="text-success fw-semibold">{{ carga.registros_exitosos }}</span> / {{ carga.registros_procesados }}
-                                        </small>
-                                        {% if carga.errores_detalle %}
-                                        <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                data-bs-toggle="modal" data-bs-target="#errorModal{{ carga.id }}" 
-                                                style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">
-                                            <i class="fas fa-info-circle"></i>
-                                        </button>
+                                    <div>
+                                        <span class="text-success fw-bold">{{ carga.registros_exitosos }}</span>
+                                        <span class="text-muted"> / </span>
+                                        <span class="text-primary fw-bold">{{ carga.registros_procesados }}</span>
+                                    </div>
+                                    <small class="text-muted">exitosos / procesados</small>
+                                </td>
+                                <td class="text-center">
+                                    {% if carga.errores_detalle %}
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            data-bs-toggle="modal" data-bs-target="#errorModal{{ carga.id }}">
+                                        <i class="fas fa-exclamation-circle me-1"></i>Ver Errores
+                                    </button>
 
-                                        <!-- Modal de errores -->
-                                        <div class="modal fade" id="errorModal{{ carga.id }}" tabindex="-1">
-                                            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                                                <div class="modal-content border-0 shadow">
-                                                    <div class="modal-header bg-danger text-white">
-                                                        <h5 class="modal-title">
-                                                            <i class="fas fa-exclamation-triangle me-2"></i>Errores Encontrados
-                                                        </h5>
-                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <div class="alert alert-light border mb-3">
-                                                            <strong>Archivo:</strong> {{ carga.archivo_nombre }}<br>
-                                                            <strong>Fecha:</strong> {{ carga.fecha_carga|date:"d/m/Y H:i" }}<br>
-                                                            <strong>Procesados:</strong> {{ carga.registros_procesados }} | 
-                                                            <strong>Exitosos:</strong> {{ carga.registros_exitosos }} | 
-                                                            <strong>Fallidos:</strong> {{ carga.registros_fallidos }}
+                                    {% else %}
+                                    <span class="badge bg-success-subtle text-success">
+                                        <i class="fas fa-check me-1"></i>Sin errores
+                                    </span>
+                                    {% endif %}
+
+                                    <!-- Modal de errores -->
+                                    {% if carga.errores_detalle %}
+                                    <div class="modal fade" id="errorModal{{ carga.id }}" tabindex="-1">
+                                        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                                            <div class="modal-content border-0 shadow-lg">
+                                                <div class="modal-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;">
+                                                    <h4 class="modal-title fw-bold">
+                                                        <i class="fas fa-exclamation-triangle me-2"></i>Reporte de Errores en Carga Masiva
+                                                    </h4>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body p-4">
+                                                    <!-- Información del Archivo -->
+                                                    <div class="card border-0 bg-light mb-4">
+                                                        <div class="card-body">
+                                                            <div class="row g-3">
+                                                                <div class="col-md-6">
+                                                                    <div class="d-flex align-items-center mb-2">
+                                                                        <i class="fas fa-file-excel text-success fa-lg me-2"></i>
+                                                                        <div>
+                                                                            <small class="text-muted d-block">Archivo</small>
+                                                                            <strong>{{ carga.archivo_nombre }}</strong>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="d-flex align-items-center mb-2">
+                                                                        <i class="fas fa-calendar-alt text-primary fa-lg me-2"></i>
+                                                                        <div>
+                                                                            <small class="text-muted d-block">Fecha de Carga</small>
+                                                                            <strong>{{ carga.fecha_carga|date:"d/m/Y H:i:s" }}</strong>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-12">
+                                                                    <div class="row text-center">
+                                                                        <div class="col-4">
+                                                                            <div class="p-3 bg-white rounded border">
+                                                                                <i class="fas fa-list-ol text-primary fa-2x mb-2"></i>
+                                                                                <div class="h3 mb-0">{{ carga.registros_procesados }}</div>
+                                                                                <small class="text-muted">Procesados</small>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-4">
+                                                                            <div class="p-3 bg-white rounded border border-success">
+                                                                                <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                                                                                <div class="h3 mb-0 text-success">{{ carga.registros_exitosos }}</div>
+                                                                                <small class="text-muted">Exitosos</small>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-4">
+                                                                            <div class="p-3 bg-white rounded border border-danger">
+                                                                                <i class="fas fa-times-circle text-danger fa-2x mb-2"></i>
+                                                                                <div class="h3 mb-0 text-danger">{{ carga.registros_fallidos }}</div>
+                                                                                <small class="text-muted">Fallidos</small>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <h6 class="fw-bold mb-2">Detalle de errores:</h6>
-                                                        <pre class="bg-light p-3 rounded border" style="white-space: pre-wrap; font-size: 0.875rem; max-height: 300px;">{{ carga.errores_detalle }}</pre>
                                                     </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+
+                                                    <!-- Detalle de Errores -->
+                                                    <div class="card border-danger">
+                                                        <div class="card-header bg-danger text-white">
+                                                            <h6 class="mb-0">
+                                                                <i class="fas fa-list-ul me-2"></i>Detalle de Errores por Fila
+                                                            </h6>
+                                                        </div>
+                                                        <div class="card-body p-0">
+                                                            <pre class="bg-light p-4 m-0 border-0" style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.9rem; max-height: 400px; overflow-y: auto;">{{ carga.errores_detalle }}</pre>
+                                                        </div>
                                                     </div>
+
+                                                    <!-- Ayuda -->
+                                                    <div class="alert alert-info mt-3 mb-0">
+                                                        <i class="fas fa-info-circle me-2"></i>
+                                                        <strong>Recomendaciones:</strong> Revisa los errores listados arriba, corrige los datos en tu archivo Excel y vuelve a intentar la carga.
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer bg-light">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                        <i class="fas fa-times me-2"></i>Cerrar
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
-                                        {% endif %}
-                                    </td>
+                                    </div>
+                                    {% endif %}
+                                </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
                     {% else %}
-                    <div class="text-center py-3">
-                        <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
-                        <p class="text-muted mb-0" style="font-size: 0.85rem;">No hay cargas previas</p>
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No hay cargas previas registradas</p>
+                        <small class="text-muted">Los archivos cargados aparecerán aquí</small>
                     </div>
                     {% endif %}
                 </div>
