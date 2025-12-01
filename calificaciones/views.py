@@ -176,7 +176,27 @@ def verificar_cuenta_bloqueada(username):
 
 
 def registrar_intento_login(username, ip_address, exitoso, detalles=""):
-    """Registra todos los intentos de login en la base de datos"""
+    """
+    Registra todos los intentos de autenticación en la tabla IntentoLogin para auditoría.
+
+    Función auxiliar utilizada por login_view para mantener histórico completo de intentos
+    de login exitosos y fallidos, facilitando análisis de seguridad y debugging.
+
+    Args:
+        username (str): Nombre de usuario que intentó autenticarse.
+        ip_address (str): Dirección IP desde donde se realizó el intento.
+        exitoso (bool): True si la autenticación fue exitosa, False si falló.
+        detalles (str, optional): Información adicional sobre el intento. Default: "".
+
+    Returns:
+        None: La función no retorna valor, solo crea registro en BD.
+
+    Notes:
+        - Llamada automáticamente por login_view en cada intento
+        - Utilizada para análisis de patrones de ataque
+        - Base de datos para verificar_intentos_fallidos
+        - Visible en admin panel de gestión de usuarios
+    """
     IntentoLogin.objects.create(
         username=username, ip_address=ip_address, exitoso=exitoso, detalles=detalles
     )
@@ -184,9 +204,27 @@ def registrar_intento_login(username, ip_address, exitoso, detalles=""):
 
 def verificar_intentos_fallidos(username, ip_address):
     """
-    Verifica intentos fallidos en los últimos 15 minutos
-    Si hay 5 o más intentos fallidos, bloquea la cuenta
-    Retorna: (debe_bloquear: bool, intentos: int)
+    Verifica intentos fallidos recientes y bloquea la cuenta si excede el umbral.
+
+    Cuenta los intentos fallidos de login en la ventana de tiempo definida por
+    FAILED_ATTEMPT_WINDOW_MINUTES. Si alcanza MAX_LOGIN_ATTEMPTS, bloquea automáticamente
+    la cuenta y registra la acción en auditoría.
+
+    Args:
+        username (str): Nombre de usuario a verificar.
+        ip_address (str): IP desde donde se realizó el último intento.
+
+    Returns:
+        tuple: (debe_bloquear, intentos) donde:
+            - debe_bloquear (bool): True si se alcanzó el límite y se bloqueó la cuenta.
+            - intentos (int): Número de intentos fallidos en la ventana de tiempo.
+
+    Notes:
+        - Ventana de tiempo: FAILED_ATTEMPT_WINDOW_MINUTES (15 minutos por defecto)
+        - Umbral de bloqueo: MAX_LOGIN_ATTEMPTS (5 intentos por defecto)
+        - Crea o actualiza registro en CuentaBloqueada
+        - Registra acción ACCOUNT_LOCKED en LogAuditoria
+        - Retorna (False, intentos) si el usuario no existe
     """
     INTENTOS_MAXIMOS = MAX_LOGIN_ATTEMPTS
     VENTANA_TIEMPO = FAILED_ATTEMPT_WINDOW_MINUTES
@@ -560,7 +598,31 @@ def dashboard(request):
 @login_required
 @requiere_permiso("consultar")
 def listar_calificaciones(request):
-    """Lista todas las calificaciones con filtros y búsqueda"""
+    """
+    Lista todas las calificaciones tributarias activas con capacidad de filtrado.
+
+    Muestra tabla paginada de calificaciones con opciones de filtrado por código de
+    instrumento, rango de fechas y número de DJ. Utiliza select_related para optimizar
+    queries de relaciones FK.
+
+    Args:
+        request (HttpRequest): GET request con parámetros opcionales:
+            - codigo_instrumento (str): Filtro parcial por código (ICONTAINS).
+            - fecha_desde (str): Fecha mínima del informe (formato YYYY-MM-DD).
+            - fecha_hasta (str): Fecha máxima del informe (formato YYYY-MM-DD).
+            - numero_dj (str): Filtro parcial por número de DJ (ICONTAINS).
+
+    Returns:
+        HttpResponse: Render de 'calificaciones/listar_calificaciones.html' con:
+            - calificaciones: QuerySet de CalificacionTributaria filtrado
+            - Parámetros de filtros en context para mantener estado del form
+
+    Notes:
+        - Solo muestra registros con activo=True (borrado lógico)
+        - Ordenado por fecha_creacion descendente (más recientes primero)
+        - Requiere permiso: 'consultar'
+        - Query optimizado con select_related('instrumento', 'usuario_creador')
+    """
     calificaciones = CalificacionTributaria.objects.filter(activo=True).select_related(
         "instrumento", "usuario_creador"
     )
@@ -601,7 +663,30 @@ def listar_calificaciones(request):
 @login_required
 @requiere_permiso("crear")
 def crear_calificacion(request):
-    """Crea una nueva calificación tributaria"""
+    """
+    Crea una nueva calificación tributaria con validación y auditoría.
+
+    Presenta formulario para crear calificación manualmente. Valida datos, asigna usuario
+    creador automáticamente y registra la operación en LogAuditoria.
+
+    Args:
+        request (HttpRequest): 
+            - GET: Muestra formulario vacío
+            - POST: Procesa formulario con datos de calificación
+
+    Returns:
+        HttpResponse:
+            - GET: Render de 'calificaciones/form_calificacion.html' con formulario vacío
+            - POST exitoso: Redirect a 'listar_calificaciones' con mensaje de éxito
+            - POST con error: Render de form con errores de validación
+
+    Notes:
+        - Requiere permiso: 'crear'
+        - Usuario creador se asigna automáticamente (no editable)
+        - Registra acción CREATE en LogAuditoria con IP del cliente
+        - Maneja IntegrityError, ValidationError y excepciones genéricas
+        - Logging: INFO en creación exitosa, ERROR en fallos
+    """
     if request.method == "POST":
         form = CalificacionTributariaForm(request.POST)
         if form.is_valid():
@@ -650,7 +735,34 @@ def crear_calificacion(request):
 @login_required
 @requiere_permiso("modificar")
 def editar_calificacion(request, pk):
-    """Edita una calificación existente"""
+    """
+    Edita una calificación tributaria existente con validación y auditoría.
+
+    Permite modificar todos los campos de una calificación previamente creada. Valida
+    que el registro exista y esté activo antes de permitir edición.
+
+    Args:
+        request (HttpRequest):
+            - GET: Muestra formulario pre-poblado con datos actuales
+            - POST: Procesa formulario con datos actualizados
+        pk (int): Primary key de la CalificacionTributaria a editar.
+
+    Returns:
+        HttpResponse:
+            - GET: Render de 'calificaciones/form_calificacion.html' con form poblado
+            - POST exitoso: Redirect a 'listar_calificaciones' con mensaje de éxito
+            - POST con error: Render de form con errores, sin guardar cambios
+
+    Raises:
+        Http404: Si la calificación no existe o está inactiva (activo=False).
+
+    Notes:
+        - Requiere permiso: 'modificar'
+        - Registra acción UPDATE en LogAuditoria con IP del cliente
+        - Maneja IntegrityError, ValidationError y excepciones genéricas
+        - Logging: INFO en actualización exitosa, WARNING/ERROR en fallos
+        - Usuario creador original no se modifica
+    """
     calificacion = get_object_or_404(CalificacionTributaria, pk=pk, activo=True)
 
     if request.method == "POST":
@@ -698,7 +810,34 @@ def editar_calificacion(request, pk):
 @login_required
 @requiere_permiso("eliminar")
 def eliminar_calificacion(request, pk):
-    """Eliminación lógica de una calificación"""
+    """
+    Eliminación lógica (soft delete) de una calificación tributaria.
+
+    No elimina físicamente el registro de la base de datos, sino que marca el campo
+    activo=False, preservando la integridad de auditoría e históricos.
+
+    Args:
+        request (HttpRequest):
+            - GET: Muestra página de confirmación
+            - POST: Ejecuta la eliminación lógica
+        pk (int): Primary key de la CalificacionTributaria a eliminar.
+
+    Returns:
+        HttpResponse:
+            - GET: Render de 'calificaciones/confirmar_eliminar.html' con objeto
+            - POST exitoso: Redirect a 'listar_calificaciones' con mensaje de éxito
+            - POST con error: Redirect a 'listar_calificaciones' con mensaje de error
+
+    Raises:
+        Http404: Si la calificación no existe o ya está inactiva.
+
+    Notes:
+        - Requiere permiso: 'eliminar'
+        - Eliminación lógica: activo=False (registro permanece en BD)
+        - Registra acción DELETE en LogAuditoria con IP del cliente
+        - Logging: WARNING en eliminación exitosa, ERROR en fallos
+        - No afecta relaciones FK (instrumento, usuario_creador intactos)
+    """
     calificacion = get_object_or_404(CalificacionTributaria, pk=pk, activo=True)
 
     if request.method == "POST":
