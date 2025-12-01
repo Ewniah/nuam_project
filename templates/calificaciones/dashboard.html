@@ -5,14 +5,65 @@
 {% block navbar_section %}Dashboard{% endblock %}
 
 {% block content %}
+<style>
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15) !important;
+}
+.action-card:active {
+    transform: translateY(-2px);
+}
+</style>
 <div class="container-fluid">
 <h4 class="mb-3" style="color: #002A4E;"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h4>
 
 <!-- ZONA A: Acciones Rápidas -->
-<div class="row g-2 mb-3">
-    <div class="col-lg-4"><a href="{% url 'crear_calificacion' %}" class="text-decoration-none"><div class="card border-0 shadow-sm" style="border-left: 3px solid #F37021;"><div class="card-body p-3 d-flex align-items-center"><div class="me-3"><i class="fas fa-plus-circle fa-2x" style="color: #F37021;"></i></div><div><h6 class="mb-0">Nueva Calificación</h6><small class="text-muted">Con 30 factores</small></div></div></div></a></div>
-    <div class="col-lg-4"><a href="{% url 'carga_masiva' %}" class="text-decoration-none"><div class="card border-0 shadow-sm" style="border-left: 3px solid #002A4E;"><div class="card-body p-3 d-flex align-items-center"><div class="me-3"><i class="fas fa-file-upload fa-2x" style="color: #002A4E;"></i></div><div><h6 class="mb-0">Carga Masiva</h6><small class="text-muted">Importar archivos</small></div></div></div></a></div>
-    <div class="col-lg-4"><a href="{% url 'listar_calificaciones' %}" class="text-decoration-none"><div class="card border-0 shadow-sm" style="border-left: 3px solid #002A4E;"><div class="card-body p-3 d-flex align-items-center"><div class="me-3"><i class="fas fa-search fa-2x" style="color: #002A4E;"></i></div><div><h6 class="mb-0">Buscar / Listar</h6><small class="text-muted">Consultar registros</small></div></div></div></a></div>
+<div class="row g-3 mb-3">
+    <div class="col-lg-4">
+        <a href="{% url 'crear_calificacion' %}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 action-card" style="background: linear-gradient(135deg, #F37021 0%, #ff8c42 100%); transition: all 0.3s ease; cursor: pointer;">
+                <div class="card-body p-3 d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-plus-circle fa-2x text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 text-white fw-bold">Nueva Calificación</h6>
+                        <small class="text-white" style="opacity: 0.9;">Con 30 factores</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-lg-4">
+        <a href="{% url 'carga_masiva' %}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 action-card" style="background: linear-gradient(135deg, #002A4E 0%, #004080 100%); transition: all 0.3s ease; cursor: pointer;">
+                <div class="card-body p-3 d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-file-upload fa-2x text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 text-white fw-bold">Carga Masiva</h6>
+                        <small class="text-white" style="opacity: 0.9;">Importar archivos</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-lg-4">
+        <a href="{% url 'listar_calificaciones' %}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm h-100 action-card" style="background: linear-gradient(135deg, #17A2B8 0%, #20c0d8 100%); transition: all 0.3s ease; cursor: pointer;">
+                <div class="card-body p-3 d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-search fa-2x text-white"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 text-white fw-bold">Buscar / Listar</h6>
+                        <small class="text-white" style="opacity: 0.9;">Consultar registros</small>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
 </div>
 
 <!-- ZONA B: KPIs -->
