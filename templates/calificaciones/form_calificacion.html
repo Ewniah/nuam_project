@@ -457,24 +457,24 @@
                     </p>
                     
                     <!-- Monto Base -->
-                    <div class="mb-4 p-3 bg-light border rounded">
-                        <div class="row align-items-end">
-                            <div class="col-md-8">
-                                <label for="{{ form.monto.id_for_label }}" class="form-label fw-bold">
-                                    <i class="fas fa-dollar-sign text-success me-2"></i>
-                                    {{ form.monto.label }} ($)
-                                </label>
-                                {{ form.monto }}
-                                <small class="form-text text-muted d-block mt-1">
-                                    Monto total base para el cálculo de factores proporcionales
-                                </small>
-                            </div>
-                            <div class="col-md-4">
-                                <button type="button" id="btn-calcular-simple" class="btn btn-success w-100">
-                                    <i class="fas fa-calculator me-2"></i>Calcular desde Base
-                                </button>
-                            </div>
+                    <div class="mb-4">
+                        <label for="{{ form.monto.id_for_label }}" class="form-label fw-bold">
+                            <i class="fas fa-dollar-sign text-success me-2"></i>
+                            Monto Total / Base ($)
+                        </label>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-light">
+                                <i class="fas fa-dollar-sign text-success"></i>
+                            </span>
+                            {{ form.monto }}
+                            <button type="button" id="btn-calcular-simple" class="btn btn-success">
+                                <i class="fas fa-calculator me-2"></i>Calcular Factores
+                            </button>
                         </div>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Ingrese el monto total y presione "Calcular Factores" para distribuirlo automáticamente entre los 30 factores
+                        </small>
                     </div>
                     
                     <hr class="my-4">

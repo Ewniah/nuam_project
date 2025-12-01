@@ -3,6 +3,68 @@
 
 {% block title %}Gestión de Calificaciones - NUAM Exchange{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Sticky Columns for Horizontal Scroll */
+    th.sticky-col,
+    td.sticky-col {
+        position: sticky;
+        left: 0;
+        background-color: white;
+        z-index: 10;
+    }
+
+    th.sticky-col {
+        z-index: 20;
+        background-color: #f8f9fa !important;
+    }
+
+    th.sticky-col-2,
+    td.sticky-col-2 {
+        position: sticky;
+        left: 280px;
+        background-color: white;
+        z-index: 9;
+    }
+
+    th.sticky-col-2 {
+        z-index: 19;
+        background-color: #f8f9fa !important;
+    }
+
+    .table-responsive {
+        border-radius: 8px;
+        overflow-x: auto;
+    }
+
+    .btn-nuam-primary {
+        background-color: #F37021;
+        border-color: #F37021;
+        color: white;
+        font-weight: 600;
+    }
+
+    .btn-nuam-primary:hover {
+        background-color: #d95e16;
+        border-color: #d95e16;
+        color: white;
+    }
+
+    .btn-nuam-secondary {
+        background-color: #002A4E;
+        border-color: #002A4E;
+        color: white;
+        font-weight: 600;
+    }
+
+    .btn-nuam-secondary:hover {
+        background-color: #001a30;
+        border-color: #001a30;
+        color: white;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Page Header -->
 <div class="page-header mb-4">
@@ -33,27 +95,30 @@
     </div>
 </div>
 
-<!-- Búsqueda y Filtros Mejorados -->
-<div class="card card-nuam border-0 shadow-sm mb-4">
+<!-- Búsqueda y Filtros -->
+<div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
         <form method="get">
             <div class="row g-3 align-items-end">
                 <!-- Búsqueda por texto -->
-                <div class="col-md-5">
-                    <label class="form-label fw-bold text-muted small">BUSCAR</label>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold text-dark small mb-2">
+                        <i class="fas fa-search me-2 text-muted"></i>BÚSQUEDA
+                    </label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0"><i
-                                class="fas fa-search text-muted"></i></span>
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
                         <input type="text" name="q" class="form-control border-start-0 ps-0"
-                            placeholder="Código, nombre o DJ..." value="{{ query }}">
+                            placeholder="Buscar por código, nombre o DJ..." value="{{ query }}">
                     </div>
                 </div>
 
                 <!-- Botones de Acción -->
-                <div class="col-md-7">
+                <div class="col-md-6">
                     <div class="d-flex gap-2 justify-content-end">
-                        <button type="submit" class="btn btn-nuam-secondary">
-                            <i class="fas fa-filter me-2"></i>Filtrar
+                        <button type="submit" class="btn btn-nuam-primary">
+                            <i class="fas fa-search me-2"></i>Buscar
                         </button>
 
                         {% if query or request.GET.metodo or request.GET.dj %}
@@ -80,13 +145,13 @@
 </div>
 
 <!-- Tabla de Calificaciones -->
-<div class="card card-nuam border-0 shadow-sm">
-    <div class="card-header card-header-nuam bg-white border-bottom py-3">
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3">
         <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold text-nuam-secondary">
-                <i class="fas fa-list me-2"></i>Listado de Calificaciones
+            <h5 class="mb-0 fw-bold text-dark">
+                <i class="fas fa-table me-2 text-primary"></i>Listado de Calificaciones
             </h5>
-            <span class="badge bg-nuam-secondary rounded-pill px-3">
+            <span class="badge" style="background-color: #F37021; border-radius: 20px; padding: 0.5rem 1rem;">
                 {% if calificaciones.paginator %}
                 {{ calificaciones.paginator.count }} registro{{ calificaciones.paginator.count|pluralize:"s" }}
                 {% else %}
@@ -98,10 +163,10 @@
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
+                <thead class="table-light">
                     <tr>
-                        <th class="border-0 ps-4">Instrumento</th>
-                        <th class="border-0">Tipo</th>
+                        <th class="border-0 ps-4 sticky-col">Instrumento</th>
+                        <th class="border-0 sticky-col-2">Tipo</th>
                         <th class="border-0 text-end">Monto (CLP)</th>
                         <th class="border-0 text-end">Factor</th>
                         <th class="border-0">Método</th>
@@ -113,10 +178,10 @@
                 <tbody>
                     {% for cal in calificaciones %}
                     <tr>
-                        <td class="ps-4">
+                        <td class="ps-4 sticky-col">
                             <div class="d-flex align-items-center">
-                                <div class="rounded-circle bg-light p-2 me-3 text-nuam-primary">
-                                    <i class="fas fa-chart-bar fa-lg"></i>
+                                <div class="rounded-circle p-2 me-3" style="background-color: rgba(243, 112, 33, 0.1);">
+                                    <i class="fas fa-chart-bar" style="color: #F37021;"></i>
                                 </div>
                                 <div>
                                     <div class="fw-bold text-dark">{{ cal.instrumento.codigo_instrumento }}</div>
@@ -125,7 +190,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td>
+                        <td class="sticky-col-2">
                             <span class="badge bg-light text-dark border">{{ cal.instrumento.tipo_instrumento }}</span>
                         </td>
                         <td class="text-end fw-bold text-dark">
