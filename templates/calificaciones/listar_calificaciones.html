@@ -40,13 +40,23 @@
     .btn-nuam-primary {
         background-color: #F37021;
         border-color: #F37021;
-        color: white;
+        color: white !important;
         font-weight: 600;
     }
 
     .btn-nuam-primary:hover {
         background-color: #d95e16;
         border-color: #d95e16;
+        color: white !important;
+    }
+
+    /* Export buttons styling */
+    .btn-success {
+        font-weight: 500;
+    }
+
+    .btn-outline-dark:hover {
+        background-color: #343a40;
         color: white;
     }
 
@@ -99,48 +109,91 @@
     </div>
 </div>
 
-<!-- Búsqueda y Filtros -->
+<!-- === ZONE A: FILTER BAR === -->
 <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-bottom">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-semibold text-dark">
+                <i class="fas fa-filter me-2" style="color: #F37021;"></i>Filtros de Búsqueda
+            </h5>
+            <!-- === ZONE B: EXPORT TOOLBAR === -->
+            <div class="d-flex gap-2">
+                <a href="{% url 'exportar_excel' %}?codigo_instrumento={{ codigo_instrumento }}&mercado={{ mercado }}&tipo_sociedad={{ tipo_sociedad }}&ejercicio={{ ejercicio }}&numero_dj={{ numero_dj }}" 
+                   class="btn btn-success btn-sm">
+                    <i class="fas fa-file-excel me-1"></i>Exportar Excel
+                </a>
+                <a href="{% url 'exportar_csv' %}?codigo_instrumento={{ codigo_instrumento }}&mercado={{ mercado }}&tipo_sociedad={{ tipo_sociedad }}&ejercicio={{ ejercicio }}&numero_dj={{ numero_dj }}" 
+                   class="btn btn-outline-dark btn-sm">
+                    <i class="fas fa-file-csv me-1"></i>Exportar CSV
+                </a>
+            </div>
+        </div>
+    </div>
     <div class="card-body">
-        <form method="get">
-            <div class="row g-3 align-items-end">
-                <!-- Búsqueda por texto -->
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold text-dark small mb-2">
-                        <i class="fas fa-search me-2 text-muted"></i>BÚSQUEDA
+        <form method="get" action="{% url 'listar_calificaciones' %}">
+            <div class="row g-2 align-items-end">
+                <!-- Col 1: Búsqueda General -->
+                <div class="col-md-3">
+                    <label for="codigo_instrumento" class="form-label fw-semibold small text-muted">
+                        <i class="fas fa-search me-1"></i>Buscar por nombre
                     </label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0">
-                            <i class="fas fa-search text-muted"></i>
-                        </span>
-                        <input type="text" name="q" class="form-control border-start-0 ps-0"
-                            placeholder="Buscar por código, nombre o DJ..." value="{{ query }}">
-                    </div>
+                    <input type="text" 
+                           class="form-control" 
+                           id="codigo_instrumento" 
+                           name="codigo_instrumento" 
+                           placeholder="Código o nombre..."
+                           value="{{ codigo_instrumento }}">
                 </div>
 
-                <!-- Botones de Acción -->
-                <div class="col-md-6">
-                    <div class="d-flex gap-2 justify-content-end">
-                        <button type="submit" class="btn btn-nuam-primary">
-                            <i class="fas fa-search me-2"></i>Buscar
+                <!-- Col 2: Mercado -->
+                <div class="col-md-2">
+                    <label for="mercado" class="form-label fw-semibold small text-muted">
+                        <i class="fas fa-chart-line me-1"></i>Mercado
+                    </label>
+                    <select class="form-select" id="mercado" name="mercado">
+                        <option value="">Todos</option>
+                        <option value="ACN" {% if mercado == 'ACN' %}selected{% endif %}>Acciones</option>
+                        <option value="CFI" {% if mercado == 'CFI' %}selected{% endif %}>Cuota Fondo</option>
+                        <option value="FFM" {% if mercado == 'FFM' %}selected{% endif %}>Fondo Mutuo</option>
+                    </select>
+                </div>
+
+                <!-- Col 3: Origen (tipo_sociedad) -->
+                <div class="col-md-2">
+                    <label for="tipo_sociedad" class="form-label fw-semibold small text-muted">
+                        <i class="fas fa-building me-1"></i>Origen
+                    </label>
+                    <select class="form-select" id="tipo_sociedad" name="tipo_sociedad">
+                        <option value="">Todos</option>
+                        <option value="C" {% if tipo_sociedad == 'C' %}selected{% endif %}>Bolsa</option>
+                        <option value="A" {% if tipo_sociedad == 'A' %}selected{% endif %}>Corredora</option>
+                    </select>
+                </div>
+
+                <!-- Col 4: Año (ejercicio) -->
+                <div class="col-md-2">
+                    <label for="ejercicio" class="form-label fw-semibold small text-muted">
+                        <i class="fas fa-calendar-alt me-1"></i>Año
+                    </label>
+                    <input type="number" 
+                           class="form-control" 
+                           id="ejercicio" 
+                           name="ejercicio" 
+                           placeholder="2024"
+                           min="2000"
+                           max="2100"
+                           value="{{ ejercicio }}">
+                </div>
+
+                <!-- Col 5: Botones de Acción -->
+                <div class="col-md-3">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-nuam-primary flex-fill">
+                            <i class="fas fa-search me-1"></i>Buscar
                         </button>
-
-                        {% if query or request.GET.metodo or request.GET.dj %}
-                        <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-2"></i>Limpiar
+                        <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-secondary flex-fill">
+                            <i class="fas fa-times me-1"></i>Limpiar
                         </a>
-                        {% endif %}
-
-                        <div class="btn-group ms-2">
-                            <a href="{% url 'exportar_excel' %}?q={{ query }}&metodo={{ request.GET.metodo }}&dj={{ request.GET.dj }}"
-                                class="btn btn-success text-white">
-                                <i class="fas fa-file-excel me-2"></i>Excel
-                            </a>
-                            <a href="{% url 'exportar_csv' %}?q={{ query }}&metodo={{ request.GET.metodo }}&dj={{ request.GET.dj }}"
-                                class="btn btn-outline-success">
-                                <i class="fas fa-file-csv me-2"></i>CSV
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
