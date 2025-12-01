@@ -16,20 +16,134 @@
 
 <!-- ZONA B: KPIs -->
 <div class="row g-2 mb-3">
-    <div class="col-lg-2 col-md-4 col-6"><div class="card border-0 shadow-sm"><div class="card-body text-center p-2"><i class="fas fa-file-alt fa-lg mb-1" style="color: #F37021;"></i><h4 class="mb-0">{{ total_calificaciones }}</h4><small class="text-muted">Calificaciones</small></div></div></div>
-    <div class="col-lg-2 col-md-4 col-6"><div class="card border-0 shadow-sm"><div class="card-body text-center p-2"><i class="fas fa-coins fa-lg mb-1" style="color: #F37021;"></i><h4 class="mb-0">{{ total_instrumentos }}</h4><small class="text-muted">Instrumentos</small></div></div></div>
-    <div class="col-lg-2 col-md-4 col-6"><div class="card border-0 shadow-sm"><div class="card-body text-center p-2"><i class="fas fa-upload fa-lg mb-1" style="color: #F37021;"></i><h4 class="mb-0">{{ cargas_hoy }}</h4><small class="text-muted">Hoy</small></div></div></div>
-    <div class="col-lg-2 col-md-4 col-6"><div class="card border-0 shadow-sm"><div class="card-body text-center p-2"><i class="fas fa-calendar fa-lg mb-1" style="color: #17A2B8;"></i><h4 class="mb-0">{{ calificaciones_mes }}</h4><small class="text-muted">Este Mes</small></div></div></div>
-    <div class="col-lg-2 col-md-4 col-6"><div class="card border-0 shadow-sm"><div class="card-body text-center p-2"><i class="fas fa-calendar-week fa-lg mb-1" style="color: #28A745;"></i><h4 class="mb-0">{{ calificaciones_semana }}</h4><small class="text-muted">Semana</small></div></div></div>
-    <div class="col-lg-2 col-md-4 col-6"><div class="card border-0 shadow-sm"><div class="card-body text-center p-2"><i class="fas fa-users fa-lg mb-1" style="color: #6C757D;"></i><h4 class="mb-0">{{ total_usuarios }}</h4><small class="text-muted">Usuarios</small></div></div></div>
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center p-2">
+                <i class="fas fa-file-alt fa-lg mb-1" style="color: #F37021;"></i>
+                <h4 class="mb-0">{{ total_calificaciones }}</h4>
+                <small class="text-muted d-block">Total Calificaciones</small>
+                <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Registros vigentes (DJ 1949/1922)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center p-2">
+                <i class="fas fa-coins fa-lg mb-1" style="color: #F37021;"></i>
+                <h4 class="mb-0">{{ total_instrumentos }}</h4>
+                <small class="text-muted d-block">Instrumentos</small>
+                <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Activos en el mercado</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center p-2">
+                <i class="fas fa-upload fa-lg mb-1" style="color: #F37021;"></i>
+                <h4 class="mb-0">{{ cargas_hoy }}</h4>
+                <small class="text-muted d-block">Cargas Hoy</small>
+                <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Archivos procesados hoy</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center p-2">
+                <i class="fas fa-calendar fa-lg mb-1" style="color: #17A2B8;"></i>
+                <h4 class="mb-0">{{ calificaciones_mes }}</h4>
+                <small class="text-muted d-block">Este Mes</small>
+                <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Calificaciones del mes actual</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center p-2">
+                <i class="fas fa-calendar-week fa-lg mb-1" style="color: #28A745;"></i>
+                <h4 class="mb-0">{{ calificaciones_semana }}</h4>
+                <small class="text-muted d-block">Esta Semana</small>
+                <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Últimos 7 días</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-2 col-md-4 col-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center p-2">
+                <i class="fas fa-users fa-lg mb-1" style="color: #6C757D;"></i>
+                <h4 class="mb-0">{{ total_usuarios }}</h4>
+                <small class="text-muted d-block">Usuarios</small>
+                <small class="text-muted d-block mt-1" style="font-size: 0.7rem;">Cuentas activas del sistema</small>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- ZONA C: Gráficos -->
 <div class="row g-2 mb-3">
-    <div class="col-lg-3 col-md-6"><div class="card border-0 shadow-sm"><div class="card-header bg-white py-2"><h6 class="mb-0 small"><i class="fas fa-chart-pie me-1"></i>Mercado</h6></div><div class="card-body p-2" style="height:200px;"><canvas id="chartMercado"></canvas></div></div></div>
-    <div class="col-lg-3 col-md-6"><div class="card border-0 shadow-sm"><div class="card-header bg-white py-2"><h6 class="mb-0 small"><i class="fas fa-chart-bar me-1"></i>Cargas 7d</h6></div><div class="card-body p-2" style="height:200px;"><canvas id="chartCargas"></canvas></div></div></div>
-    <div class="col-lg-3 col-md-6"><div class="card border-0 shadow-sm"><div class="card-header bg-white py-2"><h6 class="mb-0 small"><i class="fas fa-chart-line me-1"></i>Origen</h6></div><div class="card-body p-2" style="height:200px;"><canvas id="chartOrigen"></canvas></div></div></div>
-    <div class="col-lg-3 col-md-6"><div class="card border-0 shadow-sm"><div class="card-header bg-white py-2"><h6 class="mb-0 small"><i class="fas fa-chart-area me-1"></i>Top 5</h6></div><div class="card-body p-2" style="height:200px;"><canvas id="chartTop"></canvas></div></div></div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 small"><i class="fas fa-chart-pie me-1"></i>Distribución por Tipo de Mercado</h6>
+            </div>
+            <div class="card-body p-2" style="height:200px;">
+                {% if total_calificaciones > 0 %}
+                    <canvas id="chartMercado"></canvas>
+                {% else %}
+                    <div class="d-flex align-items-center justify-content-center h-100 text-center" style="background-color: #f8f9fa;">
+                        <small class="text-muted px-3">No hay datos registrados aún para generar este gráfico.</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 small"><i class="fas fa-chart-bar me-1"></i>Volumen de Cargas (Últimos 7 días)</h6>
+            </div>
+            <div class="card-body p-2" style="height:200px;">
+                {% if cargas_hoy >= 0 %}
+                    <canvas id="chartCargas"></canvas>
+                {% else %}
+                    <div class="d-flex align-items-center justify-content-center h-100 text-center" style="background-color: #f8f9fa;">
+                        <small class="text-muted px-3">No hay datos registrados aún para generar este gráfico.</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 small"><i class="fas fa-chart-line me-1"></i>Distribución por Origen</h6>
+            </div>
+            <div class="card-body p-2" style="height:200px;">
+                {% if total_calificaciones > 0 %}
+                    <canvas id="chartOrigen"></canvas>
+                {% else %}
+                    <div class="d-flex align-items-center justify-content-center h-100 text-center" style="background-color: #f8f9fa;">
+                        <small class="text-muted px-3">No hay datos registrados aún para generar este gráfico.</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-2">
+                <h6 class="mb-0 small"><i class="fas fa-chart-area me-1"></i>Top 5 Instrumentos Más Utilizados</h6>
+            </div>
+            <div class="card-body p-2" style="height:200px;">
+                {% if total_calificaciones > 0 %}
+                    <canvas id="chartTop"></canvas>
+                {% else %}
+                    <div class="d-flex align-items-center justify-content-center h-100 text-center" style="background-color: #f8f9fa;">
+                        <small class="text-muted px-3">No hay datos registrados aún para generar este gráfico.</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- ZONA D: Auditoría -->
@@ -37,10 +151,40 @@
     <div class="card-header bg-white py-2"><h6 class="mb-0"><i class="fas fa-history me-1"></i>Actividad Reciente</h6></div>
     <div class="card-body p-0">
         {% if ultimos_logs %}
-        <div class="table-responsive"><table class="table table-sm mb-0">
-            <thead style="background:#002A4E;color:white;"><tr><th class="py-2">Usuario</th><th class="py-2">Acción</th><th class="py-2">Detalle</th><th class="py-2">Fecha</th></tr></thead>
-            <tbody>{% for log in ultimos_logs %}<tr><td class="py-1"><small>{{ log.usuario.username }}</small></td><td class="py-1">{% if log.accion == 'CREATE' %}<span class="badge bg-success">Crear</span>{% elif log.accion == 'UPDATE' %}<span class="badge bg-warning text-dark">Editar</span>{% else %}<span class="badge bg-danger">Eliminar</span>{% endif %}</td><td class="py-1"><small>{{ log.detalles|truncatewords:6 }}</small></td><td class="py-1"><small>{{ log.fecha_hora|date:"d/m H:i" }}</small></td></tr>{% endfor %}</tbody>
-        </table></div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead style="background:#002A4E;color:white;">
+                    <tr>
+                        <th class="py-2">Usuario</th>
+                        <th class="py-2">Acción</th>
+                        <th class="py-2">Detalle</th>
+                        <th class="py-2">Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in ultimos_logs %}
+                    <tr>
+                        <td class="py-1"><small>{{ log.usuario.username }}</small></td>
+                        <td class="py-1">
+                            {% if log.accion == 'CREATE' %}
+                                <span class="badge bg-success">Creación</span>
+                            {% elif log.accion == 'UPDATE' %}
+                                <span class="badge bg-warning text-dark">Edición</span>
+                            {% elif log.accion == 'DELETE' %}
+                                <span class="badge bg-danger">Eliminación</span>
+                            {% elif log.accion == 'LOGIN' %}
+                                <span class="badge bg-info">Acceso</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ log.accion }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-1"><small>{{ log.detalles|truncatewords:6 }}</small></td>
+                        <td class="py-1"><small>{{ log.fecha_hora|date:"d/m H:i" }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
         <p class="text-center text-muted py-3 mb-0">No hay registros</p>
         {% endif %}
@@ -52,9 +196,165 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-new Chart(document.getElementById('chartMercado'),{type:'doughnut',data:{labels:{{labels_mercado|safe}},datasets:[{data:{{data_mercado|safe}},backgroundColor:['#F37021','#002A4E','#ADB5BD']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:9}}}}}});
-new Chart(document.getElementById('chartCargas'),{type:'bar',data:{labels:{{labels_cargas|safe}},datasets:[{data:{{data_cargas|safe}},backgroundColor:'#F37021'}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
-new Chart(document.getElementById('chartOrigen'),{type:'pie',data:{labels:{{labels_origen|safe}},datasets:[{data:{{data_origen|safe}},backgroundColor:['#002A4E','#F37021']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:9}}}}}});
-new Chart(document.getElementById('chartTop'),{type:'bar',data:{labels:{{labels_top_instrumentos|safe}},datasets:[{data:{{data_top_instrumentos|safe}},backgroundColor:'#002A4E'}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true}}}});
+// Chart 1: Distribución por Mercado (Doughnut con porcentajes)
+{% if total_calificaciones > 0 %}
+const ctxMercado = document.getElementById('chartMercado');
+if (ctxMercado) {
+    new Chart(ctxMercado, {
+        type: 'doughnut',
+        data: {
+            labels: {{labels_mercado|safe}},
+            datasets: [{
+                data: {{data_mercado|safe}},
+                backgroundColor: ['#F37021', '#002A4E', '#ADB5BD', '#17A2B8', '#28A745']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 9 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+{% endif %}
+
+// Chart 2: Volumen de Cargas (Bar con etiqueta en eje Y)
+const ctxCargas = document.getElementById('chartCargas');
+if (ctxCargas) {
+    new Chart(ctxCargas, {
+        type: 'bar',
+        data: {
+            labels: {{labels_cargas|safe}},
+            datasets: [{
+                label: 'Cantidad de Archivos',
+                data: {{data_cargas|safe}},
+                backgroundColor: '#F37021'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Archivos: ' + context.parsed.y;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Cantidad de Archivos',
+                        font: { size: 10 }
+                    },
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+}
+
+// Chart 3: Distribución por Origen (Pie con porcentajes)
+{% if total_calificaciones > 0 %}
+const ctxOrigen = document.getElementById('chartOrigen');
+if (ctxOrigen) {
+    new Chart(ctxOrigen, {
+        type: 'pie',
+        data: {
+            labels: {{labels_origen|safe}},
+            datasets: [{
+                data: {{data_origen|safe}},
+                backgroundColor: ['#002A4E', '#F37021', '#ADB5BD']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 9 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+{% endif %}
+
+// Chart 4: Top 5 Instrumentos (Bar horizontal con tooltips claros)
+{% if total_calificaciones > 0 %}
+const ctxTop = document.getElementById('chartTop');
+if (ctxTop) {
+    new Chart(ctxTop, {
+        type: 'bar',
+        data: {
+            labels: {{labels_top_instrumentos|safe}},
+            datasets: [{
+                label: 'Calificaciones',
+                data: {{data_top_instrumentos|safe}},
+                backgroundColor: '#002A4E'
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Calificaciones: ' + context.parsed.x;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Cantidad',
+                        font: { size: 10 }
+                    },
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+}
+{% endif %}
 </script>
 {% endblock %}
