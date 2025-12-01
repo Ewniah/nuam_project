@@ -1,41 +1,32 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ titulo }} - NUAM Exchange{% endblock %}
+{% block title %}{% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} Instrumento - NUAM{% endblock %}
+{% block navbar_section %}Instrumentos{% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="page-header mb-4">
-    <div class="row align-items-center">
-        <div class="col">
-            <h2 class="mb-1 fw-bold text-nuam-secondary">
-                <i class="fas fa-chart-line text-nuam-primary me-2"></i>{{ titulo }}
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #002A4E;">
+                <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %} me-2" style="color: #F37021;"></i>
+                {% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} Instrumento
             </h2>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"
-                            class="text-decoration-none">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'listar_instrumentos' %}"
-                            class="text-decoration-none">Instrumentos</a></li>
-                    <li class="breadcrumb-item active">{{ titulo }}</li>
-                </ol>
-            </nav>
+            <p class="text-muted mb-0">{% if form.instance.pk %}Modificar datos del instrumento financiero{% else %}Agregar nuevo instrumento al catálogo{% endif %}</p>
         </div>
-        <div class="col-auto">
-            <a href="{% url 'listar_instrumentos' %}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Volver
-            </a>
-        </div>
+        <a href="{% url 'listar_instrumentos' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-2"></i>Volver
+        </a>
     </div>
-</div>
 
-<div class="row justify-content-center">
-    <div class="col-lg-6">
-        <div class="card card-nuam border-0 shadow-sm">
-            <div class="card-header card-header-nuam bg-white border-bottom py-3">
-                <h5 class="mb-0 fw-bold text-nuam-secondary">
-                    <i class="fas fa-info-circle me-2"></i>Datos del Instrumento
-                </h5>
-            </div>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 fw-semibold" style="color: #002A4E;">
+                        <i class="fas fa-file-alt me-2" style="color: #F37021;"></i>Datos del Instrumento
+                    </h5>
+                </div>
             <div class="card-body p-4">
                 <form method="post">
                     {% csrf_token %}
@@ -103,7 +94,7 @@
                         <a href="{% url 'listar_instrumentos' %}" class="btn btn-outline-secondary">
                             <i class="fas fa-times me-2"></i>Cancelar
                         </a>
-                        <button type="submit" class="btn btn-nuam-primary px-4">
+                        <button type="submit" class="btn px-4" style="background-color: #F37021; color: white;">
                             <i class="fas fa-save me-2"></i>Guardar Instrumento
                         </button>
                     </div>
@@ -112,5 +103,5 @@
         </div>
     </div>
 </div>
-
+</div>
 {% endblock %}

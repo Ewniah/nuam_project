@@ -2354,7 +2354,7 @@ def registro_auditoria(request):
 
     Retorna:
         HttpResponse: Render de 'calificaciones/registro_auditoria.html' con:
-            - logs: QuerySet de LogAuditoria filtrado y ordenado
+            - logs: QuerySet de LogAuditoria filtrado y ordenado (limited to 50 per page)
             - usuarios: Lista de todos los usuarios para filtro
             - acciones: Lista de acciones únicas para filtro
             - Parámetros de filtro en context
@@ -2363,7 +2363,7 @@ def registro_auditoria(request):
         - Requiere permiso: 'admin' (Administrador o Auditor)
         - Ordenado por fecha_hora descendente (más recientes primero)
         - Query optimizado con select_related('usuario')
-        - Limitado a MAX_AUDIT_LOG_RECORDS registros por defecto
+        - Limitado a 50 registros por página
         - Acciones incluyen: LOGIN, LOGOUT, CREATE, UPDATE, DELETE, ACCOUNT_LOCKED, ACCOUNT_UNLOCKED
     """
     logs = LogAuditoria.objects.all().select_related("usuario").order_by("-fecha_hora")
@@ -2386,8 +2386,8 @@ def registro_auditoria(request):
     if fecha_hasta:
         logs = logs.filter(fecha_hora__date__lte=fecha_hasta)
 
-    # Limitar registros para performance
-    logs = logs[:MAX_AUDIT_LOG_RECORDS]
+    # Limitar a 50 registros (audit logs can be very large)
+    logs = logs[:50]
 
     # Lista de usuarios para filtro
     usuarios = User.objects.filter(is_active=True).order_by("username")

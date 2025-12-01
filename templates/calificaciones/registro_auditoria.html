@@ -2,219 +2,156 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}Registro de Auditoría - NUAM Exchange{% endblock %}
+{% block title %}Registro de Auditoría - NUAM{% endblock %}
+{% block navbar_section %}Auditoría{% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="page-header mb-4">
-    <div class="row align-items-center">
-        <div class="col">
-            <h2 class="mb-1 fw-bold text-nuam-secondary">
-                <i class="fas fa-clipboard-list text-nuam-primary me-2"></i>Registro de Auditoría
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #002A4E;">
+                <i class="fas fa-shield-alt me-2" style="color: #F37021;"></i>Registro de Auditoría
             </h2>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"
-                            class="text-decoration-none">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Auditoría</li>
-                </ol>
-            </nav>
+            <p class="text-muted mb-0">Monitoreo de acciones y eventos del sistema</p>
         </div>
-        <div class="col-auto">
-            <span class="badge bg-light text-dark border px-3 py-2">
-                <i class="fas fa-database me-2"></i>Total: <strong>{{ total_logs|intcomma }}</strong>
-            </span>
+        <span class="badge px-3 py-2" style="background-color: #002A4E; color: white;">
+            <i class="fas fa-database me-2"></i>{{ logs|length }} registro{{ logs|length|pluralize:"s" }}
+        </span>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white border-bottom">
+            <h6 class="mb-0 fw-semibold" style="color: #002A4E;">
+                <i class="fas fa-filter me-2" style="color: #F37021;"></i>Filtros de Búsqueda
+            </h6>
+        </div>
+        <div class="card-body p-3">
+            <form method="get" class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold" style="color: #002A4E;">Acción</label>
+                    <select name="accion" class="form-select form-select-sm">
+                        <option value="">Todas</option>
+                        {% for codigo, nombre in acciones %}
+                        <option value="{{ codigo }}" {% if accion_filtro==codigo %}selected{% endif %}>
+                            {{ nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold" style="color: #002A4E;">Usuario</label>
+                    <select name="usuario" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                        {% for u in usuarios %}
+                        <option value="{{ u.id }}" {% if usuario_filtro==u.id|stringformat:"s" %}selected{% endif %}>
+                            {{ u.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold" style="color: #002A4E;">Desde</label>
+                    <input type="date" name="fecha_desde" class="form-control form-control-sm" value="{{ fecha_desde }}">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold" style="color: #002A4E;">Hasta</label>
+                    <input type="date" name="fecha_hasta" class="form-control form-control-sm" value="{{ fecha_hasta }}">
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-sm flex-fill" style="background-color: #F37021; color: white;">
+                        <i class="fas fa-search me-1"></i>Buscar
+                    </button>
+                    <a href="{% url 'registro_auditoria' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-redo"></i>
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
-</div>
 
-<!-- Filtros -->
-<div class="card card-nuam border-0 shadow-sm mb-4">
-    <div class="card-header card-header-nuam bg-white border-bottom py-3">
-        <h6 class="mb-0 fw-bold text-nuam-secondary">
-            <i class="fas fa-filter me-2"></i>Filtros de Búsqueda
-        </h6>
-    </div>
-    <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-2">
-                <label class="form-label small text-muted text-uppercase fw-bold">Acción</label>
-                <select name="accion" class="form-select">
-                    <option value="">Todas</option>
-                    {% for codigo, nombre in acciones %}
-                    <option value="{{ codigo }}" {% if filtros.accion==codigo %}selected{% endif %}>
-                        {{ nombre }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label small text-muted text-uppercase fw-bold">Usuario</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-user"></i></span>
-                    <input type="text" name="usuario" class="form-control border-start-0 ps-0"
-                        placeholder="Buscar por usuario" value="{{ filtros.usuario }}">
-                </div>
-            </div>
-
-            <div class="col-md-2">
-                <label class="form-label small text-muted text-uppercase fw-bold">Tabla</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-table"></i></span>
-                    <input type="text" name="tabla" class="form-control border-start-0 ps-0"
-                        placeholder="Tabla afectada" value="{{ filtros.tabla }}">
-                </div>
-            </div>
-
-            <div class="col-md-2">
-                <label class="form-label small text-muted text-uppercase fw-bold">Desde</label>
-                <input type="date" name="fecha_desde" class="form-control" value="{{ filtros.fecha_desde }}">
-            </div>
-
-            <div class="col-md-2">
-                <label class="form-label small text-muted text-uppercase fw-bold">Hasta</label>
-                <input type="date" name="fecha_hasta" class="form-control" value="{{ filtros.fecha_hasta }}">
-            </div>
-
-            <div class="col-md-1 d-flex align-items-end">
-                <button type="submit" class="btn btn-nuam-primary w-100">
-                    <i class="fas fa-search"></i>
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Tabla de auditoría -->
-<div class="card card-nuam border-0 shadow-sm">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="border-0 ps-4">Fecha/Hora</th>
-                        <th class="border-0">Usuario</th>
-                        <th class="border-0">Acción</th>
-                        <th class="border-0">Tabla</th>
-                        <th class="border-0">ID</th>
-                        <th class="border-0">Descripción</th>
-                        <th class="border-0 pe-4">IP</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in logs %}
-                    <tr>
-                        <td class="ps-4 text-nowrap">
-                            <small class="text-muted"><i class="far fa-clock me-1"></i>{{ log.fecha_hora|date:"d/m/Y
-                                H:i:s" }}</small>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="avatar-xs me-2 bg-light rounded-circle d-flex align-items-center justify-content-center"
-                                    style="width: 24px; height: 24px;">
-                                    <i class="fas fa-user-circle text-secondary" style="font-size: 14px;"></i>
+    <!-- Tabla de auditoría -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0 ps-4 py-3">Fecha/Hora</th>
+                            <th class="border-0 py-3">Usuario</th>
+                            <th class="border-0 py-3">IP</th>
+                            <th class="border-0 py-3 text-center">Acción</th>
+                            <th class="border-0 py-3">Tabla Afectada</th>
+                            <th class="border-0 py-3 pe-4">Detalles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td class="ps-4">
+                                <small class="text-muted">
+                                    <i class="far fa-calendar-alt me-1"></i>{{ log.fecha_hora|date:"d/m/Y" }}<br>
+                                    <i class="far fa-clock me-1"></i>{{ log.fecha_hora|date:"H:i:s" }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user-circle me-2" style="color: #F37021;"></i>
+                                    <strong>{{ log.usuario.username }}</strong>
                                 </div>
-                                <span class="fw-medium text-dark">{{ log.usuario.username }}</span>
-                            </div>
-                        </td>
-                        <td>
-                            {% if log.accion == 'CREATE' %}
-                            <span
-                                class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">
-                                <i class="fas fa-plus-circle me-1"></i>{{ log.get_accion_display }}
-                            </span>
-                            {% elif log.accion == 'UPDATE' %}
-                            <span
-                                class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1">
-                                <i class="fas fa-pencil-alt me-1"></i>{{ log.get_accion_display }}
-                            </span>
-                            {% elif log.accion == 'DELETE' %}
-                            <span
-                                class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">
-                                <i class="fas fa-trash-alt me-1"></i>{{ log.get_accion_display }}
-                            </span>
-                            {% elif log.accion == 'LOGIN' %}
-                            <span
-                                class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1">
-                                <i class="fas fa-sign-in-alt me-1"></i>{{ log.get_accion_display }}
-                            </span>
-                            {% elif log.accion == 'LOGOUT' %}
-                            <span
-                                class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1">
-                                <i class="fas fa-sign-out-alt me-1"></i>{{ log.get_accion_display }}
-                            </span>
-                            {% else %}
-                            <span
-                                class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-2 py-1">
-                                <i class="fas fa-info-circle me-1"></i>{{ log.get_accion_display }}
-                            </span>
-                            {% endif %}
-                        </td>
-                        <td><code class="text-nuam-primary">{{ log.tabla_afectada|default:"-" }}</code></td>
-                        <td><small class="text-muted font-monospace">{{ log.registro_id|default:"-" }}</small></td>
-                        <td><small class="text-dark">{{ log.detalles|truncatechars:50 }}</small></td>
-                        <td class="pe-4"><small class="text-muted font-monospace">{{ log.direccion_ip|default:"-"
-                                }}</small></td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7" class="text-center py-5">
-                            <div class="text-muted opacity-50 mb-3">
-                                <i class="fas fa-search fa-3x"></i>
-                            </div>
-                            <p class="text-muted mt-3 mb-0">No hay registros de auditoría con los filtros aplicados.</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                            <td><small class="text-muted font-monospace">{{ log.ip_address|default:"-" }}</small></td>
+                            <td class="text-center">
+                                {% if log.accion == 'CREATE' or log.accion == 'LOGIN' %}
+                                <span class="badge bg-success px-2 py-1">
+                                    <i class="fas fa-{% if log.accion == 'CREATE' %}plus-circle{% else %}sign-in-alt{% endif %} me-1"></i>{{ log.get_accion_display }}
+                                </span>
+                                {% elif log.accion == 'UPDATE' %}
+                                <span class="badge bg-warning text-dark px-2 py-1">
+                                    <i class="fas fa-edit me-1"></i>{{ log.get_accion_display }}
+                                </span>
+                                {% elif log.accion == 'DELETE' or log.accion == 'FAILED_LOGIN' or log.accion == 'ACCOUNT_LOCKED' %}
+                                <span class="badge bg-danger px-2 py-1">
+                                    <i class="fas fa-{% if log.accion == 'DELETE' %}trash{% else %}exclamation-triangle{% endif %} me-1"></i>{{ log.get_accion_display }}
+                                </span>
+                                {% elif log.accion == 'LOGOUT' %}
+                                <span class="badge bg-secondary px-2 py-1">
+                                    <i class="fas fa-sign-out-alt me-1"></i>{{ log.get_accion_display }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-info px-2 py-1">
+                                    <i class="fas fa-info-circle me-1"></i>{{ log.get_accion_display }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.tabla_afectada %}
+                                <code style="color: #F37021;">{{ log.tabla_afectada }}</code>
+                                <small class="text-muted d-block">#{{ log.registro_id|default:"-" }}</small>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-4">{{ log.detalles|truncatechars:60 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">No hay registros de auditoría con los filtros aplicados</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
         </div>
-
-        <!-- Paginación -->
-        {% if logs.has_other_pages %}
-        <div class="card-footer bg-white border-top py-3">
-            <nav aria-label="Paginación">
-                <ul class="pagination justify-content-center mb-0">
-                    {% if logs.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link border-0 text-muted"
-                            href="?page=1{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                            <i class="fas fa-angle-double-left"></i>
-                        </a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link border-0 text-muted"
-                            href="?page={{ logs.previous_page_number }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                            <i class="fas fa-angle-left"></i>
-                        </a>
-                    </li>
-                    {% endif %}
-
-                    <li class="page-item disabled">
-                        <span class="page-link border-0 text-dark fw-bold">
-                            Página {{ logs.number }} de {{ logs.paginator.num_pages }}
-                        </span>
-                    </li>
-
-                    {% if logs.has_next %}
-                    <li class="page-item">
-                        <a class="page-link border-0 text-muted"
-                            href="?page={{ logs.next_page_number }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                            <i class="fas fa-angle-right"></i>
-                        </a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link border-0 text-muted"
-                            href="?page={{ logs.paginator.num_pages }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
-                            <i class="fas fa-angle-double-right"></i>
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}

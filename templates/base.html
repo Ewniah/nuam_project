@@ -175,9 +175,21 @@
                             <i class="fas fa-upload me-1"></i> Carga Masiva
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'listar_instrumentos' or request.resolver_match.url_name == 'crear_instrumento' or request.resolver_match.url_name == 'editar_instrumento' %}active{% endif %}"
+                            href="{% url 'listar_instrumentos' %}">
+                            <i class="fas fa-briefcase me-1"></i> Instrumentos
+                        </a>
+                    </li>
                     {% if user.is_staff %}
                     <li class="nav-item">
-                        <a class="nav-link {% if 'admin' in request.path %}active{% endif %}"
+                        <a class="nav-link {% if request.resolver_match.url_name == 'registro_auditoria' %}active{% endif %}"
+                            href="{% url 'registro_auditoria' %}">
+                            <i class="fas fa-shield-alt me-1"></i> Auditoría
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'admin' in request.path and request.resolver_match.url_name != 'registro_auditoria' %}active{% endif %}"
                             href="{% url 'admin_gestionar_usuarios' %}">
                             <i class="fas fa-users-cog me-1"></i> Admin
                         </a>
