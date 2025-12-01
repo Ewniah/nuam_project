@@ -227,6 +227,8 @@
                         <th class="border-0 text-end">Monto (CLP)</th>
                         <th class="border-0 text-end">Factor</th>
                         <th class="border-0">Método</th>
+                        <th class="border-0">Origen</th>
+                        <th class="border-0">Fuente</th>
                         <th class="border-0">DJ</th>
                         <th class="border-0">Fecha Informe</th>
                         <th class="border-0 text-center pe-4">Acciones</th>
@@ -269,6 +271,34 @@
                             <span class="badge" style="background-color: rgba(13, 202, 240, 0.1); color: #0a7ea4; border: 1px solid rgba(13, 202, 240, 0.3);">
                                 <i class="fas fa-calculator me-1"></i>{{ cal.get_metodo_ingreso_display }}
                             </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cal.origen == 'CORREDORA' %}
+                                <span class="badge bg-success" title="Corredora de Bolsa">
+                                    <i class="fas fa-building me-1"></i>Corredora
+                                </span>
+                            {% elif cal.origen == 'BOLSA' %}
+                                <span class="badge bg-info" title="Bolsa de Valores">
+                                    <i class="fas fa-chart-line me-1"></i>Bolsa
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary" title="Ingreso Manual">
+                                    <i class="fas fa-keyboard me-1"></i>Manual
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cal.fuente_origen == 'MANUAL' %}
+                                <span class="badge bg-primary" title="Ingreso Manual">
+                                    <i class="fas fa-keyboard me-1"></i>Manual
+                                </span>
+                            {% elif cal.fuente_origen == 'MASIVA' %}
+                                <span class="badge" style="background-color: #6f42c1; color: white;" title="Carga Masiva">
+                                    <i class="fas fa-file-upload me-1"></i>Masiva
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">N/A</span>
                             {% endif %}
                         </td>
                         <td>

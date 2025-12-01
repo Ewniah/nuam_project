@@ -203,6 +203,7 @@
                             <tr>
                                 <th class="border-0 ps-4">Instrumento</th>
                                 <th class="border-0">Método</th>
+                                <th class="border-0">Fuente</th>
                                 <th class="border-0 text-end">Monto</th>
                                 <th class="border-0 text-end">Factor</th>
                                 <th class="border-0 pe-4">Fecha</th>
@@ -223,6 +224,15 @@
                                     {% else %}
                                     <span
                                         class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">Factor</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cal.fuente_origen == 'MANUAL' %}
+                                        <span class="badge bg-primary"><i class="fas fa-keyboard me-1"></i>Manual</span>
+                                    {% elif cal.fuente_origen == 'MASIVA' %}
+                                        <span class="badge" style="background-color: #6f42c1;"><i class="fas fa-file-upload me-1"></i>Masiva</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">N/A</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-end font-monospace">{{ cal.monto|formato_clp:2 }}</td>

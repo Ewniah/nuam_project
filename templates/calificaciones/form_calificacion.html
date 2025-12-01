@@ -402,6 +402,31 @@
                         {{ form.ejercicio }}
                     </div>
                     
+                    <!-- Origen -->
+                    <div class="col-md-6">
+                        <label for="{{ form.origen.id_for_label }}" class="form-label">
+                            {{ form.origen.label }}
+                        </label>
+                        {{ form.origen }}
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle text-info"></i> CORREDORA tiene prioridad sobre BOLSA en carga masiva
+                        </small>
+                    </div>
+                    
+                    <!-- Fuente Origen (Read-only) -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Fuente de Datos
+                            <span class="badge bg-secondary ms-1">
+                                <i class="fas fa-lock me-1"></i>Auto
+                            </span>
+                        </label>
+                        <input type="text" class="form-control" value="Ingreso Manual" disabled>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle text-info"></i> Se establece automáticamente según el método de entrada
+                        </small>
+                    </div>
+                    
                     <!-- Observaciones -->
                     <div class="col-12">
                         <label for="{{ form.observaciones.id_for_label }}" class="form-label">
