@@ -1,8 +1,8 @@
 # 🔄 HANDOVER - Proyecto NUAM Sistema de Calificaciones Tributarias
 
 **Fecha:** 1 Diciembre 2025  
-**Versión:** 3.5 FINAL  
-**Estado:** ✅ FASE 3.5 COMPLETADA - LISTO PARA ENTREGA
+**Versión:** 4.0  
+**Estado:** 🚀 FASE 4 EN PROGRESO - QA, DB RESET & MASTER SEEDING
 
 ---
 
@@ -14,10 +14,12 @@
 - ✅ **Fase 02 COMPLETADA** - Lógica y estabilización del modelo de datos
 - ✅ **Fase 03 COMPLETADA** - Implementación de 30 factores tributarios
 - ✅ **Fase 3.5 COMPLETADA** - Code Cleanup & Humanización
+- 🚀 **Fase 04 EN PROGRESO** - QA, Database Reset & Master Seeding
 - ✅ Sistema **100% funcional** con modelo de datos completo
 - ✅ **65+ commits** en repositorio principal
 - ✅ **11/11 tests pasando** (100% success rate)
 - ✅ **Calidad de código: 10/10** - 100% profesional en español
+- ⚠️ **Base de datos:** Contiene datos inconsistentes de desarrollo
 
 ### Sistema en Producción
 
@@ -797,6 +799,174 @@ def obtener_ip_cliente(request):
 docs(i18n): traducir todos los comentarios al español - Fase 3.5 completada
 chore(cleanup): eliminar scripts y archivos de prueba obsoletos
 docs(scripts): actualizar README con información del script maestro consolidado
+```
+
+---
+
+## 🔬 FASE 4 - QA, DATABASE RESET & MASTER SEEDING
+
+### Objetivo de la Fase
+
+**Preparar el sistema para QA y demostración con datos limpios y realistas.**
+
+### Problema Identificado
+
+- ⚠️ Base de datos contiene **datos inconsistentes** de desarrollo
+- ⚠️ Registros de prueba con valores artificiales
+- ⚠️ Faltan datos representativos para demostración
+- ⚠️ No hay dataset "Golden" para validación end-to-end
+
+### Plan de Trabajo
+
+#### 4.1 Database Reset (Flush) 🗑️
+
+**Objetivo:** Limpiar la base de datos manteniendo el esquema.
+
+**Tareas:**
+- [ ] Ejecutar `python manage.py flush` para eliminar todos los datos
+- [ ] Verificar que las migraciones permanezcan intactas
+- [ ] Confirmar que el esquema está limpio pero funcional
+
+**Comando:**
+```bash
+python manage.py flush --no-input
+```
+
+#### 4.2 Master Seeding Script 🌱
+
+**Objetivo:** Crear script de seeding con "Golden Dataset" realista.
+
+**Tareas:**
+- [ ] Crear `scripts/seed_master_data.py`
+- [ ] Implementar seeding de Roles (Administrador, Analista, Auditor)
+- [ ] Implementar seeding de Usuarios (3-5 usuarios con perfiles completos)
+- [ ] Implementar seeding de Instrumentos Financieros (20-30 instrumentos diversos)
+- [ ] Implementar seeding de Calificaciones con 30 factores (50-100 registros)
+- [ ] Implementar seeding de Logs de Auditoría (actividad realista)
+- [ ] Agregar validación de integridad post-seeding
+
+**Estructura del Dataset Golden:**
+
+```python
+# Roles (3)
+- Administrador (acceso total)
+- Analista Financiero (CRUD calificaciones)
+- Auditor (solo lectura)
+
+# Usuarios (5)
+- admin@nuam.cl (Administrador)
+- analista1@nuam.cl (Analista)
+- analista2@nuam.cl (Analista)
+- auditor@nuam.cl (Auditor)
+- demo@nuam.cl (Administrador - para demos)
+
+# Instrumentos Financieros (25)
+- 10 Acciones (Empresas CMPC, Copec, BCI, etc.)
+- 5 Bonos (Gobierno, Corporativos)
+- 5 Fondos Mutuos
+- 3 Depósitos a Plazo
+- 2 Otros instrumentos
+
+# Calificaciones Tributarias (100)
+- Distribuidas entre todos los instrumentos
+- Fechas en últimos 12 meses
+- Mix de DJ 1922 y DJ 1949
+- 30 factores tributarios completos
+- Diferentes orígenes (BOLSA/CORREDORA)
+- Validaciones REGLA A y REGLA B cumplidas
+```
+
+**Características del Script:**
+- ✅ Idempotente (puede ejecutarse múltiples veces)
+- ✅ Transaccional (rollback en caso de error)
+- ✅ Verbose output con progreso
+- ✅ Validación de integridad al finalizar
+- ✅ Generación de reporte de seeding
+
+#### 4.3 Testing Manual End-to-End 🧪
+
+**Objetivo:** Validar todas las funcionalidades con datos limpios.
+
+**Test Cases:**
+
+1. **Autenticación y Seguridad**
+   - [ ] Login exitoso con cada rol
+   - [ ] Intentos fallidos y bloqueo de cuenta
+   - [ ] Logout y registro en auditoría
+
+2. **Dashboard**
+   - [ ] Visualización correcta de métricas
+   - [ ] Gráficos funcionando con datos reales
+   - [ ] Estadísticas precisas
+
+3. **CRUD Calificaciones**
+   - [ ] Crear calificación con 30 factores
+   - [ ] Editar calificación existente
+   - [ ] Eliminar calificación (solo Admin)
+   - [ ] Validación REGLA A y REGLA B
+
+4. **CRUD Instrumentos**
+   - [ ] Crear instrumento
+   - [ ] Editar instrumento
+   - [ ] Eliminar instrumento (cascade check)
+
+5. **Carga Masiva**
+   - [ ] Importar Excel con 30 factores
+   - [ ] Validación de errores
+   - [ ] Detección de duplicados
+   - [ ] Regla de prioridad CORREDORA > BOLSA
+
+6. **Exportación**
+   - [ ] Exportar a Excel
+   - [ ] Exportar a CSV
+   - [ ] Verificar integridad de datos exportados
+
+7. **Permisos RBAC**
+   - [ ] Administrador: acceso total
+   - [ ] Analista: CRUD sin eliminar
+   - [ ] Auditor: solo lectura
+
+8. **Auditoría**
+   - [ ] Verificar logs de todas las operaciones
+   - [ ] Filtros funcionando correctamente
+   - [ ] Exportación de auditoría
+
+#### 4.4 Documentación de QA 📋
+
+**Objetivo:** Documentar resultados de testing.
+
+**Tareas:**
+- [ ] Crear `docs/qa_testing_report.md`
+- [ ] Documentar casos de prueba ejecutados
+- [ ] Registrar bugs encontrados (si existen)
+- [ ] Documentar estado final del sistema
+
+### Estado Actual de Fase 4
+
+**Fecha inicio:** 1 Diciembre 2025  
+**Progreso:** 0% - Iniciando  
+**Siguiente paso:** Database Flush
+
+### Comandos Rápidos
+
+```bash
+# 1. Limpiar base de datos
+python manage.py flush --no-input
+
+# 2. Ejecutar seeding maestro (cuando esté listo)
+python scripts/seed_master_data.py
+
+# 3. Verificar datos
+python manage.py shell
+>>> from calificaciones.models import *
+>>> Rol.objects.count()
+>>> User.objects.count()
+>>> InstrumentoFinanciero.objects.count()
+>>> CalificacionTributaria.objects.count()
+>>> LogAuditoria.objects.count()
+
+# 4. Crear superusuario (si es necesario)
+python manage.py createsuperuser
 ```
 
 ---
