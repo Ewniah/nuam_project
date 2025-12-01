@@ -173,12 +173,13 @@ class CargaMasivaForm(forms.Form):
 
 
 class RegistroForm(UserCreationForm):
-    """Nuevo: Formulario de registro de usuario con campos adicionales"""
+    """Formulario de registro de usuario con campos adicionales y perfil"""
     email = forms.EmailField(
         required=True,
+        label='Correo Electrónico',
         widget=forms.EmailInput(attrs={
             'class': 'form-control',
-            'placeholder': 'correo@ejemplo.com'
+            'placeholder': 'nombre@ejemplo.com'
         })
     )
     first_name = forms.CharField(
@@ -187,7 +188,7 @@ class RegistroForm(UserCreationForm):
         label='Nombre',
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Nombre'
+            'placeholder': 'Ingrese su nombre'
         })
     )
     last_name = forms.CharField(
@@ -196,8 +197,35 @@ class RegistroForm(UserCreationForm):
         label='Apellido',
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Apellido'
+            'placeholder': 'Ingrese su apellido'
         })
+    )
+    telefono = forms.CharField(
+        max_length=20,
+        required=False,
+        label='Teléfono',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '+56 9 1234 5678'
+        })
+    )
+    departamento = forms.CharField(
+        max_length=100,
+        required=False,
+        label='Departamento',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Ej: Finanzas, Operaciones'
+        })
+    )
+    rol = forms.ModelChoiceField(
+        queryset=Rol.objects.all(),
+        required=True,
+        label='Rol',
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        }),
+        help_text='Seleccione el rol que mejor describe su función'
     )
     
     class Meta:
@@ -206,21 +234,33 @@ class RegistroForm(UserCreationForm):
         widgets = {
             'username': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Usuario'
+                'placeholder': 'Ej: jsmith'
             })
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Agregar clases de Bootstrap a los campos de contraseña
+        
+        # Agregar clases de Bootstrap a todos los campos
+        self.fields['username'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Ej: jsmith'
+        })
+        self.fields['username'].help_text = 'Solo letras, números y @/./+/-/_'
+        
         self.fields['password1'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': 'Contraseña'
+            'placeholder': '••••••••'
         })
+        self.fields['password1'].label = 'Contraseña'
+        self.fields['password1'].help_text = 'Mínimo 8 caracteres, no solo numérica'
+        
         self.fields['password2'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': 'Confirmar contraseña'
+            'placeholder': '••••••••'
         })
+        self.fields['password2'].label = 'Confirmar Contraseña'
+        self.fields['password2'].help_text = ''
     
     def clean_email(self):
         """Valida que el email no esté registrado"""
