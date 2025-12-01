@@ -282,7 +282,7 @@ def login_view(request):
         request (HttpRequest): Objeto de solicitud HTTP con datos POST (username, password).
 
     Returns:
-        HttpResponse: 
+        HttpResponse:
             - Redirect a 'dashboard' si login exitoso.
             - Render de 'registration/login.html' si cuenta bloqueada o credenciales inválidas.
 
@@ -296,7 +296,7 @@ def login_view(request):
         username = request.POST.get("username")
         password = request.POST.get("password")
         ip_address = obtener_ip_cliente(request)
-        
+
         logger.debug(f"Login attempt - Username: {username}, IP: {ip_address}")
 
         # 1. Verificar si la cuenta está bloqueada
@@ -316,7 +316,7 @@ def login_view(request):
         if user is not None:
             # Login exitoso
             login(request, user)
-            
+
             logger.info(
                 f"Successful login - User: {user.username}, Name: {user.get_full_name()}, "
                 f"IP: {ip_address}, Role: {user.groups.first().name if user.groups.exists() else 'No role'}"
@@ -391,7 +391,7 @@ def logout_view(request):
     """Cierra sesión y registra en auditoría"""
     user = request.user
     ip_address = obtener_ip_cliente(request)
-    
+
     logger.info(f"User logout - User: {user.username}, IP: {ip_address}")
 
     LogAuditoria.objects.create(
@@ -445,8 +445,10 @@ def dashboard(request):
         - Actividad reciente usa RECENT_ACTIVITY_DAYS (7 días por defecto)
     """
     from datetime import datetime
-    
-    logger.debug(f"Dashboard access - User: {request.user.username}, IP: {obtener_ip_cliente(request)}")
+
+    logger.debug(
+        f"Dashboard access - User: {request.user.username}, IP: {obtener_ip_cliente(request)}"
+    )
 
     # Mensaje de bienvenida según hora del día
     hora_actual = datetime.now().hour
@@ -464,7 +466,7 @@ def dashboard(request):
     total_calificaciones = CalificacionTributaria.objects.filter(activo=True).count()
     total_instrumentos = InstrumentoFinanciero.objects.filter(activo=True).count()
     total_usuarios = User.objects.filter(is_active=True).count()
-    
+
     logger.info(
         f"Dashboard stats - User: {request.user.username}, "
         f"Calificaciones: {total_calificaciones}, Instrumentos: {total_instrumentos}, "
@@ -607,7 +609,7 @@ def crear_calificacion(request):
                 calificacion = form.save(commit=False)
                 calificacion.usuario_creador = request.user
                 calificacion.save()
-                
+
                 logger.info(
                     f"Calificacion created - User: {request.user.username}, "
                     f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}, "
@@ -629,7 +631,10 @@ def crear_calificacion(request):
                 return redirect("listar_calificaciones")
             except IntegrityError as e:
                 logger.error(f"Database integrity error creating calificacion: {e}", exc_info=True)
-                messages.error(request, "Error de integridad: La calificación ya existe o hay datos duplicados.")
+                messages.error(
+                    request,
+                    "Error de integridad: La calificación ya existe o hay datos duplicados.",
+                )
             except ValidationError as e:
                 logger.warning(f"Validation error creating calificacion: {e}")
                 messages.error(request, f"Error de validación: {e}")
@@ -653,7 +658,7 @@ def editar_calificacion(request, pk):
         if form.is_valid():
             try:
                 calificacion = form.save()
-                
+
                 logger.info(
                     f"Calificacion updated - User: {request.user.username}, "
                     f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}"
@@ -673,7 +678,9 @@ def editar_calificacion(request, pk):
                 messages.success(request, "Calificación actualizada exitosamente.")
                 return redirect("listar_calificaciones")
             except IntegrityError as e:
-                logger.error(f"Database integrity error updating calificacion {pk}: {e}", exc_info=True)
+                logger.error(
+                    f"Database integrity error updating calificacion {pk}: {e}", exc_info=True
+                )
                 messages.error(request, "Error de integridad al actualizar la calificación.")
             except ValidationError as e:
                 logger.warning(f"Validation error updating calificacion {pk}: {e}")
@@ -698,7 +705,7 @@ def eliminar_calificacion(request, pk):
         try:
             calificacion.activo = False
             calificacion.save()
-            
+
             logger.warning(
                 f"Calificacion deleted (logical) - User: {request.user.username}, "
                 f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}"
@@ -855,7 +862,7 @@ def crear_instrumento(request):
         form = InstrumentoFinancieroForm(request.POST)
         if form.is_valid():
             instrumento = form.save()
-            
+
             logger.info(
                 f"Instrument created - User: {request.user.username}, "
                 f"Code: {instrumento.codigo_instrumento}, Type: {instrumento.tipo_instrumento}"
@@ -931,7 +938,7 @@ def eliminar_instrumento(request, pk):
     if request.method == "POST":
         instrumento.activo = False
         instrumento.save()
-        
+
         logger.warning(
             f"Instrument deleted (logical) - User: {request.user.username}, "
             f"Code: {instrumento.codigo_instrumento}"
@@ -988,7 +995,7 @@ def carga_masiva(request):
     Notes:
         - Formatos soportados: .xlsx (Excel), .csv (UTF-8)
         - Campos requeridos: codigo_instrumento, fecha_informe
-        - Campos opcionales: nombre_instrumento, tipo_instrumento, monto, factor, 
+        - Campos opcionales: nombre_instrumento, tipo_instrumento, monto, factor,
           metodo_ingreso, numero_dj, observaciones
         - Estados posibles: EXITOSO (0 errores), PARCIAL (algunos errores), FALLIDO (todos errores)
         - Registra cada fila procesada en CargaMasiva con errores_detalle
@@ -999,7 +1006,7 @@ def carga_masiva(request):
         form = CargaMasivaForm(request.POST, request.FILES)
         if form.is_valid():
             archivo = request.FILES["archivo"]
-            
+
             logger.info(
                 f"Bulk upload started - User: {request.user.username}, "
                 f"File: {archivo.name}, Size: {archivo.size} bytes"
@@ -1130,7 +1137,7 @@ def carga_masiva(request):
                 logger.error(
                     f"Critical error in bulk upload - User: {request.user.username}, "
                     f"File: {archivo.name}, Error: {str(e)}",
-                    exc_info=True
+                    exc_info=True,
                 )
                 carga.estado = "FALLIDO"
                 carga.errores_detalle = str(e)
@@ -1151,7 +1158,7 @@ def exportar_excel(request):
     calificaciones = CalificacionTributaria.objects.filter(activo=True).select_related(
         "instrumento", "usuario_creador"
     )
-    
+
     logger.info(
         f"Excel export initiated - User: {request.user.username}, "
         f"Total records: {calificaciones.count()}"
@@ -1226,7 +1233,7 @@ def exportar_csv(request):
     calificaciones = CalificacionTributaria.objects.filter(activo=True).select_related(
         "instrumento", "usuario_creador"
     )
-    
+
     logger.info(
         f"CSV export initiated - User: {request.user.username}, "
         f"Total records: {calificaciones.count()}"
@@ -1362,7 +1369,7 @@ def admin_gestionar_usuarios(request):
     Muestra todos los usuarios con información de bloqueos e intentos de login.
     """
     logger.debug(f"Admin user management accessed - Admin: {request.user.username}")
-    
+
     # Obtener todos los usuarios con sus perfiles
     usuarios = User.objects.all().select_related("perfilusuario__rol").order_by("username")
 
@@ -1416,7 +1423,7 @@ def desbloquear_cuenta_manual(request, user_id):
     cuenta_bloqueada.bloqueada = False
     cuenta_bloqueada.fecha_desbloqueo = timezone.now()
     cuenta_bloqueada.save()
-    
+
     logger.warning(
         f"Account manually unlocked - Admin: {request.user.username}, "
         f"Target user: {user.username}, Previous attempts: {cuenta_bloqueada.intentos_fallidos}"
@@ -1558,7 +1565,7 @@ def calcular_factores_ajax(request):
                 "mensaje_error": "",
                 "nombres": {"factor_8": "Factor 8", ...}
             }
-            
+
         JsonResponse (error): Si falla, retorna {"success": false, "error": mensaje} con status 400.
 
     Notes:
@@ -1572,7 +1579,7 @@ def calcular_factores_ajax(request):
         logger.debug(
             f"Factor calculation API called - User: {request.user.username if request.user.is_authenticated else 'Anonymous'}"
         )
-        
+
         montos = {
             "monto_8": request.GET.get("monto_8", "0"),
             "monto_9": request.GET.get("monto_9", "0"),
