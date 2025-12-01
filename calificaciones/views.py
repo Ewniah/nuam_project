@@ -237,10 +237,16 @@ def login_view(request):
         username = request.POST.get("username")
         password = request.POST.get("password")
         ip_address = obtener_ip_cliente(request)
+        
+        logger.debug(f"Login attempt - Username: {username}, IP: {ip_address}")
 
         # 1. Verificar si la cuenta está bloqueada
         bloqueada, mensaje_bloqueo, minutos = verificar_cuenta_bloqueada(username)
         if bloqueada:
+            logger.warning(
+                f"Blocked login attempt - User: {username}, IP: {ip_address}, "
+                f"Remaining lockout: {minutos} minutes"
+            )
             messages.error(request, mensaje_bloqueo)
             registrar_intento_login(username, ip_address, False, "Intento en cuenta bloqueada")
             return render(request, "registration/login.html")
@@ -251,6 +257,11 @@ def login_view(request):
         if user is not None:
             # Login exitoso
             login(request, user)
+            
+            logger.info(
+                f"Successful login - User: {user.username}, Name: {user.get_full_name()}, "
+                f"IP: {ip_address}, Role: {user.groups.first().name if user.groups.exists() else 'No role'}"
+            )
 
             # Registrar intento exitoso
             registrar_intento_login(username, ip_address, True, "Login exitoso")
@@ -274,6 +285,10 @@ def login_view(request):
             return redirect("dashboard")
         else:
             # Login fallido
+            logger.warning(
+                f"Failed login attempt - Username: {username}, IP: {ip_address}, "
+                f"Reason: Invalid credentials"
+            )
             registrar_intento_login(username, ip_address, False, "Credenciales incorrectas")
 
             # Registrar en auditoría (sin usuario porque falló)
@@ -289,6 +304,10 @@ def login_view(request):
             debe_bloquear, intentos = verificar_intentos_fallidos(username, ip_address)
 
             if debe_bloquear:
+                logger.error(
+                    f"Account locked - Username: {username}, IP: {ip_address}, "
+                    f"Failed attempts: {intentos}, Lockout duration: {LOCKOUT_DURATION_MINUTES} minutes"
+                )
                 messages.error(
                     request,
                     f"Cuenta bloqueada por múltiples intentos fallidos. "
@@ -311,7 +330,10 @@ def login_view(request):
 @login_required
 def logout_view(request):
     """Cierra sesión y registra en auditoría"""
+    user = request.user
     ip_address = obtener_ip_cliente(request)
+    
+    logger.info(f"User logout - User: {user.username}, IP: {ip_address}")
 
     LogAuditoria.objects.create(
         usuario=request.user,
@@ -340,6 +362,8 @@ def logout_view(request):
 def dashboard(request):
     """Dashboard principal con estadísticas del sistema"""
     from datetime import datetime
+    
+    logger.debug(f"Dashboard access - User: {request.user.username}, IP: {obtener_ip_cliente(request)}")
 
     # Mensaje de bienvenida según hora del día
     hora_actual = datetime.now().hour
@@ -357,6 +381,12 @@ def dashboard(request):
     total_calificaciones = CalificacionTributaria.objects.filter(activo=True).count()
     total_instrumentos = InstrumentoFinanciero.objects.filter(activo=True).count()
     total_usuarios = User.objects.filter(is_active=True).count()
+    
+    logger.info(
+        f"Dashboard stats - User: {request.user.username}, "
+        f"Calificaciones: {total_calificaciones}, Instrumentos: {total_instrumentos}, "
+        f"Usuarios: {total_usuarios}"
+    )
 
     # Calificaciones por método
     calificaciones_por_metodo = list(
@@ -489,6 +519,12 @@ def crear_calificacion(request):
             calificacion = form.save(commit=False)
             calificacion.usuario_creador = request.user
             calificacion.save()
+            
+            logger.info(
+                f"Calificacion created - User: {request.user.username}, "
+                f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}, "
+                f"Monto: {calificacion.monto}, Factor: {calificacion.factor}"
+            )
 
             # Registrar en auditoría
             ip_address = obtener_ip_cliente(request)
@@ -519,6 +555,11 @@ def editar_calificacion(request, pk):
         form = CalificacionTributariaForm(request.POST, instance=calificacion)
         if form.is_valid():
             calificacion = form.save()
+            
+            logger.info(
+                f"Calificacion updated - User: {request.user.username}, "
+                f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}"
+            )
 
             # Registrar en auditoría
             ip_address = obtener_ip_cliente(request)
@@ -549,6 +590,11 @@ def eliminar_calificacion(request, pk):
     if request.method == "POST":
         calificacion.activo = False
         calificacion.save()
+        
+        logger.warning(
+            f"Calificacion deleted (logical) - User: {request.user.username}, "
+            f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}"
+        )
 
         # Registrar en auditoría
         ip_address = obtener_ip_cliente(request)
@@ -697,6 +743,11 @@ def crear_instrumento(request):
         form = InstrumentoFinancieroForm(request.POST)
         if form.is_valid():
             instrumento = form.save()
+            
+            logger.info(
+                f"Instrument created - User: {request.user.username}, "
+                f"Code: {instrumento.codigo_instrumento}, Type: {instrumento.tipo_instrumento}"
+            )
 
             # Registrar en auditoría
             ip_address = obtener_ip_cliente(request)
@@ -768,6 +819,11 @@ def eliminar_instrumento(request, pk):
     if request.method == "POST":
         instrumento.activo = False
         instrumento.save()
+        
+        logger.warning(
+            f"Instrument deleted (logical) - User: {request.user.username}, "
+            f"Code: {instrumento.codigo_instrumento}"
+        )
 
         # Registrar en auditoría
         ip_address = obtener_ip_cliente(request)
@@ -802,6 +858,11 @@ def carga_masiva(request):
         form = CargaMasivaForm(request.POST, request.FILES)
         if form.is_valid():
             archivo = request.FILES["archivo"]
+            
+            logger.info(
+                f"Bulk upload started - User: {request.user.username}, "
+                f"File: {archivo.name}, Size: {archivo.size} bytes"
+            )
 
             # Crear registro de carga
             carga = CargaMasiva.objects.create(
@@ -814,10 +875,13 @@ def carga_masiva(request):
             try:
                 # Detectar tipo de archivo
                 if archivo.name.endswith(".xlsx"):
+                    logger.debug(f"Processing Excel file: {archivo.name}")
                     registros = procesar_excel(archivo)
                 elif archivo.name.endswith(".csv"):
+                    logger.debug(f"Processing CSV file: {archivo.name}")
                     registros = procesar_csv(archivo)
                 else:
+                    logger.error(f"Unsupported file format: {archivo.name}")
                     raise ValueError("Formato de archivo no soportado")
 
                 # Procesar registros
@@ -865,10 +929,22 @@ def carga_masiva(request):
 
                 if fallidos == 0:
                     carga.estado = "EXITOSO"
+                    logger.info(
+                        f"Bulk upload completed successfully - User: {request.user.username}, "
+                        f"File: {archivo.name}, Records: {exitosos}/{len(registros)}"
+                    )
                 elif exitosos > 0:
                     carga.estado = "PARCIAL"
+                    logger.warning(
+                        f"Bulk upload partially failed - User: {request.user.username}, "
+                        f"File: {archivo.name}, Success: {exitosos}, Failed: {fallidos}"
+                    )
                 else:
                     carga.estado = "FALLIDO"
+                    logger.error(
+                        f"Bulk upload failed completely - User: {request.user.username}, "
+                        f"File: {archivo.name}, Total records: {len(registros)}"
+                    )
 
                 carga.save()
 
@@ -889,6 +965,11 @@ def carga_masiva(request):
                 )
 
             except Exception as e:
+                logger.error(
+                    f"Critical error in bulk upload - User: {request.user.username}, "
+                    f"File: {archivo.name}, Error: {str(e)}",
+                    exc_info=True
+                )
                 carga.estado = "FALLIDO"
                 carga.errores_detalle = str(e)
                 carga.save()
@@ -907,6 +988,11 @@ def exportar_excel(request):
     """Exporta calificaciones a Excel"""
     calificaciones = CalificacionTributaria.objects.filter(activo=True).select_related(
         "instrumento", "usuario_creador"
+    )
+    
+    logger.info(
+        f"Excel export initiated - User: {request.user.username}, "
+        f"Total records: {calificaciones.count()}"
     )
 
     # Crear libro de Excel
@@ -977,6 +1063,11 @@ def exportar_csv(request):
     """Exporta calificaciones a CSV"""
     calificaciones = CalificacionTributaria.objects.filter(activo=True).select_related(
         "instrumento", "usuario_creador"
+    )
+    
+    logger.info(
+        f"CSV export initiated - User: {request.user.username}, "
+        f"Total records: {calificaciones.count()}"
     )
 
     response = HttpResponse(content_type="text/csv")
@@ -1108,6 +1199,8 @@ def admin_gestionar_usuarios(request):
     Panel de gestión de usuarios para administradores.
     Muestra todos los usuarios con información de bloqueos e intentos de login.
     """
+    logger.debug(f"Admin user management accessed - Admin: {request.user.username}")
+    
     # Obtener todos los usuarios con sus perfiles
     usuarios = User.objects.all().select_related("perfilusuario__rol").order_by("username")
 
@@ -1161,6 +1254,11 @@ def desbloquear_cuenta_manual(request, user_id):
     cuenta_bloqueada.bloqueada = False
     cuenta_bloqueada.fecha_desbloqueo = timezone.now()
     cuenta_bloqueada.save()
+    
+    logger.warning(
+        f"Account manually unlocked - Admin: {request.user.username}, "
+        f"Target user: {user.username}, Previous attempts: {cuenta_bloqueada.intentos_fallidos}"
+    )
 
     # Registrar en auditoría (CRÍTICO - Feedback del profesor)
     ip_address = obtener_ip_cliente(request)
@@ -1270,6 +1368,10 @@ def registro_auditoria(request):
 def calcular_factores_ajax(request):
     """API endpoint para calcular factores automáticamente vía AJAX"""
     try:
+        logger.debug(
+            f"Factor calculation API called - User: {request.user.username if request.user.is_authenticated else 'Anonymous'}"
+        )
+        
         montos = {
             "monto_8": request.GET.get("monto_8", "0"),
             "monto_9": request.GET.get("monto_9", "0"),
@@ -1320,6 +1422,7 @@ def calcular_factores_ajax(request):
         )
 
     except Exception as e:
+        logger.error(f"Factor calculation error - Error: {str(e)}", exc_info=True)
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
