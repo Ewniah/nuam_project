@@ -11,10 +11,11 @@ Total Routes: 22 (100% preserved)
 # IMPORTS - PEP 8 Organized
 # ============================================================================
 
-# Standard Library (5 imports)
+# Standard Library (6 imports)
 import csv
 import io
 import json
+import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -53,6 +54,25 @@ from .models import (
 from .permissions import requiere_permiso
 from .utils.calculadora_factores import calcular_clasificacion_sii
 
+# ============================================================================
+# LOGGING CONFIGURATION
+# ============================================================================
+logger = logging.getLogger(__name__)
+
+# ============================================================================
+# CONFIGURATION CONSTANTS
+# ============================================================================
+
+# Authentication & Security
+MAX_LOGIN_ATTEMPTS = 5
+LOCKOUT_DURATION_MINUTES = 30
+FAILED_ATTEMPT_WINDOW_MINUTES = 15
+
+# Pagination & Limits
+MAX_AUDIT_LOG_RECORDS = 1000
+MAX_LOGIN_HISTORY_RECORDS = 50
+RECENT_ACTIVITY_DAYS = 7
+
 
 # ============================================================================
 # SECTION 1: UTILITIES AND HELPERS
@@ -84,9 +104,9 @@ def verificar_cuenta_bloqueada(username):
         cuenta_bloqueada = CuentaBloqueada.objects.filter(usuario=user, bloqueada=True).first()
 
         if cuenta_bloqueada:
-            # Verificar si ya pasó el tiempo de bloqueo (30 minutos)
+            # Verificar si ya pasó el tiempo de bloqueo
             tiempo_bloqueo = timezone.now() - cuenta_bloqueada.fecha_bloqueo
-            MINUTOS_BLOQUEO = 30
+            MINUTOS_BLOQUEO = LOCKOUT_DURATION_MINUTES
 
             if tiempo_bloqueo.total_seconds() < MINUTOS_BLOQUEO * 60:
                 minutos_restantes = int(
@@ -133,8 +153,8 @@ def verificar_intentos_fallidos(username, ip_address):
     Si hay 5 o más intentos fallidos, bloquea la cuenta
     Retorna: (debe_bloquear: bool, intentos: int)
     """
-    INTENTOS_MAXIMOS = 5
-    VENTANA_TIEMPO = 15  # minutos
+    INTENTOS_MAXIMOS = MAX_LOGIN_ATTEMPTS
+    VENTANA_TIEMPO = FAILED_ATTEMPT_WINDOW_MINUTES
 
     tiempo_limite = timezone.now() - timedelta(minutes=VENTANA_TIEMPO)
 
@@ -1098,8 +1118,8 @@ def admin_gestionar_usuarios(request):
             usuario=usuario, bloqueada=True
         ).first()
 
-        # Contar intentos de login recientes (últimos 7 días)
-        fecha_limite = timezone.now() - timedelta(days=7)
+        # Contar intentos de login recientes
+        fecha_limite = timezone.now() - timedelta(days=RECENT_ACTIVITY_DAYS)
         usuario.intentos_recientes = IntentoLogin.objects.filter(
             username=usuario.username, fecha_hora__gte=fecha_limite
         ).count()
@@ -1217,8 +1237,8 @@ def registro_auditoria(request):
     if fecha_hasta:
         logs = logs.filter(fecha_hora__date__lte=fecha_hasta)
 
-    # Limitar a últimos 1000 registros para performance
-    logs = logs[:1000]
+    # Limitar registros para performance
+    logs = logs[:MAX_AUDIT_LOG_RECORDS]
 
     # Lista de usuarios para filtro
     usuarios = User.objects.filter(is_active=True).order_by("username")
