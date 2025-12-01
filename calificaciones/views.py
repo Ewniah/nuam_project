@@ -974,7 +974,27 @@ def editar_calificacion_factores(request, pk):
 @login_required
 @requiere_permiso("consultar")
 def listar_instrumentos(request):
-    """Lista todos los instrumentos financieros"""
+    """
+    Lista todos los instrumentos financieros activos con búsqueda multi-campo.
+
+    Muestra tabla de instrumentos con capacidad de búsqueda simultánea en código,
+    nombre y tipo de instrumento usando operadores OR.
+
+    Args:
+        request (HttpRequest): GET request con parámetro opcional:
+            - busqueda (str): Término de búsqueda (busca en código, nombre y tipo).
+
+    Returns:
+        HttpResponse: Render de 'calificaciones/listar_instrumentos.html' con
+            QuerySet de instrumentos filtrados.
+
+    Notes:
+        - Solo muestra instrumentos activos (activo=True)
+        - Búsqueda case-insensitive (ICONTAINS)
+        - Búsqueda multi-campo: código OR nombre OR tipo
+        - Ordenado por codigo_instrumento ascendente
+        - Requiere autenticación pero NO requiere permiso específico
+    """
     instrumentos = InstrumentoFinanciero.objects.filter(activo=True)
 
     # Búsqueda
@@ -996,7 +1016,29 @@ def listar_instrumentos(request):
 @login_required
 @requiere_permiso("crear")
 def crear_instrumento(request):
-    """Crea un nuevo instrumento financiero"""
+    """
+    Crea un nuevo instrumento financiero en el catálogo del sistema.
+
+    Permite agregar instrumentos que luego serán referenciados por las calificaciones
+    tributarias. Registra la creación en auditoría.
+
+    Args:
+        request (HttpRequest):
+            - GET: Muestra formulario vacío
+            - POST: Procesa formulario con datos del instrumento
+
+    Returns:
+        HttpResponse:
+            - GET: Render de 'calificaciones/form_instrumento.html' con form vacío
+            - POST exitoso: Redirect a 'listar_instrumentos' con mensaje de éxito
+
+    Notes:
+        - Requiere permiso: 'crear'
+        - Campos principales: codigo_instrumento (único), nombre_instrumento, tipo_instrumento
+        - Registra acción CREATE en LogAuditoria
+        - Logging: INFO en creación exitosa con código y tipo
+        - codigo_instrumento debe ser único (constraint en BD)
+    """
     if request.method == "POST":
         form = InstrumentoFinancieroForm(request.POST)
         if form.is_valid():
@@ -1293,7 +1335,31 @@ def carga_masiva(request):
 @login_required
 @requiere_permiso("consultar")
 def exportar_excel(request):
-    """Exporta calificaciones a Excel"""
+    """
+    Exporta todas las calificaciones activas a formato Excel (.xlsx).
+
+    Genera archivo Excel con todas las calificaciones tributarias activas incluyendo
+    datos del instrumento asociado y usuario creador. Optimizado con select_related.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP del usuario autenticado.
+
+    Returns:
+        HttpResponse: Archivo Excel descargable con:
+            - Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+            - Filename: calificaciones_YYYYMMDD.xlsx (fecha actual)
+            - Columnas: ID, Código Instrumento, Nombre Instrumento, Monto, Factor,
+              Método Ingreso, Número DJ, Fecha Informe, Usuario Creador, Fecha Creación,
+              Observaciones
+
+    Notes:
+        - Requiere permiso: 'consultar'
+        - Librería: openpyxl
+        - Solo exporta registros activos (activo=True)
+        - Query optimizado con select_related('instrumento', 'usuario_creador')
+        - Logging: INFO con username y conteo de registros
+        - Formato de fechas: YYYY-MM-DD
+    """
     calificaciones = CalificacionTributaria.objects.filter(activo=True).select_related(
         "instrumento", "usuario_creador"
     )
@@ -1368,7 +1434,33 @@ def exportar_excel(request):
 @login_required
 @requiere_permiso("consultar")
 def exportar_csv(request):
-    """Exporta calificaciones a CSV"""
+    """
+    Exporta todas las calificaciones activas a formato CSV.
+
+    Genera archivo CSV compatible con Excel y otras herramientas. Formato más liviano
+    que Excel, ideal para importación en otros sistemas.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP del usuario autenticado.
+
+    Returns:
+        HttpResponse: Archivo CSV descargable con:
+            - Content-Type: text/csv
+            - Encoding: UTF-8 (compatible con caracteres especiales)
+            - Filename: calificaciones_YYYYMMDD.csv (fecha actual)
+            - Columnas: ID, Código Instrumento, Nombre Instrumento, Monto, Factor,
+              Método Ingreso, Número DJ, Fecha Informe, Usuario Creador, Fecha Creación,
+              Observaciones
+
+    Notes:
+        - Requiere permiso: 'consultar'
+        - Librería: csv (stdlib)
+        - Solo exporta registros activos (activo=True)
+        - Query optimizado con select_related('instrumento', 'usuario_creador')
+        - Logging: INFO con username y conteo de registros
+        - Formato de fechas: YYYY-MM-DD
+        - Separador: coma (,)
+    """
     calificaciones = CalificacionTributaria.objects.filter(activo=True).select_related(
         "instrumento", "usuario_creador"
     )
