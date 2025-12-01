@@ -415,17 +415,32 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-### 7. Crear datos iniciales y superusuario
+### 7. Poblar la base de datos con Dataset Golden (RECOMENDADO)
 
 ```bash
-# Carga los roles iniciales y otros datos necesarios
-python manage.py crear_datos_iniciales
+# Opción A: Usar script de seeding maestro (RECOMENDADO)
+# Este script crea roles, usuarios, instrumentos, calificaciones y datos de prueba
+python scripts/poblar_bd_maestra.py
 
-python manage.py poblar_sistema.py
+# El script crea automáticamente:
+# - 3 Roles (Administrador, Analista, Auditor)
+# - 5 Usuarios con contraseñas:
+#   - admin / admin123 (Administrador)
+#   - analista1 / analista123 (Analista)
+#   - analista2 / analista123 (Analista)
+#   - auditor1 / auditor123 (Auditor)
+#   - demo / demo123 (Administrador)
+# - 14 Instrumentos financieros
+# - 30 Calificaciones con 30 factores completos
+# - Historial de cargas masivas y logs de auditoría
 
-# Crea tu cuenta de administrador
+# Opción B: Crear superusuario manualmente
 python manage.py createsuperuser
 ```
+
+**NOTA:** Si usas la Opción A (script de seeding), ya tendrás usuarios listos para usar. Si prefieres crear tu propio superusuario (Opción B), continúa con el paso 8.
+
+### 8. (SOLO si creaste superusuario manual) Asignar perfil al superusuario
 
 ### 8. Asignar perfil al superusuario
 
@@ -471,13 +486,29 @@ python manage.py runserver
 
 ¡Listo! Accede al sistema en http://127.0.0.1:8000/.
 
-👥 Usuarios de Prueba
-Puedes usar las siguientes credenciales para probar los diferentes roles:
+---
 
-Usuario Contraseña Rol
-admin admin123 Administrador
-analista1 nuam2025 Analista Financiero
-auditor1 nuam2025 Auditor
+## 👥 Usuarios de Prueba (Dataset Golden)
+
+Si ejecutaste `python scripts/poblar_bd_maestra.py`, puedes usar las siguientes credenciales:
+
+| Usuario   | Contraseña  | Rol                 | Email             |
+| --------- | ----------- | ------------------- | ----------------- |
+| admin     | admin123    | Administrador       | admin@nuam.cl     |
+| analista1 | analista123 | Analista Financiero | analista1@nuam.cl |
+| analista2 | analista123 | Analista Financiero | analista2@nuam.cl |
+| auditor1  | auditor123  | Auditor             | auditor1@nuam.cl  |
+| demo      | demo123     | Administrador       | demo@nuam.cl      |
+
+**Datos incluidos en el Dataset Golden:**
+
+- ✅ 14 Instrumentos financieros (Acciones, Bonos, Fondos, Depósitos)
+- ✅ 30 Calificaciones con 30 factores tributarios completos
+- ✅ 10 Cargas masivas (historial últimos 7 días)
+- ✅ 50 Logs de auditoría (actividad últimos 30 días)
+- ✅ 20 Intentos de login (historial de seguridad)
+
+Para más detalles sobre el seeding, consulta `scripts/README_SEEDING.md`.
 
 🔐 Roles y Permisos
 
@@ -517,6 +548,83 @@ Para un despliegue en producción, recuerda:
 ---
 
 ## 📝 Changelog
+
+### Versión 4.0 (1 Dic 2025) - Fase 4: QA & Database Seeding ⭐ FINAL
+
+**Script de Seeding Maestro**
+
+- ✅ Creado `scripts/poblar_bd_maestra.py` - Dataset Golden completo
+- ✅ 3 Roles RBAC (Administrador, Analista Financiero, Auditor)
+- ✅ 5 Usuarios con perfiles completos y contraseñas
+- ✅ 14 Instrumentos financieros variados (Acciones, Bonos, Fondos, Depósitos)
+- ✅ 30 Calificaciones con 30 factores tributarios completos (factor_8 a factor_37)
+- ✅ 10 Cargas masivas (historial últimos 7 días para Chart.js)
+- ✅ 50 Logs de auditoría (actividad últimos 30 días)
+- ✅ 20 Intentos de login (historial de seguridad)
+- ✅ Generación de factores con validación REGLA A y REGLA B
+- ✅ Script idempotente con validaciones y output verbose
+
+**Documentación QA**
+
+- ✅ `scripts/README_SEEDING.md` - Guía completa de flush y seeding
+- ✅ Instrucciones de verificación post-seeding
+- ✅ Comandos de troubleshooting
+- ✅ Credenciales de usuarios de prueba
+- ✅ Dataset Golden especificado para demostración
+
+**Limpieza Final**
+
+- ✅ Eliminación de archivos de gestión de proyecto
+- ✅ Código 100% profesional en español
+- ✅ Proyecto listo para entrega al cliente
+- ✅ Push final a GitHub completado
+
+### Versión 3.5 (1 Dic 2025) - Code Cleanup & Humanización
+
+**Traducción Completa al Español**
+
+- ✅ Todos los comentarios Python traducidos al español
+- ✅ Todos los comentarios HTML traducidos al español
+- ✅ Docstrings humanizados (verbose → conciso técnico)
+- ✅ Sin rastros de generación AI
+- ✅ Estándares profesionales aplicados (PEP 8, Django best practices)
+
+**Consolidación de Scripts**
+
+- ✅ Script maestro `generar_datos_prueba.py` unificado
+- ✅ Eliminación de 6 archivos obsoletos de prueba
+- ✅ Documentación actualizada en `scripts/README_PRUEBAS.md`
+
+**Humanización de Código**
+
+- ✅ Eliminación de comentarios verbosos tipo AI
+- ✅ Comentarios técnicos concisos mantenidos
+- ✅ Secciones estructurales preservadas (SECCIÓN 1-9)
+- ✅ Reglas de negocio documentadas (REGLA A, REGLA B)
+
+### Versión 3.0 (30 Nov 2025) - 30 Factores Tributarios
+
+**Modelo de Datos Extendido**
+
+- ✅ 30 factores tributarios (factor_8 a factor_37)
+- ✅ 6 campos metadata administrativos (secuencia, dividendo, tipo_sociedad, valor_historico, mercado, ejercicio)
+- ✅ Campos de origen y fuente (BOLSA/CORREDORA, MANUAL/MASIVA)
+- ✅ Validación REGLA A (factores 0-1) y REGLA B (suma 8-16 ≤ 1.0)
+
+**Carga Masiva Mejorada**
+
+- ✅ Soporte para 41 columnas en Excel/CSV
+- ✅ Validación de 30 factores en tiempo real
+- ✅ Regla de prioridad CORREDORA > BOLSA
+- ✅ Detección de duplicados con mensajes específicos
+- ✅ Reporte de errores detallado por fila
+
+**UI Extendida**
+
+- ✅ Grilla con 30 columnas de factores
+- ✅ Formularios con campos de metadata
+- ✅ Filtros avanzados (ejercicio, mercado, tipo_sociedad)
+- ✅ Exportación con 30 factores completos
 
 ### Versión 2.1 (30 Nov 2025) - Refactorización Completa
 
@@ -587,4 +695,16 @@ Este proyecto es propiedad de NUAM Exchange.
 
 **NUAM Exchange**  
 Sistema de Gestión de Calificaciones Tributarias  
-Versión 2.1 - Noviembre 2025
+**Versión 4.0 FINAL** - Diciembre 2025
+
+---
+
+## 🎯 Estado del Proyecto
+
+✅ **Fase 1:** Refactorización y estandarización - COMPLETADA  
+✅ **Fase 2:** Lógica y estabilización del modelo - COMPLETADA  
+✅ **Fase 3:** Implementación de 30 factores tributarios - COMPLETADA  
+✅ **Fase 3.5:** Code Cleanup & Humanización - COMPLETADA  
+✅ **Fase 4:** QA, Database Reset & Master Seeding - COMPLETADA
+
+🎉 **PROYECTO LISTO PARA ENTREGA FINAL**
