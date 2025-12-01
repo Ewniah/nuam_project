@@ -123,6 +123,18 @@ class CalificacionTributaria(models.Model):
         help_text="Origen de los datos. CORREDORA tiene prioridad sobre BOLSA"
     )
     
+    # Fuente de origen (HDU 16: tracking de método de entrada)
+    FUENTE_CHOICES = [
+        ('MANUAL', 'Ingreso Manual'),
+        ('MASIVA', 'Carga Masiva'),
+    ]
+    fuente_origen = models.CharField(
+        max_length=20,
+        choices=FUENTE_CHOICES,
+        default='MANUAL',
+        help_text="Método de entrada: Manual o Carga Masiva"
+    )
+    
     # ==========================================
     # CAMPOS METADATA ADMINISTRATIVOS
     # Según especificación "3.1 Archivo de carga" (HDU_Inacap.xlsx)

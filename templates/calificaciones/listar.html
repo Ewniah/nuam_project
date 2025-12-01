@@ -515,6 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <th style="min-width: 110px;">Fecha Pago</th>
                         <th style="min-width: 80px;">Sec.</th>
                         <th style="min-width: 80px;">Origen</th>
+                        <th style="min-width: 100px;">Fuente</th>
                         <th style="min-width: 80px;">Mercado</th>
                         <!-- 30 Factores -->
                         {% for i in "87654321098765432109876543210987"|make_list %}
@@ -536,6 +537,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>{{ cal.fecha_informe|date:"d/m/Y" }}</td>
                         <td>{{ cal.secuencia|default:"-" }}</td>
                         <td>{{ cal.tipo_sociedad|default:"-" }}</td>
+                        <td>
+                            {% if cal.fuente_origen == 'MANUAL' %}
+                                <span class="badge bg-primary" title="Ingreso Manual">
+                                    <i class="fas fa-keyboard me-1"></i>Manual
+                                </span>
+                            {% elif cal.fuente_origen == 'MASIVA' %}
+                                <span class="badge bg-purple" style="background-color: #6f42c1;" title="Carga Masiva">
+                                    <i class="fas fa-file-upload me-1"></i>Masiva
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">N/A</span>
+                            {% endif %}
+                        </td>
                         <td>{{ cal.mercado|default:"-" }}</td>
                         
                         <!-- 30 Factores -->

@@ -810,12 +810,13 @@ def crear_calificacion(request):
             try:
                 calificacion = form.save(commit=False)
                 calificacion.usuario_creador = request.user
+                calificacion.fuente_origen = 'MANUAL'  # HDU 16: Marcar como ingreso manual
                 calificacion.save()
 
                 logger.info(
-                    f"Calificacion created - User: {request.user.username}, "
+                    f"Calificacion created manually - User: {request.user.username}, "
                     f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}, "
-                    f"Monto: {calificacion.monto}, Factor: {calificacion.factor}"
+                    f"Monto: {calificacion.monto}, Factor: {calificacion.factor}, Fuente: MANUAL"
                 )
 
                 # Registrar en auditoría
@@ -1071,6 +1072,7 @@ def crear_calificacion_factores(request):
         if form.is_valid():
             calificacion = form.save(commit=False)
             calificacion.usuario_creador = request.user
+            calificacion.fuente_origen = 'MANUAL'  # HDU 16: Marcar como ingreso manual
 
             try:
                 calificacion.save()
@@ -1555,6 +1557,7 @@ def carga_masiva(request):
                             obj.numero_dj = registro.get("numero_dj", "")
                             obj.observaciones = registro.get("observaciones", "")
                             obj.origen = nuevo_origen
+                            obj.fuente_origen = 'MASIVA'  # HDU 16: Marcar como carga masiva
                             
                             # Actualizar campos administrativos
                             obj.secuencia = int(registro["secuencia"]) if registro.get("secuencia") else 0
@@ -1594,6 +1597,7 @@ def carga_masiva(request):
                                 'fecha_informe': registro["fecha_informe"],
                                 'observaciones': registro.get("observaciones", ""),
                                 'origen': nuevo_origen,
+                                'fuente_origen': 'MASIVA',  # HDU 16: Marcar como carga masiva
                                 # Campos metadata administrativos
                                 'secuencia': int(registro["secuencia"]) if registro.get("secuencia") else 0,
                                 'numero_dividendo': int(registro["numero_dividendo"]) if registro.get("numero_dividendo") else 0,
