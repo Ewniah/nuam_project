@@ -19,12 +19,13 @@ import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-# Django Core (11 imports)
+# Django Core (12 imports)
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.paginator import Paginator
 from django.db import IntegrityError
 from django.db.models import Count, Q
 from django.http import HttpResponse, JsonResponse
@@ -654,39 +655,64 @@ def dashboard(request):
 @requiere_permiso("consultar")
 def listar_calificaciones(request):
     """
-    Lista todas las calificaciones tributarias activas con capacidad de filtrado.
+    Lista todas las calificaciones tributarias activas con filtrado avanzado y paginación.
 
-    Muestra tabla paginada de calificaciones con opciones de filtrado por código de
-    instrumento, rango de fechas y número de DJ. Utiliza select_related para optimizar
-    queries de relaciones FK.
+    Muestra tabla paginada de calificaciones con opciones de filtrado por mercado, origen,
+    ejercicio, código de instrumento, rango de fechas y número de DJ. Optimizado para
+    hardware con CPU limitado mediante paginación server-side (50 registros por página).
 
     Parámetros:
         request (HttpRequest): GET request con parámetros opcionales:
+            - mercado (str): Filtro por tipo de mercado (ACN, CFI, FFM).
+            - tipo_sociedad (str): Filtro por origen (A=Corredora, C=Bolsa).
+            - ejercicio (int): Filtro por año de ejercicio comercial.
             - codigo_instrumento (str): Filtro parcial por código (ICONTAINS).
             - fecha_desde (str): Fecha mínima del informe (formato YYYY-MM-DD).
             - fecha_hasta (str): Fecha máxima del informe (formato YYYY-MM-DD).
             - numero_dj (str): Filtro parcial por número de DJ (ICONTAINS).
+            - page (int): Número de página para paginación.
 
     Retorna:
-        HttpResponse: Render de 'calificaciones/listar_calificaciones.html' con:
-            - calificaciones: QuerySet de CalificacionTributaria filtrado
-            - Parámetros de filtros en context para mantener estado del form
+        HttpResponse: Render de 'calificaciones/listar.html' con:
+            - calificaciones: QuerySet paginado de CalificacionTributaria
+            - page_obj: Objeto Page de Django Paginator
+            - Todos los parámetros de filtros en context para mantener estado
 
     Notas:
         - Solo muestra registros con activo=True (borrado lógico)
         - Ordenado por fecha_creacion descendente (más recientes primero)
-        - Requiere permiso: 'consultar'
+        - Paginación: 50 registros por página (optimización para CPU limitado)
         - Query optimizado con select_related('instrumento', 'usuario_creador')
+        - Template: 'calificaciones/listar.html' con sticky columns CSS
     """
+    # Base queryset con optimización de queries
     calificaciones = CalificacionTributaria.objects.filter(activo=True).select_related(
         "instrumento", "usuario_creador"
     )
 
-    # Filtros
-    codigo_instrumento = request.GET.get("codigo_instrumento")
-    fecha_desde = request.GET.get("fecha_desde")
-    fecha_hasta = request.GET.get("fecha_hasta")
-    numero_dj = request.GET.get("numero_dj")
+    # NUEVOS FILTROS - Metadata fields (Phase 3)
+    mercado = request.GET.get("mercado", "").strip()
+    tipo_sociedad = request.GET.get("tipo_sociedad", "").strip()
+    ejercicio = request.GET.get("ejercicio", "").strip()
+
+    if mercado:
+        calificaciones = calificaciones.filter(mercado__iexact=mercado)
+
+    if tipo_sociedad:
+        calificaciones = calificaciones.filter(tipo_sociedad__iexact=tipo_sociedad)
+
+    if ejercicio:
+        try:
+            ejercicio_int = int(ejercicio)
+            calificaciones = calificaciones.filter(ejercicio=ejercicio_int)
+        except ValueError:
+            logger.warning(f"Invalid ejercicio filter value: {ejercicio}")
+
+    # FILTROS EXISTENTES (legacy compatibility)
+    codigo_instrumento = request.GET.get("codigo_instrumento", "").strip()
+    fecha_desde = request.GET.get("fecha_desde", "").strip()
+    fecha_hasta = request.GET.get("fecha_hasta", "").strip()
+    numero_dj = request.GET.get("numero_dj", "").strip()
 
     if codigo_instrumento:
         calificaciones = calificaciones.filter(
@@ -702,17 +728,35 @@ def listar_calificaciones(request):
     if numero_dj:
         calificaciones = calificaciones.filter(numero_dj__icontains=numero_dj)
 
+    # Ordenamiento
     calificaciones = calificaciones.order_by("-fecha_creacion")
 
+    # PAGINACIÓN - Server-side (50 records per page for CPU optimization)
+    paginator = Paginator(calificaciones, 50)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    logger.info(
+        f"Calificaciones list - User: {request.user.username}, "
+        f"Total: {paginator.count}, Page: {page_number}/{paginator.num_pages}, "
+        f"Filters: mercado={mercado}, tipo_sociedad={tipo_sociedad}, ejercicio={ejercicio}"
+    )
+
     context = {
-        "calificaciones": calificaciones,
+        "calificaciones": page_obj,  # Paginado
+        "page_obj": page_obj,
+        # New filters
+        "mercado": mercado,
+        "tipo_sociedad": tipo_sociedad,
+        "ejercicio": ejercicio,
+        # Legacy filters
         "codigo_instrumento": codigo_instrumento,
         "fecha_desde": fecha_desde,
         "fecha_hasta": fecha_hasta,
         "numero_dj": numero_dj,
     }
 
-    return render(request, "calificaciones/listar_calificaciones.html", context)
+    return render(request, "calificaciones/listar.html", context)
 
 
 @login_required
@@ -1390,23 +1434,56 @@ def carga_masiva(request):
                             },
                         )
 
-                        # Crear calificación
-                        CalificacionTributaria.objects.create(
-                            instrumento=instrumento,
-                            usuario_creador=request.user,
-                            monto=(
-                                Decimal(str(registro["monto"])) if registro.get("monto") else None
-                            ),
-                            factor=(
-                                Decimal(str(registro["factor"])) if registro.get("factor") else None
-                            ),
-                            metodo_ingreso=registro.get("metodo_ingreso", "MONTO"),
-                            numero_dj=registro.get("numero_dj", ""),
-                            fecha_informe=registro["fecha_informe"],
-                            observaciones=registro.get("observaciones", ""),
-                        )
+                        # Preparar datos de calificación con mapeo dinámico de factores
+                        calificacion_data = {
+                            'instrumento': instrumento,
+                            'usuario_creador': request.user,
+                            'monto': Decimal(str(registro["monto"])) if registro.get("monto") else None,
+                            'factor': Decimal(str(registro["factor"])) if registro.get("factor") else None,
+                            'metodo_ingreso': registro.get("metodo_ingreso", "MONTO"),
+                            'numero_dj': registro.get("numero_dj", ""),
+                            'fecha_informe': registro["fecha_informe"],
+                            'observaciones': registro.get("observaciones", ""),
+                            # Campos metadata administrativos (TASK-004 - HDU_Inacap.xlsx)
+                            'secuencia': int(registro["secuencia"]) if registro.get("secuencia") else 0,
+                            'numero_dividendo': int(registro["numero_dividendo"]) if registro.get("numero_dividendo") else 0,
+                            'tipo_sociedad': registro.get("tipo_sociedad", None),
+                            'valor_historico': Decimal(str(registro["valor_historico"])) if registro.get("valor_historico") else Decimal('0'),
+                            'mercado': registro.get("mercado", None),
+                            'ejercicio': int(registro["ejercicio"]) if registro.get("ejercicio") else 0,
+                        }
+                        
+                        # Mapear dinámicamente todos los factores (8-37) desde el archivo
+                        for factor_num in range(8, 38):
+                            factor_key = f'factor_{factor_num}'
+                            if factor_key in registro and registro[factor_key]:
+                                try:
+                                    calificacion_data[factor_key] = Decimal(str(registro[factor_key]))
+                                except (ValueError, TypeError):
+                                    # Si el valor no es válido, dejar en None (default=0 en modelo)
+                                    calificacion_data[factor_key] = None
+                        
+                        # Crear calificación con todos los datos
+                        CalificacionTributaria.objects.create(**calificacion_data)
 
                         exitosos += 1
+                    except ValidationError as e:
+                        # Captura errores de validación del modelo (ej: suma de factores > 1)
+                        fallidos += 1
+                        error_msg = e.message if hasattr(e, 'message') else str(e)
+                        errores.append(f"Fila {i}: {error_msg}")
+                        logger.warning(f"Bulk upload row {i} validation error: {e}")
+                    except IntegrityError as e:
+                        # Captura errores de integridad de base de datos
+                        fallidos += 1
+                        error_str = str(e).lower()
+                        # Detectar si es un error de duplicado por unique_together
+                        if 'unique' in error_str or 'duplicate' in error_str or 'already exists' in error_str:
+                            errores.append(f"Fila {i}: Error - Este registro ya existe en el sistema (Duplicado).")
+                            logger.warning(f"Bulk upload row {i} duplicate record: {e}")
+                        else:
+                            errores.append(f"Fila {i}: Error de integridad de datos - {str(e)}")
+                            logger.warning(f"Bulk upload row {i} integrity error: {e}")
                     except KeyError as e:
                         fallidos += 1
                         errores.append(f"Fila {i}: Campo requerido faltante - {str(e)}")
@@ -1416,6 +1493,7 @@ def carga_masiva(request):
                         errores.append(f"Fila {i}: Valor inválido - {str(e)}")
                         logger.warning(f"Bulk upload row {i} invalid value: {e}")
                     except Exception as e:
+                        # Captura cualquier otro error inesperado
                         fallidos += 1
                         errores.append(f"Fila {i}: {str(e)}")
                         logger.error(f"Bulk upload row {i} unexpected error: {e}", exc_info=True)
@@ -1490,7 +1568,13 @@ def carga_masiva(request):
     else:
         form = CargaMasivaForm()
 
-    return render(request, "calificaciones/carga_masiva.html", {"form": form})
+    # Obtener historial de cargas recientes para mostrar en la plantilla
+    cargas_anteriores = CargaMasiva.objects.filter(usuario=request.user).order_by('-fecha_carga')[:10]
+
+    return render(request, "calificaciones/carga_masiva.html", {
+        "form": form,
+        "cargas_anteriores": cargas_anteriores
+    })
 
 
 @login_required
@@ -2071,17 +2155,13 @@ def calcular_factores_ajax(request):
     """
     API endpoint para calcular automáticamente factores proporcionales desde montos vía AJAX.
 
-    Recibe 5 montos (factor_8 a factor_12), calcula la suma total y determina el factor
-    proporcional de cada uno como: factor_i = monto_i / suma_total. Valida que la suma
-    de factores sea ≈ 1.0 (con tolerancia de 0.00000001).
+    Recibe 30 montos (monto_8 a monto_37), calcula la suma total y determina el factor
+    proporcional de cada uno como: factor_i = monto_i / suma_total. Valida REGLA B
+    (suma de factores 8-16 <= 1.0).
 
     Parámetros:
-        request (HttpRequest): GET request con parámetros:
-            - monto_8 (str, optional): Monto para factor 8. Por defecto: "0".
-            - monto_9 (str, optional): Monto para factor 9. Por defecto: "0".
-            - monto_10 (str, optional): Monto para factor 10. Por defecto: "0".
-            - monto_11 (str, optional): Monto para factor 11. Por defecto: "0".
-            - monto_12 (str, optional): Monto para factor 12. Por defecto: "0".
+        request (HttpRequest): GET/POST request con parámetros:
+            - monto_8 a monto_37 (str, optional): Montos para cada factor. Por defecto: "0".
 
     Retorna:
         JsonResponse: JSON con estructura:
@@ -2091,9 +2171,10 @@ def calcular_factores_ajax(request):
                     "factor_8": "0.25000000",
                     "factor_9": "0.25000000",
                     ...
+                    "factor_37": "0.00000000"
                 },
                 "suma_montos": "1000.00",
-                "suma_factores": "1.00000000",
+                "suma_factores_criticos": "0.95000000",
                 "es_valido": true,
                 "mensaje_error": "",
                 "nombres": {"factor_8": "Factor 8", ...}
@@ -2102,10 +2183,11 @@ def calcular_factores_ajax(request):
         JsonResponse (error): Si falla, retorna {"success": false, "error": mensaje} con status 400.
 
     Notas:
+        - Soporta 30 factores completos (8-37)
         - Precisión: 8 decimales para factores
+        - Valida REGLA B: suma factores 8-16 <= 1
         - Conversión automática de valores inválidos a Decimal("0")
-        - Maneja ValueError y TypeError en conversión de montos
-        - Utilizado por formulario de calificación de factores simple
+        - Utilizado por formulario de calificación completo
         - No requiere autenticación (público)
     """
     try:
@@ -2113,13 +2195,14 @@ def calcular_factores_ajax(request):
             f"Factor calculation API called - User: {request.user.username if request.user.is_authenticated else 'Anonymous'}"
         )
 
-        montos = {
-            "monto_8": request.GET.get("monto_8", "0"),
-            "monto_9": request.GET.get("monto_9", "0"),
-            "monto_10": request.GET.get("monto_10", "0"),
-            "monto_11": request.GET.get("monto_11", "0"),
-            "monto_12": request.GET.get("monto_12", "0"),
-        }
+        # Soportar tanto GET como POST
+        params = request.GET if request.method == 'GET' else request.POST
+
+        # Extraer TODOS los montos (8-37)
+        montos = {}
+        for i in range(8, 38):
+            monto_key = f"monto_{i}"
+            montos[monto_key] = params.get(monto_key, "0")
 
         # Convertir a Decimal
         montos_decimal = {}
@@ -2130,36 +2213,51 @@ def calcular_factores_ajax(request):
                 logger.warning(f"Invalid decimal value for {key}: {value}, Error: {e}")
                 montos_decimal[key] = Decimal("0")
 
-        # Calcular suma total
+        # Calcular suma total de TODOS los montos
         suma_montos = sum(montos_decimal.values())
 
-        # Calcular factores
+        # Calcular factores proporcionalmente
         factores = {}
         for key, monto in montos_decimal.items():
             factor_key = key.replace("monto", "factor")
             if suma_montos > 0:
-                factores[factor_key] = str(round(monto / suma_montos, 8))
+                factor_value = monto / suma_montos
+                # Redondear a 8 decimales
+                factores[factor_key] = str(factor_value.quantize(Decimal("0.00000001")))
             else:
                 factores[factor_key] = "0.00000000"
 
-        # Calcular suma de factores
-        suma_factores = sum(Decimal(f) for f in factores.values())
+        # Calcular suma de factores CRÍTICOS (8-16) para REGLA B
+        suma_factores_criticos = sum([
+            Decimal(factores[f"factor_{i}"]) for i in range(8, 17)
+        ])
+
+        # Validar REGLA B
+        es_valido = suma_factores_criticos <= Decimal("1.0")
+        mensaje_error = ""
+        if not es_valido:
+            mensaje_error = (
+                f"La suma de factores 8-16 es {suma_factores_criticos:.8f}, "
+                f"debe ser ≤ 1.00000000 (REGLA B)"
+            )
+
+        # Generar nombres de factores
+        nombres = {
+            'factor_8': 'Con crédito por IDPC generados a contar del 01.01.2017',
+            'factor_9': 'Con crédito por IDPC generados hasta el 31.12.2016',
+        }
+        for i in range(10, 38):
+            nombres[f'factor_{i}'] = f'Factor {i}'
 
         return JsonResponse(
             {
                 "success": True,
                 "factores": factores,
                 "suma_montos": str(suma_montos),
-                "suma_factores": str(suma_factores),
-                "es_valido": abs(suma_factores - Decimal("1.0")) < Decimal("0.00000001"),
-                "mensaje_error": "",
-                "nombres": {
-                    "factor_8": "Factor 8",
-                    "factor_9": "Factor 9",
-                    "factor_10": "Factor 10",
-                    "factor_11": "Factor 11",
-                    "factor_12": "Factor 12",
-                },
+                "suma_factores_criticos": str(suma_factores_criticos),
+                "es_valido": es_valido,
+                "mensaje_error": mensaje_error,
+                "nombres": nombres,
             }
         )
 

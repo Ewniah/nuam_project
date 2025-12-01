@@ -1,30 +1,39 @@
+/* NUAM Corporate Design System - Phase 3 */
+/* Global Font: Roboto */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
 :root {
-    --nuam-primary: #00b2ff; /* Cyan NUAM */
-    --nuam-secondary: #23282f; /* Dark Navy */
-    --nuam-text: #23282f;
+    --nuam-navy: #002A4E;
+    --nuam-cyan: #00B5E2;
+    --nuam-primary: #00B5E2; /* Cyan NUAM */
+    --nuam-secondary: #002A4E; /* Navy Blue */
+    --nuam-text: #333333;
     --nuam-bg: #f8f9fa;
     --nuam-white: #ffffff;
     --nuam-gray: #6c757d;
+    --nuam-light-gray: #F5F7FA;
 }
 
 body {
-    font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: var(--nuam-text);
     background-color: var(--nuam-bg);
 }
 
 /* Navbar Overrides */
 .navbar-nuam {
-    background-color: var(--nuam-secondary);
+    background-color: var(--nuam-navy);
     padding: 1rem 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-nuam .navbar-brand {
     color: var(--nuam-white);
-    font-weight: 700;
+    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 10px;
+    font-size: 1.25rem;
 }
 
 .navbar-nuam .navbar-brand img {
@@ -33,44 +42,60 @@ body {
 }
 
 .navbar-nuam .nav-link {
-    color: rgba(255, 255, 255, 0.8) !important;
-    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-weight: 400;
     transition: color 0.3s ease;
+    padding: 0.5rem 1rem;
 }
 
 .navbar-nuam .nav-link:hover,
 .navbar-nuam .nav-link.active {
-    color: var(--nuam-primary) !important;
+    color: var(--nuam-white) !important;
 }
 
 /* Buttons */
 .btn-nuam-primary {
-    background-color: var(--nuam-primary);
-    border-color: var(--nuam-primary);
+    background-color: var(--nuam-cyan);
+    border-color: var(--nuam-cyan);
     color: var(--nuam-white);
-    font-weight: 600;
-    border-radius: 4px;
+    font-weight: 500;
+    border-radius: 6px;
     padding: 0.5rem 1.5rem;
     transition: all 0.3s ease;
 }
 
 .btn-nuam-primary:hover {
-    background-color: #0099db;
-    border-color: #0099db;
+    background-color: #0099C4;
+    border-color: #0099C4;
     color: var(--nuam-white);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 181, 226, 0.3);
 }
 
 .btn-nuam-secondary {
-    background-color: var(--nuam-secondary);
-    border-color: var(--nuam-secondary);
+    background-color: var(--nuam-navy);
+    border-color: var(--nuam-navy);
     color: var(--nuam-white);
+    font-weight: 500;
 }
 
 .btn-nuam-secondary:hover {
-    background-color: #1a1e23;
-    border-color: #1a1e23;
+    background-color: #003d6e;
+    border-color: #003d6e;
     color: var(--nuam-white);
+}
+
+/* Hero Buttons - Uniform Size */
+.btn-nuam-hero {
+    min-width: 220px;
+    padding: 0.875rem 2rem;
+    border-radius: 30px;
+    font-weight: 500;
+    font-size: 1.05rem;
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
 }
 
 /* Cards */
@@ -90,42 +115,50 @@ body {
 .card-header-nuam {
     background-color: var(--nuam-white);
     border-bottom: 1px solid rgba(0,0,0,0.05);
-    font-weight: 700;
-    color: var(--nuam-secondary);
+    font-weight: 600;
+    color: var(--nuam-navy);
     padding: 1.25rem;
 }
 
 /* Footer */
 .footer-nuam {
-    background-color: var(--nuam-secondary);
+    background-color: var(--nuam-navy);
     color: var(--nuam-white);
     padding: 3rem 0;
     margin-top: auto;
 }
 
 .footer-nuam a {
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     transition: color 0.3s ease;
 }
 
 .footer-nuam a:hover {
-    color: var(--nuam-primary);
+    color: var(--nuam-cyan);
 }
 
 /* Utilities */
 .text-nuam-primary {
-    color: var(--nuam-primary) !important;
+    color: var(--nuam-cyan) !important;
+}
+
+.text-nuam-cyan {
+    color: var(--nuam-cyan) !important;
 }
 
 .text-nuam-secondary {
-    color: var(--nuam-secondary) !important;
+    color: var(--nuam-navy) !important;
 }
 
 .bg-nuam-primary {
-    background-color: var(--nuam-primary) !important;
+    background-color: var(--nuam-cyan) !important;
 }
 
 .bg-nuam-secondary {
-    background-color: var(--nuam-secondary) !important;
+    background-color: var(--nuam-navy) !important;
+}
+
+.bg-nuam-light {
+    background-color: var(--nuam-light-gray) !important;
 }

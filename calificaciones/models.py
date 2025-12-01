@@ -72,60 +72,92 @@ class CalificacionTributaria(models.Model):
     numero_dj = models.CharField(max_length=10, blank=True, help_text="DJ 1949 o 1922")
     
     # ==========================================
-    # NUEVOS CAMPOS: 5 Factores para Demo (Feedback Profesor)
+    # CAMPOS METADATA ADMINISTRATIVOS
+    # Según especificación "3.1 Archivo de carga" (HDU_Inacap.xlsx)
+    # ==========================================
+    secuencia = models.IntegerField(
+        default=0, 
+        null=True, 
+        blank=True,
+        help_text="Número de secuencia del registro (10 dígitos)"
+    )
+    numero_dividendo = models.IntegerField(
+        default=0, 
+        null=True, 
+        blank=True,
+        help_text="Número de dividendo asociado (10 dígitos)"
+    )
+    tipo_sociedad = models.CharField(
+        max_length=1,
+        choices=[
+            ('A', 'Abierta'),
+            ('C', 'Cerrada'),
+        ],
+        null=True,
+        blank=True,
+        help_text="Tipo de sociedad: A=Abierta, C=Cerrada"
+    )
+    valor_historico = models.DecimalField(
+        max_digits=18,
+        decimal_places=4,
+        default=0,
+        null=True,
+        blank=True,
+        help_text="Valor histórico del instrumento (10 dígitos)"
+    )
+    mercado = models.CharField(
+        max_length=3,
+        null=True,
+        blank=True,
+        help_text="Código de mercado (ej: ACN, 3 chars)"
+    )
+    ejercicio = models.IntegerField(
+        default=0,
+        null=True,
+        blank=True,
+        help_text="Año de ejercicio tributario (4 dígitos)"
+    )
+    
+    # ==========================================
+    # FACTORES TRIBUTARIOS COMPLETOS (8-37)
+    # Según DJ 1949 y DJ 1922 del SII
     # ==========================================
     
-    # Factor 8: Con crédito por IDPC generados a contar del 01.01.2017
-    monto_8 = models.DecimalField(
-        max_digits=18, decimal_places=4, null=True, blank=True,
-        verbose_name="Monto Factor 8",
-        help_text="Con crédito por IDPC generados a contar del 01.01.2017"
-    )
-    factor_8 = models.DecimalField(
-        max_digits=10, decimal_places=8, null=True, blank=True,
-        verbose_name="Factor 8"
-    )
+    # Factores 8-16: Líneas del formulario DJ
+    factor_8 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 8")
+    factor_9 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 9")
+    factor_10 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 10")
+    factor_11 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 11")
+    factor_12 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 12")
+    factor_13 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 13")
+    factor_14 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 14")
+    factor_15 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 15")
+    factor_16 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 16")
     
-    # Factor 9: Con crédito por IDPC generados hasta el 31.12.2016
-    monto_9 = models.DecimalField(
-        max_digits=18, decimal_places=4, null=True, blank=True,
-        verbose_name="Monto Factor 9",
-        help_text="Con crédito por IDPC generados hasta el 31.12.2016"
-    )
-    factor_9 = models.DecimalField(
-        max_digits=10, decimal_places=8, null=True, blank=True,
-        verbose_name="Factor 9"
-    )
+    # Factores 17-25: Líneas adicionales DJ
+    factor_17 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 17")
+    factor_18 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 18")
+    factor_19 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 19")
+    factor_20 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 20")
+    factor_21 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 21")
+    factor_22 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 22")
+    factor_23 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 23")
+    factor_24 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 24")
+    factor_25 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 25")
     
-    # Factor 10
-    monto_10 = models.DecimalField(
-        max_digits=18, decimal_places=4, null=True, blank=True,
-        verbose_name="Monto Factor 10"
-    )
-    factor_10 = models.DecimalField(
-        max_digits=10, decimal_places=8, null=True, blank=True,
-        verbose_name="Factor 10"
-    )
-    
-    # Factor 11
-    monto_11 = models.DecimalField(
-        max_digits=18, decimal_places=4, null=True, blank=True,
-        verbose_name="Monto Factor 11"
-    )
-    factor_11 = models.DecimalField(
-        max_digits=10, decimal_places=8, null=True, blank=True,
-        verbose_name="Factor 11"
-    )
-    
-    # Factor 12
-    monto_12 = models.DecimalField(
-        max_digits=18, decimal_places=4, null=True, blank=True,
-        verbose_name="Monto Factor 12"
-    )
-    factor_12 = models.DecimalField(
-        max_digits=10, decimal_places=8, null=True, blank=True,
-        verbose_name="Factor 12"
-    )
+    # Factores 26-37: Líneas finales DJ
+    factor_26 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 26")
+    factor_27 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 27")
+    factor_28 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 28")
+    factor_29 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 29")
+    factor_30 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 30")
+    factor_31 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 31")
+    factor_32 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 32")
+    factor_33 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 33")
+    factor_34 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 34")
+    factor_35 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 35")
+    factor_36 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 36")
+    factor_37 = models.DecimalField(max_digits=10, decimal_places=8, default=0, null=True, blank=True, verbose_name="Factor 37")
 
     # Fechas y estado
     fecha_informe = models.DateField()
@@ -133,28 +165,40 @@ class CalificacionTributaria(models.Model):
     fecha_modificacion = models.DateTimeField(auto_now=True)
     activo = models.BooleanField(default=True)  # Eliminación lógica
 
-    observaciones = models.TextField(blank=True)
+    observaciones = models.TextField(blank=True, null=True)
     
     def clean(self):
         """
-        Validación personalizada: suma de factores 8-12 debe ser ≤ 1
-        (Según feedback del profesor)
+        Validación estricta de integridad de datos tributarios.
+        
+        REGLA A: Cada factor debe estar entre 0 y 1 (rango válido)
+        REGLA B: La suma de factores 8-16 no puede superar 1.0
+        
+        Raises:
+            ValidationError: Si alguna regla es violada
         """
         from django.core.exceptions import ValidationError
         
-        # Calcular suma de factores 8-12
-        suma_factores = sum([
-            self.factor_8 or Decimal('0'),
-            self.factor_9 or Decimal('0'),
-            self.factor_10 or Decimal('0'),
-            self.factor_11 or Decimal('0'),
-            self.factor_12 or Decimal('0'),
+        # REGLA A: Validar rango individual de cada factor (0 <= factor <= 1)
+        for i in range(8, 38):  # Factores 8 a 37
+            field_name = f'factor_{i}'
+            factor_value = getattr(self, field_name, None)
+            
+            if factor_value is not None:
+                if factor_value < Decimal('0') or factor_value > Decimal('1'):
+                    raise ValidationError(
+                        f'El {field_name} debe estar entre 0 y 1. Valor recibido: {factor_value}'
+                    )
+        
+        # REGLA B: Validar suma de factores 8-16 (límite crítico)
+        suma_factores_criticos = sum([
+            getattr(self, f'factor_{i}', None) or Decimal('0')
+            for i in range(8, 17)  # Factores 8 a 16
         ])
         
-        if suma_factores > Decimal('1'):
+        if suma_factores_criticos > Decimal('1'):
             raise ValidationError(
-                f'La suma de los factores 8-12 no puede ser mayor que 1. '
-                f'Suma actual: {suma_factores:.8f}'
+                'La suma de los factores 8 al 16 no puede superar 1.'
             )
 
     def calcular_factor_desde_monto(self):
@@ -163,33 +207,6 @@ class CalificacionTributaria(models.Model):
             self.factor = self.monto / Decimal('1000000')
             return self.factor
         return None
-    
-    def calcular_factores_demo(self):
-        """
-        Calcula los 5 factores de demo desde sus montos.
-        Fórmula: Factor = Monto / Suma(Montos 8-12)
-        """
-        # Calcular suma total de montos 8-12
-        suma_montos = sum([
-            self.monto_8 or Decimal('0'),
-            self.monto_9 or Decimal('0'),
-            self.monto_10 or Decimal('0'),
-            self.monto_11 or Decimal('0'),
-            self.monto_12 or Decimal('0'),
-        ])
-        
-        if suma_montos > 0:
-            # Calcular cada factor
-            if self.monto_8:
-                self.factor_8 = (self.monto_8 / suma_montos).quantize(Decimal('0.00000001'))
-            if self.monto_9:
-                self.factor_9 = (self.monto_9 / suma_montos).quantize(Decimal('0.00000001'))
-            if self.monto_10:
-                self.factor_10 = (self.monto_10 / suma_montos).quantize(Decimal('0.00000001'))
-            if self.monto_11:
-                self.factor_11 = (self.monto_11 / suma_montos).quantize(Decimal('0.00000001'))
-            if self.monto_12:
-                self.factor_12 = (self.monto_12 / suma_montos).quantize(Decimal('0.00000001'))
 
     def calcular_monto_desde_factor(self):
         """Calcula monto desde factor: Monto = Factor * 1.000.000"""
@@ -199,25 +216,22 @@ class CalificacionTributaria(models.Model):
         return None
 
     def save(self, *args, **kwargs):
-        """Calcula automáticamente el valor faltante según método de ingreso"""
-        # Cálculo legacy
+        """
+        Guarda el registro con validación estricta de integridad de datos.
+        
+        Proceso:
+            1. Cálculos legacy (monto ↔ factor)
+            2. Validación completa via full_clean()
+            3. Persistencia en base de datos
+        """
+        # Cálculo legacy de compatibilidad
         if self.metodo_ingreso == 'MONTO' and self.monto:
             self.calcular_factor_desde_monto()
         elif self.metodo_ingreso == 'FACTOR' and self.factor:
             self.calcular_monto_desde_factor()
         
-        # Calcular factores de demo si hay montos
-        if any([self.monto_8, self.monto_9, self.monto_10, self.monto_11, self.monto_12]):
-            self.calcular_factores_demo()
-            
-            # Actualizar monto total (legacy) para que aparezca en listados
-            self.monto = sum([
-                self.monto_8 or Decimal('0'),
-                self.monto_9 or Decimal('0'),
-                self.monto_10 or Decimal('0'),
-                self.monto_11 or Decimal('0'),
-                self.monto_12 or Decimal('0'),
-            ])
+        # Ejecutar todas las validaciones antes de guardar
+        self.full_clean()
         
         super().save(*args, **kwargs)
 
@@ -227,6 +241,7 @@ class CalificacionTributaria(models.Model):
     class Meta:
         verbose_name_plural = "Calificaciones Tributarias"
         ordering = ['-fecha_creacion']
+        unique_together = ['instrumento', 'fecha_informe', 'numero_dj']
         indexes = [
             models.Index(fields=['fecha_informe']),
             models.Index(fields=['numero_dj']),

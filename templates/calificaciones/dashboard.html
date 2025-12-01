@@ -8,15 +8,15 @@
 <div class="dashboard-header mb-4">
     <div class="row align-items-center">
         <div class="col-md-12">
-            <div class="welcome-banner border-0 shadow-sm p-4 rounded" 
-                 style="background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);">
+            <div class="welcome-banner border-0 shadow-sm p-4 rounded bg-white" 
+                 style="border-left: 5px solid #F37021;">
                 <div class="d-flex align-items-center">
                     <div class="me-3" style="font-size: 2.5rem;">{{ icono_saludo }}</div>
                     <div class="flex-grow-1">
-                        <h4 class="text-white mb-1">
+                        <h4 class="mb-1" style="color: #002A4E;">
                             {{ saludo }}, {{ user.get_full_name|default:user.username }}!
                         </h4>
-                        <p class="text-white-50 mb-0">
+                        <p class="text-muted mb-0">
                             {% if user.is_superuser %}
                                 <i class="bi bi-shield-fill"></i> Administrador del Sistema
                             {% elif user.perfilusuario.rol %}
@@ -28,17 +28,17 @@
                     <div class="text-end">
                         <div class="btn-group" role="group">
                             {% if user.is_superuser or user.is_staff %}
-                            <a href="{% url 'crear_calificacion' %}" class="btn btn-light">
+                            <a href="{% url 'crear_calificacion' %}" class="btn" style="background-color: #F37021; color: white; border: none;">
                                 <i class="bi bi-plus-circle"></i> Nueva
                             </a>
-                            <a href="{% url 'carga_masiva' %}" class="btn btn-outline-light">
+                            <a href="{% url 'carga_masiva' %}" class="btn btn-outline-secondary">
                                 <i class="bi bi-upload"></i> Importar
                             </a>
                             {% elif user.perfilusuario.rol.nombre_rol == 'Analista Financiero' %}
-                            <a href="{% url 'crear_calificacion' %}" class="btn btn-light">
+                            <a href="{% url 'crear_calificacion' %}" class="btn" style="background-color: #F37021; color: white; border: none;">
                                 <i class="bi bi-plus-circle"></i> Nueva
                             </a>
-                            <a href="{% url 'carga_masiva' %}" class="btn btn-outline-light">
+                            <a href="{% url 'carga_masiva' %}" class="btn btn-outline-secondary">
                                 <i class="bi bi-upload"></i> Importar
                             </a>
                             {% endif %}
@@ -58,17 +58,17 @@
                     <div>
                         <p class="text-muted mb-1 small text-uppercase">Total Calificaciones</p>
                         <h3 class="mb-0 fw-bold">{{ total_calificaciones }}</h3>
-                        <small class="text-success">
+                        <small style="color: #F37021;">
                             <i class="bi bi-arrow-up"></i> Registros activos
                         </small>
                     </div>
-                    <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                    <div class="stats-icon" style="background-color: rgba(243, 112, 33, 0.1); color: #F37021; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                         <i class="bi bi-file-earmark-text"></i>
                     </div>
                 </div>
             </div>
             <div class="card-footer bg-transparent border-top-0 pt-0 pb-3">
-                <a href="{% url 'listar_calificaciones' %}" class="text-decoration-none small">
+                <a href="{% url 'listar_calificaciones' %}" class="text-decoration-none small" style="color: #F37021;">
                     Ver detalles <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
@@ -82,17 +82,17 @@
                     <div>
                         <p class="text-muted mb-1 small text-uppercase">Instrumentos</p>
                         <h3 class="mb-0 fw-bold">{{ total_instrumentos }}</h3>
-                        <small class="text-info">
+                        <small class="text-muted">
                             <i class="bi bi-graph-up"></i> Tipos disponibles
                         </small>
                     </div>
-                    <div class="stats-icon bg-success bg-opacity-10 text-success">
+                    <div class="stats-icon" style="background-color: rgba(243, 112, 33, 0.1); color: #F37021; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                         <i class="bi bi-graph-up-arrow"></i>
                     </div>
                 </div>
             </div>
             <div class="card-footer bg-transparent border-top-0 pt-0 pb-3">
-                <a href="{% url 'listar_instrumentos' %}" class="text-decoration-none small">
+                <a href="{% url 'listar_instrumentos' %}" class="text-decoration-none small" style="color: #F37021;">
                     Ver detalles <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
@@ -106,17 +106,17 @@
                     <div>
                         <p class="text-muted mb-1 small text-uppercase">Usuarios Activos</p>
                         <h3 class="mb-0 fw-bold">{{ total_usuarios }}</h3>
-                        <small class="text-primary">
+                        <small class="text-muted">
                             <i class="bi bi-people"></i> En el sistema
                         </small>
                     </div>
-                    <div class="stats-icon bg-info bg-opacity-10 text-info">
+                    <div class="stats-icon" style="background-color: rgba(243, 112, 33, 0.1); color: #F37021; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                         <i class="bi bi-people-fill"></i>
                     </div>
                 </div>
             </div>
             <div class="card-footer bg-transparent border-top-0 pt-0 pb-3">
-                <a href="/admin/auth/user/" class="text-decoration-none small">
+                <a href="/admin/auth/user/" class="text-decoration-none small" style="color: #F37021;">
                     Gestionar <i class="bi bi-arrow-right"></i>
                 </a>
             </div>
@@ -130,11 +130,11 @@
                     <div>
                         <p class="text-muted mb-1 small text-uppercase">Últimos 30 Días</p>
                         <h3 class="mb-0 fw-bold">{{ calificaciones_recientes_30d }}</h3>
-                        <small class="text-warning">
+                        <small style="color: #F37021;">
                             <i class="bi bi-calendar-check"></i> Nuevas calificaciones
                         </small>
                     </div>
-                    <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                    <div class="stats-icon" style="background-color: rgba(243, 112, 33, 0.1); color: #F37021; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                         <i class="bi bi-calendar3-range"></i>
                     </div>
                 </div>

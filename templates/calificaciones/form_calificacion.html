@@ -1,304 +1,919 @@
 {% extends 'base.html' %}
-{% load formatos %}
+{% load static %}
 
-{% block title %}{{ titulo }} - NUAM Exchange{% endblock %}
+{% block title %}{{ form.instance.pk|yesno:"Editar,Nueva" }} Calificación Tributaria - NUAM{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== NUAM WHITE/ORANGE THEME ===== */
+    :root {
+        --nuam-orange: #F37021;
+        --nuam-navy: #002A4E;
+        --nuam-light-gray: #F8F9FA;
+        --nuam-border: #DEE2E6;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, var(--nuam-navy) 0%, #003d70 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 42, 78, 0.15);
+    }
+    
+    .section-card {
+        background: white;
+        border: 1px solid var(--nuam-border);
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .section-header {
+        background: var(--nuam-light-gray);
+        border-bottom: 3px solid var(--nuam-orange);
+        padding: 1rem 1.5rem;
+    }
+    
+    .section-header h5 {
+        margin: 0;
+        color: var(--nuam-navy);
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .section-header .section-number {
+        display: inline-block;
+        background: var(--nuam-orange);
+        color: white;
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+        text-align: center;
+        border-radius: 50%;
+        margin-right: 0.75rem;
+        font-weight: 700;
+    }
+    
+    .section-body {
+        padding: 1.5rem;
+    }
+    
+    .btn-nuam {
+        background: var(--nuam-orange);
+        border: none;
+        color: white;
+        padding: 0.625rem 1.5rem;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-nuam:hover {
+        background: #d96419;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(243, 112, 33, 0.3);
+    }
+    
+    .btn-nuam:active {
+        transform: translateY(0);
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-label.required::after {
+        content: " *";
+        color: #dc3545;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--nuam-orange);
+        box-shadow: 0 0 0 0.2rem rgba(243, 112, 33, 0.25);
+    }
+    
+    .toggle-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .toggle-buttons .btn-check:checked + .btn {
+        background: var(--nuam-orange);
+        border-color: var(--nuam-orange);
+        color: white;
+    }
+    
+    .calculator-panel {
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .calculator-panel.hidden {
+        display: none;
+    }
+    
+    .monto-input-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .monto-input-item label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    
+    .factor-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1rem;
+    }
+    
+    .factor-item {
+        position: relative;
+    }
+    
+    .factor-item label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        color: #495057;
+    }
+    
+    .factor-item input {
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+    }
+    
+    .critical-factors {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border: 2px solid #2196f3;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .critical-factors h6 {
+        color: #1565c0;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .secondary-factors {
+        padding: 1.5rem;
+        background: #fafafa;
+        border-radius: 8px;
+    }
+    
+    .validation-warning {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .validation-warning i {
+        color: #ff9800;
+    }
+    
+    .suma-display {
+        display: inline-block;
+        background: white;
+        border: 2px solid #dee2e6;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .suma-display.valid {
+        border-color: #28a745;
+        color: #28a745;
+    }
+    
+    .suma-display.invalid {
+        border-color: #dc3545;
+        color: #dc3545;
+        animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    .alert-nuam {
+        background: #fff3e0;
+        border-left: 4px solid var(--nuam-orange);
+        color: #e65100;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="page-header mb-4">
-    <div class="row align-items-center">
-        <div class="col">
-            <h2 class="mb-1 fw-bold text-nuam-secondary">
-                <i class="fas fa-file-signature text-nuam-primary me-2"></i>{{ titulo }}
-            </h2>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"
-                            class="text-decoration-none">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'listar_calificaciones' %}"
-                            class="text-decoration-none">Calificaciones</a></li>
-                    <li class="breadcrumb-item active">{{ titulo }}</li>
-                </ol>
-            </nav>
-        </div>
-        <div class="col-auto">
-            <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Volver
+<div class="container-fluid px-4 py-3">
+    
+    <!-- ========================================
+         PAGE HEADER
+         ======================================== -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="fas fa-file-invoice me-2"></i>
+                    {{ form.instance.pk|yesno:"Editar,Nueva" }} Calificación Tributaria
+                </h2>
+                <p class="mb-0 opacity-75">
+                    Complete los datos requeridos para registrar la calificación según DJ 1949 o 1922.
+                </p>
+            </div>
+            <a href="{% url 'listar_calificaciones' %}" class="btn btn-light">
+                <i class="fas fa-arrow-left me-2"></i>Volver al Listado
             </a>
         </div>
     </div>
-</div>
-
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="card card-nuam border-0 shadow-sm">
-            <div class="card-header card-header-nuam bg-white border-bottom py-3">
-                <h5 class="mb-0 fw-bold text-nuam-secondary">
-                    <i class="fas fa-info-circle me-2"></i>Datos de la Calificación
+    
+    <!-- Form Errors -->
+    {% if form.errors %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <h6 class="mb-2">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Errores de Validación:</strong>
+        </h6>
+        <ul class="mb-0">
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <li>{{ field|title }}: {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    
+    <!-- Form -->
+    <form method="post" id="formCalificacion" novalidate>
+        {% csrf_token %}
+        
+        <!-- ========================================
+             SECCIÓN A: DATOS ADMINISTRATIVOS
+             ======================================== -->
+        <div class="section-card">
+            <div class="section-header">
+                <h5>
+                    <span class="section-number">1</span>
+                    <i class="fas fa-building me-2"></i>
+                    Identificación del Evento
                 </h5>
             </div>
-            <div class="card-body p-4">
-                <form method="post" id="formCalificacion">
-                    {% csrf_token %}
-
-                    {% if form.non_field_errors %}
-                    <div class="alert alert-danger shadow-sm border-0">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        {{ form.non_field_errors }}
-                    </div>
-                    {% endif %}
-
-                    <!-- Instrumento Financiero con tooltip -->
-                    <div class="mb-4">
-                        <label for="id_instrumento" class="form-label fw-bold text-muted small">
-                            INSTRUMENTO FINANCIERO *
-                            <i class="fas fa-question-circle text-nuam-primary ms-1" data-bs-toggle="tooltip"
-                                data-bs-placement="right"
-                                title="Seleccione el instrumento financiero al cual desea asignar esta calificación tributaria"></i>
+            <div class="section-body">
+                <div class="row g-3">
+                    <!-- Instrumento -->
+                    <div class="col-md-4">
+                        <label for="{{ form.instrumento.id_for_label }}" class="form-label required">
+                            {{ form.instrumento.label }}
                         </label>
                         {{ form.instrumento }}
                         {% if form.instrumento.errors %}
-                        <div class="text-danger mt-2 small">{{ form.instrumento.errors }}</div>
+                            <div class="text-danger small mt-1">{{ form.instrumento.errors.0 }}</div>
                         {% endif %}
                     </div>
-
-                    <!-- Método de Ingreso con tooltip -->
-                    <div class="mb-4">
-                        <label for="id_metodo_ingreso" class="form-label fw-bold text-muted small">
-                            MÉTODO DE INGRESO *
-                            <i class="fas fa-question-circle text-nuam-primary ms-1" data-bs-toggle="tooltip"
-                                data-bs-placement="right"
-                                title="DJ 1949: Ingrese el monto en CLP y el sistema calculará el factor automáticamente. DJ 1922: Ingrese el factor y el sistema calculará el monto"></i>
+                    
+                    <!-- Fecha Informe -->
+                    <div class="col-md-4">
+                        <label for="{{ form.fecha_informe.id_for_label }}" class="form-label required">
+                            {{ form.fecha_informe.label }}
                         </label>
-                        {{ form.metodo_ingreso }}
-                        {% if form.metodo_ingreso.errors %}
-                        <div class="text-danger mt-2 small">{{ form.metodo_ingreso.errors }}</div>
-                        {% endif %}
+                        {{ form.fecha_informe }}
                     </div>
-
-                    <!-- Monto y Factor con tooltips -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6" id="monto-container">
-                            <label for="id_monto" class="form-label fw-bold text-muted small">
-                                MONTO (CLP)
-                                <i class="fas fa-question-circle text-nuam-primary ms-1" data-bs-toggle="tooltip"
-                                    data-bs-placement="right"
-                                    title="Ingrese el monto en pesos chilenos. El sistema calculará automáticamente el factor dividiendo por 1.000.000"></i>
-                            </label>
-                            {{ form.monto }}
-                            {% if form.monto.errors %}
-                            <div class="text-danger mt-2 small">{{ form.monto.errors }}</div>
-                            {% endif %}
-                            <div class="form-text small">Solo si el método es "Ingreso por Monto"</div>
-                        </div>
-                        <div class="col-md-6" id="factor-container">
-                            <label for="id_factor" class="form-label fw-bold text-muted small">
-                                FACTOR
-                                <i class="fas fa-question-circle text-nuam-primary ms-1" data-bs-toggle="tooltip"
-                                    data-bs-placement="right"
-                                    title="Ingrese el factor tributario. El sistema calculará automáticamente el monto multiplicando por 1.000.000"></i>
-                            </label>
-                            {{ form.factor }}
-                            {% if form.factor.errors %}
-                            <div class="text-danger mt-2 small">{{ form.factor.errors }}</div>
-                            {% endif %}
-                            <div class="form-text small">Solo si el método es "Ingreso por Factor"</div>
-                        </div>
+                    
+                    <!-- Mercado -->
+                    <div class="col-md-4">
+                        <label for="{{ form.mercado.id_for_label }}" class="form-label required">
+                            {{ form.mercado.label }}
+                        </label>
+                        {{ form.mercado }}
                     </div>
-
-                    <!-- DJ y Fecha con tooltips -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label for="id_numero_dj" class="form-label fw-bold text-muted small">
-                                NÚMERO DJ
-                                <i class="fas fa-question-circle text-nuam-primary ms-1" data-bs-toggle="tooltip"
-                                    data-bs-placement="right"
-                                    title="Decreto Ley del SII: 1922 (factor) o 1949 (monto)"></i>
-                            </label>
-                            {{ form.numero_dj }}
-                            {% if form.numero_dj.errors %}
-                            <div class="text-danger mt-2 small">{{ form.numero_dj.errors }}</div>
-                            {% endif %}
-                            <div class="form-text small">Ejemplo: 1922, 1949</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="id_fecha_informe" class="form-label fw-bold text-muted small">
-                                FECHA INFORME *
-                                <i class="fas fa-question-circle text-nuam-primary ms-1" data-bs-toggle="tooltip"
-                                    data-bs-placement="right" title="Fecha del informe de calificación tributaria"></i>
-                            </label>
-                            {{ form.fecha_informe }}
-                            {% if form.fecha_informe.errors %}
-                            <div class="text-danger mt-2 small">{{ form.fecha_informe.errors }}</div>
-                            {% endif %}
-                        </div>
+                    
+                    <!-- Secuencia -->
+                    <div class="col-md-4">
+                        <label for="{{ form.secuencia.id_for_label }}" class="form-label required">
+                            {{ form.secuencia.label }}
+                        </label>
+                        {{ form.secuencia }}
                     </div>
-
+                    
+                    <!-- Número Dividendo -->
+                    <div class="col-md-4">
+                        <label for="{{ form.numero_dividendo.id_for_label }}" class="form-label">
+                            {{ form.numero_dividendo.label }}
+                        </label>
+                        {{ form.numero_dividendo }}
+                    </div>
+                    
+                    <!-- Tipo Sociedad -->
+                    <div class="col-md-4">
+                        <label for="{{ form.tipo_sociedad.id_for_label }}" class="form-label">
+                            {{ form.tipo_sociedad.label }}
+                        </label>
+                        {{ form.tipo_sociedad }}
+                    </div>
+                    
+                    <!-- Valor Histórico -->
+                    <div class="col-md-4">
+                        <label for="{{ form.valor_historico.id_for_label }}" class="form-label">
+                            {{ form.valor_historico.label }}
+                        </label>
+                        {{ form.valor_historico }}
+                    </div>
+                    
+                    <!-- Número DJ -->
+                    <div class="col-md-4">
+                        <label for="{{ form.numero_dj.id_for_label }}" class="form-label">
+                            {{ form.numero_dj.label }}
+                        </label>
+                        {{ form.numero_dj }}
+                    </div>
+                    
+                    <!-- Ejercicio -->
+                    <div class="col-md-4">
+                        <label for="{{ form.ejercicio.id_for_label }}" class="form-label">
+                            {{ form.ejercicio.label }}
+                        </label>
+                        {{ form.ejercicio }}
+                    </div>
+                    
                     <!-- Observaciones -->
-                    <div class="mb-4">
-                        <label for="id_observaciones" class="form-label fw-bold text-muted small">
-                            OBSERVACIONES
+                    <div class="col-12">
+                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                            {{ form.observaciones.label }}
                         </label>
                         {{ form.observaciones }}
-                        {% if form.observaciones.errors %}
-                        <div class="text-danger mt-2 small">{{ form.observaciones.errors }}</div>
-                        {% endif %}
-                        <div class="form-text small">Agregue cualquier comentario o nota relevante</div>
+                        <small class="form-text text-muted">Comentarios adicionales sobre la calificación</small>
                     </div>
-
-                    <!-- Estado Activo -->
-                    <div class="mb-4">
-                        <div class="form-check form-switch">
-                            {{ form.activo }}
-                            <label class="form-check-label fw-bold" for="id_activo">
-                                Registro Activo
-                            </label>
-                        </div>
-                        <div class="form-text small">Desactive si desea archivar temporalmente este registro</div>
-                    </div>
-
-                    <!-- Botones de Acción -->
-                    <hr class="my-4">
-                    <div class="d-flex justify-content-end gap-3">
-                        <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-2"></i>Cancelar
-                        </a>
-                        <button type="submit" class="btn btn-nuam-primary px-4">
-                            <i class="fas fa-save me-2"></i>Guardar Calificación
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
-    </div>
+        
+        <!-- ========================================
+             SECCIÓN B: CALCULADORA
+             ======================================== -->
+        <div class="section-card">
+            <div class="section-header">
+                <h5>
+                    <span class="section-number">2</span>
+                    <i class="fas fa-calculator me-2"></i>
+                    Definición de Valores
+                </h5>
+            </div>
+            <div class="section-body">
+                
+                <!-- Toggle: Modo Ingreso -->
+                <div class="alert alert-nuam">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Seleccione el método de ingreso:</strong> Puede calcular factores automáticamente desde montos o ingresarlos manualmente.
+                </div>
+                
+                <div class="toggle-buttons">
+                    <input type="radio" class="btn-check" name="modo_ingreso" id="modo_monto" value="monto" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="modo_monto">
+                        <i class="fas fa-dollar-sign me-2"></i>
+                        Ingreso por Monto
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="modo_ingreso" id="modo_factor" value="factor" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="modo_factor">
+                        <i class="fas fa-percent me-2"></i>
+                        Ingreso por Factor
+                    </label>
+                </div>
+                
+                <!-- Calculadora de Montos -->
+                <div id="calculadora-panel" class="calculator-panel">
+                    <h6 class="mb-3">
+                        <i class="fas fa-coins me-2 text-warning"></i>
+                        Ingreso de Montos para Cálculo Automático
+                    </h6>
+                    <p class="text-muted small mb-3">
+                        Ingrese los montos correspondientes a cada factor. El sistema calculará automáticamente los factores proporcionales.
+                    </p>
+                    
+                    <!-- Grid de inputs de montos (generados dinámicamente) -->
+                    <div class="monto-input-grid" id="montos-container">
+                        <!-- JavaScript generará los 30 inputs aquí -->
+                    </div>
+                    
+                    <!-- Botones de Acción -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" id="btn-limpiar-montos" class="btn btn-outline-secondary">
+                            <i class="fas fa-eraser me-2"></i>Limpiar Montos
+                        </button>
+                        <button type="button" id="btn-calcular" class="btn btn-nuam">
+                            <i class="fas fa-calculator me-2"></i>
+                            <span id="btn-calcular-text">Calcular Factores</span>
+                            <span id="btn-calcular-spinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+                        </button>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- ========================================
+             SECCIÓN C: GRILLA DE FACTORES
+             ======================================== -->
+        <div class="section-card">
+            <div class="section-header">
+                <h5>
+                    <span class="section-number">3</span>
+                    <i class="fas fa-chart-line me-2"></i>
+                    Detalle de Factores (DJ 1949)
+                </h5>
+            </div>
+            <div class="section-body">
+                
+                <!-- Warning: Validación -->
+                <div class="validation-warning">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>REGLA B de Validación:</strong> La suma de factores 8-16 no debe superar 1.0
+                        </div>
+                        <div class="suma-display" id="suma-criticos">
+                            0.00000000
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- FACTORES CRÍTICOS (8-16) -->
+                <div class="critical-factors">
+                    <h6>
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Factores Críticos (8-16)
+                    </h6>
+                    <div class="factor-grid">
+                        <div class="factor-item">
+                            <label for="id_factor_8" class="form-label">Factor 8</label>
+                            {{ form.factor_8 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_9" class="form-label">Factor 9</label>
+                            {{ form.factor_9 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_10" class="form-label">Factor 10</label>
+                            {{ form.factor_10 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_11" class="form-label">Factor 11</label>
+                            {{ form.factor_11 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_12" class="form-label">Factor 12</label>
+                            {{ form.factor_12 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_13" class="form-label">Factor 13</label>
+                            {{ form.factor_13 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_14" class="form-label">Factor 14</label>
+                            {{ form.factor_14 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_15" class="form-label">Factor 15</label>
+                            {{ form.factor_15 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_16" class="form-label">Factor 16</label>
+                            {{ form.factor_16 }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- FACTORES SECUNDARIOS (17-37) -->
+                <div class="secondary-factors">
+                    <h6 class="mb-3" style="color: #6c757d;">
+                        <i class="fas fa-layer-group me-2"></i>
+                        Factores Secundarios (17-37)
+                    </h6>
+                    <div class="factor-grid">
+                        <div class="factor-item">
+                            <label for="id_factor_17" class="form-label">Factor 17</label>
+                            {{ form.factor_17 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_18" class="form-label">Factor 18</label>
+                            {{ form.factor_18 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_19" class="form-label">Factor 19</label>
+                            {{ form.factor_19 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_20" class="form-label">Factor 20</label>
+                            {{ form.factor_20 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_21" class="form-label">Factor 21</label>
+                            {{ form.factor_21 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_22" class="form-label">Factor 22</label>
+                            {{ form.factor_22 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_23" class="form-label">Factor 23</label>
+                            {{ form.factor_23 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_24" class="form-label">Factor 24</label>
+                            {{ form.factor_24 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_25" class="form-label">Factor 25</label>
+                            {{ form.factor_25 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_26" class="form-label">Factor 26</label>
+                            {{ form.factor_26 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_27" class="form-label">Factor 27</label>
+                            {{ form.factor_27 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_28" class="form-label">Factor 28</label>
+                            {{ form.factor_28 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_29" class="form-label">Factor 29</label>
+                            {{ form.factor_29 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_30" class="form-label">Factor 30</label>
+                            {{ form.factor_30 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_31" class="form-label">Factor 31</label>
+                            {{ form.factor_31 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_32" class="form-label">Factor 32</label>
+                            {{ form.factor_32 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_33" class="form-label">Factor 33</label>
+                            {{ form.factor_33 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_34" class="form-label">Factor 34</label>
+                            {{ form.factor_34 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_35" class="form-label">Factor 35</label>
+                            {{ form.factor_35 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_36" class="form-label">Factor 36</label>
+                            {{ form.factor_36 }}
+                        </div>
+                        <div class="factor-item">
+                            <label for="id_factor_37" class="form-label">Factor 37</label>
+                            {{ form.factor_37 }}
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- ========================================
+             SECCIÓN D: ESTADO Y ACCIONES
+             ======================================== -->
+        <div class="section-card">
+            <div class="section-header">
+                <h5>
+                    <span class="section-number">4</span>
+                    <i class="fas fa-toggle-on me-2"></i>
+                    Estado y Guardar
+                </h5>
+            </div>
+            <div class="section-body">
+                <div class="row g-3">
+                    <!-- Estado Activo -->
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            {{ form.activo }}
+                            <label class="form-check-label" for="{{ form.activo.id_for_label }}">
+                                <i class="fas fa-check-circle me-2 text-success"></i>
+                                {{ form.activo.label }}
+                            </label>
+                            <small class="form-text text-muted d-block mt-1">
+                                Marque esta opción si desea que la calificación esté activa en el sistema
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Botones de Acción -->
+                    <div class="col-12 mt-4">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-nuam btn-lg px-5">
+                                <i class="fas fa-save me-2"></i>Guardar Calificación
+                            </button>
+                            <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </form>
+    
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Inicializar tooltips de Bootstrap
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
-        })
-
-        // Obtener elementos por ID fijo
-        const metodoSelect = document.getElementById('id_metodo_ingreso');
-        const montoInput = document.getElementById('id_monto');
-        const factorInput = document.getElementById('id_factor');
-        const formCalificacion = document.getElementById('formCalificacion');
-        const montoContainer = document.getElementById('monto-container');
-        const factorContainer = document.getElementById('factor-container');
-
-        console.log('Elementos encontrados:', {
-            metodo: !!metodoSelect,
-            monto: !!montoInput,
-            factor: !!factorInput
-        });
-
-        function actualizarCampos() {
-            const metodo = metodoSelect.value;
-            console.log('Método seleccionado:', metodo);
-
-            if (metodo === 'MONTO') {
-                // Habilitar monto
-                montoInput.disabled = false;
-                montoInput.required = true;
-                montoContainer.style.opacity = '1';
-                montoInput.style.backgroundColor = '#fff';
-
-                // Deshabilitar factor
-                factorInput.disabled = true;
-                factorInput.required = false;
-                factorInput.value = '';
-                factorContainer.style.opacity = '0.5';
-                factorInput.style.backgroundColor = '#e9ecef';
-
-            } else if (metodo === 'FACTOR') {
-                // Habilitar factor
-                factorInput.disabled = false;
-                factorInput.required = true;
-                factorContainer.style.opacity = '1';
-                factorInput.style.backgroundColor = '#fff';
-
-                // Deshabilitar monto
-                montoInput.disabled = true;
-                montoInput.required = false;
-                montoInput.value = '';
-                montoContainer.style.opacity = '0.5';
-                montoInput.style.backgroundColor = '#e9ecef';
-
+    // ========================================
+    // CONFIGURACIÓN
+    // ========================================
+    const AJAX_URL = "{% url 'calcular_factores_ajax' %}";
+    const CSRF_TOKEN = "{{ csrf_token }}";
+    const TOTAL_FACTORES = 30;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Inicializando formulario de calificación...');
+        
+        // ========================================
+        // 1. TOGGLE MODO MONTO/FACTOR
+        // ========================================
+        const modoMonto = document.getElementById('modo_monto');
+        const modoFactor = document.getElementById('modo_factor');
+        const calculadoraPanel = document.getElementById('calculadora-panel');
+        
+        function toggleModo() {
+            const esModoMonto = modoMonto.checked;
+            
+            if (esModoMonto) {
+                calculadoraPanel.classList.remove('hidden');
+                // En modo monto, los factores se calculan automáticamente
+                for (let i = 8; i <= 37; i++) {
+                    const factorInput = document.getElementById(`id_factor_${i}`);
+                    if (factorInput) {
+                        factorInput.readOnly = true;
+                        factorInput.style.background = '#e9ecef';
+                    }
+                }
             } else {
-                // Si no hay método seleccionado
-                montoInput.disabled = true;
-                factorInput.disabled = true;
-                montoContainer.style.opacity = '0.5';
-                factorContainer.style.opacity = '0.5';
+                calculadoraPanel.classList.add('hidden');
+                // En modo factor, se pueden editar manualmente
+                for (let i = 8; i <= 37; i++) {
+                    const factorInput = document.getElementById(`id_factor_${i}`);
+                    if (factorInput) {
+                        factorInput.readOnly = false;
+                        factorInput.style.background = 'white';
+                    }
+                }
             }
         }
-
-        // Formatear monto mientras se escribe
-        montoInput.addEventListener('input', function (e) {
-            let value = e.target.value;
-            let numericValue = value.replace(/[^\d]/g, '');
-
-            if (numericValue === '') {
-                e.target.value = '';
-                return;
+        
+        modoMonto.addEventListener('change', toggleModo);
+        modoFactor.addEventListener('change', toggleModo);
+        toggleModo(); // Inicializar
+        
+        // ========================================
+        // 2. GENERAR INPUTS DE MONTOS
+        // ========================================
+        const montosContainer = document.getElementById('montos-container');
+        
+        for (let i = 8; i <= 37; i++) {
+            const div = document.createElement('div');
+            div.className = 'monto-input-item';
+            div.innerHTML = `
+                <label for="monto_${i}">Monto ${i}</label>
+                <input type="number" 
+                       id="monto_${i}" 
+                       class="form-control monto-input" 
+                       step="0.01" 
+                       min="0"
+                       placeholder="0.00">
+            `;
+            montosContainer.appendChild(div);
+        }
+        
+        // ========================================
+        // 3. CALCULAR FACTORES (AJAX)
+        // ========================================
+        const btnCalcular = document.getElementById('btn-calcular');
+        const btnTexto = document.getElementById('btn-calcular-text');
+        const btnSpinner = document.getElementById('btn-calcular-spinner');
+        
+        btnCalcular.addEventListener('click', async function() {
+            console.log('🧮 Calculando factores...');
+            
+            // UI: Mostrar loading
+            btnCalcular.disabled = true;
+            btnTexto.textContent = 'Calculando...';
+            btnSpinner.classList.remove('d-none');
+            
+            // Recopilar montos
+            const formData = new FormData();
+            for (let i = 8; i <= 37; i++) {
+                const montoInput = document.getElementById(`monto_${i}`);
+                formData.append(`monto_${i}`, montoInput.value || '0');
             }
-
-            let number = parseInt(numericValue);
-            e.target.value = number.toLocaleString('es-CL');
-        });
-
-        // Permitir solo números y punto/coma en factor
-        factorInput.addEventListener('input', function (e) {
-            e.target.value = e.target.value.replace(/[^\d.,]/g, '');
-        });
-
-        // Limpiar formato antes de enviar
-        formCalificacion.addEventListener('submit', function (e) {
-            if (metodoSelect.value === 'MONTO' && montoInput.value && !montoInput.disabled) {
-                const montoLimpio = montoInput.value.replace(/\./g, '');
-
-                if (montoLimpio && !isNaN(montoLimpio)) {
-                    let hiddenMonto = document.createElement('input');
-                    hiddenMonto.type = 'hidden';
-                    hiddenMonto.name = 'monto';
-                    hiddenMonto.value = montoLimpio;
-                    formCalificacion.appendChild(hiddenMonto);
-                    montoInput.name = '';
+            
+            try {
+                const response = await fetch(AJAX_URL, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': CSRF_TOKEN
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('✅ Factores calculados:', data);
+                    
+                    // Poblar factores
+                    for (let i = 8; i <= 37; i++) {
+                        const factorInput = document.getElementById(`id_factor_${i}`);
+                        if (factorInput && data.factores[`factor_${i}`]) {
+                            factorInput.value = data.factores[`factor_${i}`];
+                        }
+                    }
+                    
+                    // Actualizar suma de críticos
+                    actualizarSumaCriticos();
+                    
+                    // Mensaje de éxito
+                    mostrarNotificacion('Factores calculados correctamente', 'success');
                 } else {
-                    e.preventDefault();
-                    alert('Por favor ingrese un monto válido');
-                    return false;
+                    console.error('❌ Error en cálculo:', data.error);
+                    mostrarNotificacion(data.error, 'error');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error de red:', error);
+                mostrarNotificacion('Error al comunicarse con el servidor', 'error');
+            } finally {
+                // Restaurar botón
+                btnCalcular.disabled = false;
+                btnTexto.textContent = 'Calcular Factores';
+                btnSpinner.classList.add('d-none');
+            }
+        });
+        
+        // ========================================
+        // 4. LIMPIAR MONTOS
+        // ========================================
+        const btnLimpiar = document.getElementById('btn-limpiar-montos');
+        btnLimpiar.addEventListener('click', function() {
+            for (let i = 8; i <= 37; i++) {
+                const montoInput = document.getElementById(`monto_${i}`);
+                if (montoInput) montoInput.value = '';
+                
+                const factorInput = document.getElementById(`id_factor_${i}`);
+                if (factorInput) factorInput.value = '';
+            }
+            actualizarSumaCriticos();
+            mostrarNotificacion('Montos y factores limpiados', 'info');
+        });
+        
+        // ========================================
+        // 5. SUMA DE FACTORES CRÍTICOS EN TIEMPO REAL
+        // ========================================
+        function actualizarSumaCriticos() {
+            let suma = 0;
+            for (let i = 8; i <= 16; i++) {
+                const factorInput = document.getElementById(`id_factor_${i}`);
+                if (factorInput && factorInput.value) {
+                    suma += parseFloat(factorInput.value) || 0;
                 }
             }
-
-            if (metodoSelect.value === 'FACTOR' && factorInput.value && !factorInput.disabled) {
-                const factorLimpio = factorInput.value.replace(/,/g, '.');
-
-                if (factorLimpio && !isNaN(factorLimpio)) {
-                    let hiddenFactor = document.createElement('input');
-                    hiddenFactor.type = 'hidden';
-                    hiddenFactor.name = 'factor';
-                    hiddenFactor.value = factorLimpio;
-                    formCalificacion.appendChild(hiddenFactor);
-                    factorInput.name = '';
-                } else {
-                    e.preventDefault();
-                    alert('Por favor ingrese un factor válido');
-                    return false;
-                }
+            
+            const sumaDisplay = document.getElementById('suma-criticos');
+            sumaDisplay.textContent = suma.toFixed(8);
+            
+            // Validación visual
+            if (suma > 1.0) {
+                sumaDisplay.classList.add('invalid');
+                sumaDisplay.classList.remove('valid');
+            } else {
+                sumaDisplay.classList.add('valid');
+                sumaDisplay.classList.remove('invalid');
             }
+        }
+        
+        // Escuchar cambios en factores críticos
+        for (let i = 8; i <= 16; i++) {
+            const factorInput = document.getElementById(`id_factor_${i}`);
+            if (factorInput) {
+                factorInput.addEventListener('input', actualizarSumaCriticos);
+            }
+        }
+        
+        // Inicializar suma
+        actualizarSumaCriticos();
+        
+        // ========================================
+        // 6. VALIDACIÓN PRE-SUBMIT
+        // ========================================
+        const form = document.getElementById('formCalificacion');
+        form.addEventListener('submit', function(e) {
+            // Verificar REGLA B
+            let sumaCriticos = 0;
+            for (let i = 8; i <= 16; i++) {
+                const factorInput = document.getElementById(`id_factor_${i}`);
+                sumaCriticos += parseFloat(factorInput.value) || 0;
+            }
+            
+            if (sumaCriticos > 1.0) {
+                e.preventDefault();
+                mostrarNotificacion(
+                    `REGLA B violada: La suma de factores 8-16 es ${sumaCriticos.toFixed(8)}, debe ser ≤ 1.0`,
+                    'error'
+                );
+                return false;
+            }
+            
+            console.log('✅ Validación pasada, enviando formulario...');
         });
-
-        // Ejecutar al cargar
-        actualizarCampos();
-
-        // Ejecutar cuando cambie
-        metodoSelect.addEventListener('change', actualizarCampos);
+        
+        // ========================================
+        // HELPERS
+        // ========================================
+        function mostrarNotificacion(mensaje, tipo) {
+            const colores = {
+                success: '#28a745',
+                error: '#dc3545',
+                info: '#17a2b8'
+            };
+            
+            const iconos = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle'
+            };
+            
+            const notif = document.createElement('div');
+            notif.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                color: ${colores[tipo]};
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                border-left: 4px solid ${colores[tipo]};
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+                max-width: 400px;
+            `;
+            notif.innerHTML = `<i class="fas ${iconos[tipo]} me-2"></i>${mensaje}`;
+            document.body.appendChild(notif);
+            
+            setTimeout(() => {
+                notif.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notif.remove(), 300);
+            }, 3000);
+        }
+        
+        console.log('✅ Formulario inicializado correctamente');
     });
 </script>
+
+<style>
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+    }
+</style>
 {% endblock %}

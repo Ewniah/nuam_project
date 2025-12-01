@@ -1,116 +1,209 @@
-{% extends 'base.html' %}
-{% load static %}
+{% extends "base_public.html" %}
 
-{% block title %}Inicio - NUAM Exchange{% endblock %}
-
-{% block extra_css %}
-<style>
-    .hero-section {
-        background: linear-gradient(135deg, var(--nuam-secondary) 0%, #1a1e23 100%);
-        color: var(--nuam-white);
-        padding: 5rem 0;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .hero-section::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 50%;
-        height: 100%;
-        background: radial-gradient(circle, rgba(0, 178, 255, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
-        pointer-events: none;
-    }
-
-    .feature-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        height: 100%;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        border-color: var(--nuam-primary);
-    }
-
-    .feature-icon {
-        font-size: 2.5rem;
-        color: var(--nuam-primary);
-        margin-bottom: 1.5rem;
-    }
-</style>
-{% endblock %}
+{% block title %}NUAM - Sistema de Gestión de Calificaciones Tributarias{% endblock %}
 
 {% block content %}
+
 <!-- Hero Section -->
-<div class="row mb-5">
-    <div class="col-12">
-        <div class="hero-section rounded-3 p-5">
-            <div class="row align-items-center position-relative" style="z-index: 1;">
-                <div class="col-lg-8">
-                    <h1 class="display-4 fw-bold mb-3">Sistema de Calificaciones Tributarias</h1>
-                    <p class="lead mb-4 text-white-50">
-                        Gestión integral, cálculo de factores y auditoría para el mercado integrado.
-                    </p>
-                    <div class="d-flex gap-3">
-                        <a href="{% url 'dashboard' %}" class="btn btn-nuam-primary btn-lg">
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="hero-title">
+                    Sistema de Gestión de<br>
+                    <span class="text-nuam-orange">Calificaciones Tributarias</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Plataforma integral para la administración, evaluación y control de calificaciones tributarias 
+                    según Decreto Ley 1922 y 1949. Gestión profesional con validación automatizada de 30 factores.
+                </p>
+                <div class="d-flex gap-3 flex-wrap justify-content-center">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard' %}" class="btn btn-orange btn-nuam-hero" style="min-width: 200px;">
                             <i class="fas fa-chart-line me-2"></i>Ir al Dashboard
                         </a>
-                        <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-light btn-lg">
-                            <i class="fas fa-list me-2"></i>Ver Calificaciones
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-orange btn-nuam-hero" style="min-width: 200px;">
+                            <i class="fas fa-sign-in-alt me-2"></i>Ingresar al Sistema
                         </a>
+                    {% endif %}
+                    <a href="#features" class="btn btn-blue-outline btn-nuam-hero" style="min-width: 200px;">
+                        <i class="fas fa-info-circle me-2"></i>Conocer Más
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block text-center">
+                <i class="fas fa-chart-pie" style="font-size: 15rem; opacity: 0.1;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5 bg-nuam-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Funcionalidades Principales</h2>
+            <p class="text-muted">Sistema completo para la gestión eficiente de calificaciones tributarias</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-calculator fa-3x text-nuam-orange"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">30 Factores Tributarios</h5>
+                        <p class="card-text text-muted">
+                            Gestión completa de los 30 factores (Factor 8 a Factor 37) con validación automática 
+                            según normativa vigente.
+                        </p>
                     </div>
                 </div>
-                <div class="col-lg-4 d-none d-lg-block text-center">
-                    <i class="fas fa-shield-alt fa-10x text-white-50 opacity-25"></i>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-upload fa-3x text-nuam-orange"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Carga Masiva</h5>
+                        <p class="card-text text-muted">
+                            Importación de datos desde Excel/CSV con validación en tiempo real y detección 
+                            automática de duplicados.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-shield-alt fa-3x text-nuam-orange"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Auditoría Completa</h5>
+                        <p class="card-text text-muted">
+                            Registro exhaustivo de operaciones con control de acceso por roles y seguimiento 
+                            de todas las modificaciones.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-chart-line fa-3x text-nuam-orange"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Dashboard Ejecutivo</h5>
+                        <p class="card-text text-muted">
+                            Visualización de métricas clave, estadísticas y tendencias con gráficos 
+                            interactivos en tiempo real.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-check-double fa-3x text-nuam-orange"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Validación Estricta</h5>
+                        <p class="card-text text-muted">
+                            Reglas de negocio automáticas: suma de factores ≤ 1.0, rango 0-1, 
+                            unicidad de registros.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-file-export fa-3x text-nuam-cyan"></i>
+                        </div>
+                        <h5 class="card-title fw-bold">Exportación Flexible</h5>
+                        <p class="card-text text-muted">
+                            Exportación de datos a Excel y CSV con formato profesional para reportes 
+                            y análisis externos.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<!-- Quick Access Cards -->
-<div class="row g-4 mb-5">
-    <!-- Card 1 -->
-    <div class="col-md-4">
-        <div class="card card-nuam feature-card p-4 text-center">
-            <div class="feature-icon">
-                <i class="fas fa-calculator"></i>
+<!-- About Section -->
+<section id="about" class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h2 class="fw-bold mb-4">Acerca del Sistema</h2>
+                <p class="text-muted mb-3">
+                    El Sistema de Gestión de Calificaciones Tributarias NUAM es una plataforma desarrollada 
+                    para facilitar la administración y control de calificaciones según los Decretos Ley 1922 y 1949.
+                </p>
+                <p class="text-muted mb-3">
+                    Construido con Django 5.2 y PostgreSQL 18, ofrece una arquitectura robusta y escalable, 
+                    con énfasis en la integridad de datos y la trazabilidad de operaciones.
+                </p>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-check text-nuam-orange me-2"></i>Backend estable con validaciones estrictas</li>
+                    <li class="mb-2"><i class="fas fa-check text-nuam-orange me-2"></i>10 migraciones aplicadas exitosamente</li>
+                    <li class="mb-2"><i class="fas fa-check text-nuam-orange me-2"></i>11/11 tests automatizados pasando</li>
+                    <li class="mb-2"><i class="fas fa-check text-nuam-orange me-2"></i>Sistema de roles y permisos granulares</li>
+                </ul>
             </div>
-            <h3 class="h4 fw-bold mb-3">Cálculo de Factores</h3>
-            <p class="text-muted mb-4">
-                Ingrese montos y calcule automáticamente los factores tributarios con validación en tiempo real.
-            </p>
-            <a href="{% url 'crear_calificacion_factores' %}" class="btn btn-outline-primary stretched-link">
-                Nueva Calificación
+            <div class="col-lg-6">
+                <div class="card border-0 shadow">
+                    <div class="card-body p-4">
+                        <h5 class="card-title fw-bold mb-3">
+                            <i class="fas fa-info-circle text-nuam-orange me-2"></i>Información Técnica
+                        </h5>
+                        <table class="table table-sm table-borderless">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted">Framework:</td>
+                                    <td class="fw-semibold">Django 5.2.8</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Base de Datos:</td>
+                                    <td class="fw-semibold">PostgreSQL 18</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Versión:</td>
+                                    <td class="fw-semibold">3.0 (Fase 3)</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Estado:</td>
+                                    <td><span class="badge bg-success">Producción</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-nuam-light">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-3">¿Listo para comenzar?</h2>
+        <p class="text-muted mb-4">Accede al sistema y gestiona tus calificaciones tributarias de forma eficiente</p>
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}" class="btn btn-orange btn-nuam-hero" style="min-width: 200px;">
+                <i class="fas fa-chart-line me-2"></i>Ir al Dashboard
             </a>
-        </div>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-orange btn-nuam-hero" style="min-width: 200px;">
+                <i class="fas fa-sign-in-alt me-2"></i>Acceder Ahora
+            </a>
+        {% endif %}
     </div>
+</section>
 
-    <!-- Card 2 -->
-    <div class="col-md-4">
-        <div class="card card-nuam feature-card p-4 text-center">
-            <div class="feature-icon">
-                <i class="fas fa-file-upload"></i>
-            </div>
-            <div class="row justify-content-center">
-                <div class="col-4 mb-3 mb-md-0">
-                    <h2 class="display-6 fw-bold text-nuam-secondary">SHA-256</h2>
-                    <p class="text-muted text-uppercase small fw-bold">Seguridad de Datos</p>
-                </div>
-                <div class="col-4 mb-3 mb-md-0">
-                    <h2 class="display-6 fw-bold text-nuam-primary">24/7</h2>
-                    <p class="text-muted text-uppercase small fw-bold">Disponibilidad</p>
-                </div>
-                <div class="col-4">
-                    <h2 class="display-6 fw-bold text-nuam-secondary">v2.1</h2>
-                    <p class="text-muted text-uppercase small fw-bold">Versión Actual</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}

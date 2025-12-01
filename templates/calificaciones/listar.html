@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mantenedor de Calificaciones - NUAM{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ZONA A - Filter Bar */
+    .filter-zone {
+        background: linear-gradient(135deg, #002A4E 0%, #003d6e 100%);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-zone label {
+        color: white;
+        font-weight: 500;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .filter-zone .form-control,
+    .filter-zone .form-select {
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background-color: rgba(255, 255, 255, 0.95);
+    }
+
+    .btn-filter-primary {
+        background-color: #00B5E2;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-filter-primary:hover {
+        background-color: #0099C4;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 181, 226, 0.4);
+    }
+
+    .btn-filter-secondary {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 6px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-filter-secondary:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+
+    /* ZONA B - Data Grid with Sticky Columns */
+    .grid-zone {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+    }
+
+    .table-container {
+        overflow-x: auto;
+        position: relative;
+        max-height: 600px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+    }
+
+    .data-grid {
+        margin-bottom: 0;
+        font-size: 0.875rem;
+        white-space: nowrap;
+    }
+
+    .data-grid thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #002A4E;
+        color: white;
+    }
+
+    .data-grid thead th {
+        font-weight: 600;
+        text-align: center;
+        padding: 0.75rem 0.5rem;
+        border-bottom: 2px solid #00B5E2;
+        vertical-align: middle;
+    }
+
+    /* Sticky Columns - First 2 columns (Ejercicio, Instrumento) */
+    .data-grid th:nth-child(1),
+    .data-grid td:nth-child(1) {
+        position: sticky;
+        left: 0;
+        z-index: 5;
+        background-color: #f8f9fa;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .data-grid th:nth-child(2),
+    .data-grid td:nth-child(2) {
+        position: sticky;
+        left: 80px; /* Width of first column */
+        z-index: 5;
+        background-color: #f8f9fa;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .data-grid thead th:nth-child(1),
+    .data-grid thead th:nth-child(2) {
+        background-color: #002A4E;
+        z-index: 15;
+    }
+
+    .data-grid tbody tr:hover {
+        background-color: rgba(0, 181, 226, 0.05);
+    }
+
+    .data-grid tbody tr:hover td:nth-child(1),
+    .data-grid tbody tr:hover td:nth-child(2) {
+        background-color: rgba(0, 181, 226, 0.08);
+    }
+
+    .data-grid tbody td {
+        padding: 0.6rem 0.5rem;
+        vertical-align: middle;
+        text-align: center;
+        border-right: 1px solid #e9ecef;
+    }
+
+    /* Factor Columns Styling */
+    .factor-cell {
+        font-family: 'Courier New', monospace;
+        color: #2c5282;
+        font-weight: 500;
+        min-width: 70px;
+    }
+
+    /* Action Buttons */
+    .btn-action {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        border-radius: 4px;
+        margin: 0 2px;
+    }
+
+    .btn-edit {
+        background-color: #00B5E2;
+        color: white;
+        border: none;
+    }
+
+    .btn-edit:hover {
+        background-color: #0099C4;
+        color: white;
+    }
+
+    .btn-delete {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+    }
+
+    .btn-delete:hover {
+        background-color: #c82333;
+        color: white;
+    }
+
+    /* ZONA C - Bottom Actions */
+    .actions-zone {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .actions-zone .btn {
+        border-radius: 6px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 500;
+    }
+
+    /* Pagination */
+    .pagination-info {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 1rem;
+    }
+
+    .pagination {
+        margin-top: 1rem;
+    }
+
+    .page-link {
+        color: #002A4E;
+        border-radius: 6px;
+        margin: 0 3px;
+    }
+
+    .page-link:hover {
+        background-color: #00B5E2;
+        color: white;
+        border-color: #00B5E2;
+    }
+
+    .page-item.active .page-link {
+        background-color: #002A4E;
+        border-color: #002A4E;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .filter-zone {
+            padding: 1rem;
+        }
+        
+        .actions-zone {
+            justify-content: center;
+        }
+        
+        .data-grid {
+            font-size: 0.75rem;
+        }
+        
+        .data-grid th:nth-child(2),
+        .data-grid td:nth-child(2) {
+            left: 60px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-table me-2" style="color: #00B5E2;"></i>Mantenedor de Calificaciones
+            </h2>
+            <p class="text-muted mb-0">Gestión completa de calificaciones tributarias con 30 factores</p>
+        </div>
+        <a href="{% url 'crear_calificacion' %}" class="btn btn-filter-primary">
+            <i class="fas fa-plus-circle me-2"></i>Nueva Calificación
+        </a>
+    </div>
+
+    <!-- ZONA A - FILTROS -->
+    <div class="filter-zone">
+        <form method="GET" action="{% url 'listar_calificaciones' %}" id="filterForm">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="mercado" class="form-label">
+                        <i class="fas fa-chart-line me-1"></i>Tipo de Mercado
+                    </label>
+                    <select name="mercado" id="mercado" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="ACN" {% if mercado == 'ACN' %}selected{% endif %}>Acciones</option>
+                        <option value="CFI" {% if mercado == 'CFI' %}selected{% endif %}>CFI</option>
+                        <option value="FFM" {% if mercado == 'FFM' %}selected{% endif %}>Fondos Mutuos</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="tipo_sociedad" class="form-label">
+                        <i class="fas fa-building me-1"></i>Origen
+                    </label>
+                    <select name="tipo_sociedad" id="tipo_sociedad" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="A" {% if tipo_sociedad == 'A' %}selected{% endif %}>Corredora (A)</option>
+                        <option value="C" {% if tipo_sociedad == 'C' %}selected{% endif %}>Bolsa (C)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="ejercicio" class="form-label">
+                        <i class="fas fa-calendar me-1"></i>Periodo Comercial
+                    </label>
+                    <input 
+                        type="number" 
+                        name="ejercicio" 
+                        id="ejercicio" 
+                        class="form-control" 
+                        placeholder="2025"
+                        value="{{ ejercicio }}"
+                        min="2000"
+                        max="2100"
+                    >
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-filter-primary flex-grow-1">
+                            <i class="fas fa-search me-2"></i>Buscar
+                        </button>
+                        <a href="{% url 'listar_calificaciones' %}" class="btn btn-filter-secondary">
+                            <i class="fas fa-times me-2"></i>Limpiar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ZONA B - GRID DE DATOS -->
+    <div class="grid-zone">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="pagination-info">
+                {% if page_obj %}
+                    Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }} registros
+                {% else %}
+                    Total: {{ calificaciones|length }} registros
+                {% endif %}
+            </div>
+            <div>
+                <a href="{% url 'exportar_excel' %}" class="btn btn-sm btn-outline-success">
+                    <i class="fas fa-file-excel me-1"></i>Excel
+                </a>
+                <a href="{% url 'exportar_csv' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-file-csv me-1"></i>CSV
+                </a>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table class="table table-striped table-hover table-sm data-grid">
+                <thead>
+                    <tr>
+                        <th style="min-width: 80px;">Ejercicio</th>
+                        <th style="min-width: 150px;">Instrumento</th>
+                        <th style="min-width: 110px;">Fecha Pago</th>
+                        <th style="min-width: 80px;">Sec.</th>
+                        <th style="min-width: 80px;">Origen</th>
+                        <th style="min-width: 80px;">Mercado</th>
+                        <!-- 30 Factores -->
+                        {% for i in "87654321098765432109876543210987"|make_list %}
+                            {% if forloop.counter <= 30 %}
+                                <th style="min-width: 70px;">F{{ forloop.counter|add:7 }}</th>
+                            {% endif %}
+                        {% endfor %}
+                        <th style="min-width: 120px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cal in calificaciones %}
+                    <tr>
+                        <td>{{ cal.ejercicio|default:"-" }}</td>
+                        <td class="text-start">{{ cal.instrumento.codigo_instrumento }}</td>
+                        <td>{{ cal.fecha_informe|date:"d/m/Y" }}</td>
+                        <td>{{ cal.secuencia|default:"-" }}</td>
+                        <td>{{ cal.tipo_sociedad|default:"-" }}</td>
+                        <td>{{ cal.mercado|default:"-" }}</td>
+                        
+                        <!-- 30 Factores -->
+                        <td class="factor-cell">{{ cal.factor_8|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_9|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_10|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_11|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_12|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_13|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_14|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_15|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_16|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_17|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_18|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_19|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_20|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_21|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_22|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_23|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_24|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_25|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_26|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_27|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_28|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_29|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_30|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_31|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_32|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_33|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_34|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_35|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_36|floatformat:4|default:"0.0000" }}</td>
+                        <td class="factor-cell">{{ cal.factor_37|floatformat:4|default:"0.0000" }}</td>
+                        
+                        <td>
+                            <a href="{% url 'editar_calificacion' cal.id %}" class="btn btn-action btn-edit" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            <a href="{% url 'eliminar_calificacion' cal.id %}" class="btn btn-action btn-delete" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="38" class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
+                            <p class="text-muted mb-0">No se encontraron calificaciones con los filtros seleccionados</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj %}
+        <nav aria-label="Paginación">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if mercado %}&mercado={{ mercado }}{% endif %}{% if tipo_sociedad %}&tipo_sociedad={{ tipo_sociedad }}{% endif %}{% if ejercicio %}&ejercicio={{ ejercicio }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if mercado %}&mercado={{ mercado }}{% endif %}{% if tipo_sociedad %}&tipo_sociedad={{ tipo_sociedad }}{% endif %}{% if ejercicio %}&ejercicio={{ ejercicio }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if mercado %}&mercado={{ mercado }}{% endif %}{% if tipo_sociedad %}&tipo_sociedad={{ tipo_sociedad }}{% endif %}{% if ejercicio %}&ejercicio={{ ejercicio }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if mercado %}&mercado={{ mercado }}{% endif %}{% if tipo_sociedad %}&tipo_sociedad={{ tipo_sociedad }}{% endif %}{% if ejercicio %}&ejercicio={{ ejercicio }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+
+    <!-- ZONA C - ACCIONES GLOBALES -->
+    <div class="actions-zone">
+        <a href="{% url 'carga_masiva' %}" class="btn btn-primary">
+            <i class="fas fa-upload me-2"></i>Carga Masiva
+        </a>
+        <a href="{% url 'crear_calificacion' %}" class="btn btn-success">
+            <i class="fas fa-plus-circle me-2"></i>Ingresar
+        </a>
+        <button type="button" class="btn btn-outline-secondary" disabled>
+            <i class="fas fa-edit me-2"></i>Modificar Selección
+        </button>
+        <button type="button" class="btn btn-outline-danger" disabled>
+            <i class="fas fa-trash-alt me-2"></i>Eliminar Selección
+        </button>
+    </div>
+
+</div>
+
+{% endblock %}
