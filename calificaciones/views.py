@@ -87,7 +87,24 @@ RECENT_ACTIVITY_DAYS = 7
 
 
 def obtener_ip_cliente(request):
-    """Obtiene la IP real del cliente considerando proxies"""
+    """
+    Obtiene la dirección IP real del cliente considerando proxies y balanceadores de carga.
+
+    Esta función prioriza el header X-Forwarded-For para obtener la IP original del cliente
+    cuando la aplicación está detrás de un proxy o load balancer. Si no existe, utiliza
+    REMOTE_ADDR como fallback.
+
+    Args:
+        request (HttpRequest): El objeto de solicitud HTTP de Django.
+
+    Returns:
+        str: La dirección IP del cliente (ej: "192.168.1.1").
+
+    Notes:
+        - X-Forwarded-For puede contener múltiples IPs separadas por comas; se toma la primera.
+        - REMOTE_ADDR contiene la IP del último hop (proxy si existe).
+        - Utilizado para auditoría en LogAuditoria e IntentoLogin.
+    """
     x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
     if x_forwarded_for:
         ip = x_forwarded_for.split(",")[0]
@@ -98,8 +115,24 @@ def obtener_ip_cliente(request):
 
 def verificar_cuenta_bloqueada(username):
     """
-    Verifica si una cuenta está bloqueada
-    Retorna: (bloqueada: bool, mensaje: str, minutos_restantes: int)
+    Verifica si una cuenta de usuario está bloqueada por intentos fallidos de login.
+
+    Comprueba la tabla CuentaBloqueada para determinar si el usuario está bloqueado
+    y calcula los minutos restantes hasta el desbloqueo automático.
+
+    Args:
+        username (str): El nombre de usuario a verificar.
+
+    Returns:
+        tuple: Una tupla (bloqueada, mensaje, minutos_restantes) donde:
+            - bloqueada (bool): True si la cuenta está actualmente bloqueada.
+            - mensaje (str): Mensaje descriptivo del estado del bloqueo.
+            - minutos_restantes (int): Minutos hasta el desbloqueo automático.
+
+    Notes:
+        - El tiempo de bloqueo está definido por LOCKOUT_DURATION_MINUTES (30 min por defecto).
+        - Si el tiempo de bloqueo ha expirado, se desbloquea automáticamente.
+        - Retorna (False, "", 0) si la cuenta no existe o no está bloqueada.
     """
     try:
         user = User.objects.get(username=username)
@@ -234,7 +267,31 @@ def procesar_csv(archivo):
 
 
 def login_view(request):
-    """Vista de login con auditoría completa y sistema de bloqueo"""
+    """
+    Vista de autenticación de usuarios con auditoría completa y sistema de bloqueo por intentos fallidos.
+
+    Gestiona el proceso de login incluyendo:
+    - Verificación de cuenta bloqueada
+    - Autenticación de credenciales
+    - Registro de intentos exitosos y fallidos en IntentoLogin
+    - Registro de auditoría en LogAuditoria
+    - Bloqueo automático después de MAX_LOGIN_ATTEMPTS intentos fallidos
+    - Desbloqueo automático de cuentas tras login exitoso
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP con datos POST (username, password).
+
+    Returns:
+        HttpResponse: 
+            - Redirect a 'dashboard' si login exitoso.
+            - Render de 'registration/login.html' si cuenta bloqueada o credenciales inválidas.
+
+    Notes:
+        - Sistema de bloqueo: 5 intentos fallidos → 30 minutos de bloqueo
+        - Ventana de tiempo para contar intentos: 15 minutos
+        - Registra acciones: LOGIN (exitoso), LOGIN_FAILED (fallido)
+        - Muestra advertencias al usuario cuando quedan ≤2 intentos
+    """
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
@@ -362,7 +419,31 @@ def logout_view(request):
 @login_required
 @requiere_permiso("consultar")
 def dashboard(request):
-    """Dashboard principal con estadísticas del sistema"""
+    """
+    Dashboard principal con estadísticas agregadas del sistema NUAM.
+
+    Presenta un resumen ejecutivo con:
+    - Totales: calificaciones activas, instrumentos financieros, usuarios activos
+    - Distribuciones: calificaciones por método de ingreso, instrumentos por tipo
+    - Actividad reciente: calificaciones de últimos 30 días, top 5 recientes
+    - Logs de auditoría (solo Admin/Auditor): últimos 5 registros
+    - Top 5 instrumentos más utilizados
+    - Estadísticas de cargas masivas (exitosas vs fallidas)
+    - Saludo contextual según hora del día
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP del usuario autenticado.
+
+    Returns:
+        HttpResponse: Render de 'calificaciones/dashboard.html' con context dict conteniendo
+            todas las estadísticas calculadas.
+
+    Notes:
+        - Requiere autenticación: @login_required
+        - Requiere permiso: @requiere_permiso("consultar")
+        - Queries optimizadas con select_related() y values().annotate()
+        - Actividad reciente usa RECENT_ACTIVITY_DAYS (7 días por defecto)
+    """
     from datetime import datetime
     
     logger.debug(f"Dashboard access - User: {request.user.username}, IP: {obtener_ip_cliente(request)}")
@@ -884,7 +965,36 @@ def eliminar_instrumento(request, pk):
 @login_required
 @requiere_permiso("crear")
 def carga_masiva(request):
-    """Procesa carga masiva de calificaciones desde CSV/Excel"""
+    """
+    Procesa carga masiva de calificaciones tributarias desde archivos CSV o Excel.
+
+    Función de alto riesgo que importa múltiples registros en una sola operación.
+    Soporta creación automática de instrumentos financieros si no existen y registra
+    el resultado completo de la operación en la tabla CargaMasiva.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP con archivo en FILES.
+
+    Returns:
+        HttpResponse:
+            - POST: Redirect a 'dashboard' después de procesar.
+            - GET: Render de 'calificaciones/carga_masiva.html' con formulario.
+
+    Raises:
+        ValueError: Si el formato del archivo no es soportado (.xlsx, .csv).
+        PermissionError: Si hay problemas de acceso al archivo.
+        KeyError: Si faltan campos requeridos en las filas del archivo.
+
+    Notes:
+        - Formatos soportados: .xlsx (Excel), .csv (UTF-8)
+        - Campos requeridos: codigo_instrumento, fecha_informe
+        - Campos opcionales: nombre_instrumento, tipo_instrumento, monto, factor, 
+          metodo_ingreso, numero_dj, observaciones
+        - Estados posibles: EXITOSO (0 errores), PARCIAL (algunos errores), FALLIDO (todos errores)
+        - Registra cada fila procesada en CargaMasiva con errores_detalle
+        - Logging exhaustivo: INFO (inicio/fin), WARNING (errores por fila), ERROR (crítico)
+        - Requiere permiso: @requiere_permiso("crear")
+    """
     if request.method == "POST":
         form = CargaMasivaForm(request.POST, request.FILES)
         if form.is_valid():
@@ -1418,7 +1528,46 @@ def registro_auditoria(request):
 
 
 def calcular_factores_ajax(request):
-    """API endpoint para calcular factores automáticamente vía AJAX"""
+    """
+    API endpoint para calcular automáticamente factores proporcionales desde montos vía AJAX.
+
+    Recibe 5 montos (factor_8 a factor_12), calcula la suma total y determina el factor
+    proporcional de cada uno como: factor_i = monto_i / suma_total. Valida que la suma
+    de factores sea ≈ 1.0 (con tolerancia de 0.00000001).
+
+    Args:
+        request (HttpRequest): GET request con parámetros:
+            - monto_8 (str, optional): Monto para factor 8. Default: "0".
+            - monto_9 (str, optional): Monto para factor 9. Default: "0".
+            - monto_10 (str, optional): Monto para factor 10. Default: "0".
+            - monto_11 (str, optional): Monto para factor 11. Default: "0".
+            - monto_12 (str, optional): Monto para factor 12. Default: "0".
+
+    Returns:
+        JsonResponse: JSON con estructura:
+            {
+                "success": true,
+                "factores": {
+                    "factor_8": "0.25000000",
+                    "factor_9": "0.25000000",
+                    ...
+                },
+                "suma_montos": "1000.00",
+                "suma_factores": "1.00000000",
+                "es_valido": true,
+                "mensaje_error": "",
+                "nombres": {"factor_8": "Factor 8", ...}
+            }
+            
+        JsonResponse (error): Si falla, retorna {"success": false, "error": mensaje} con status 400.
+
+    Notes:
+        - Precisión: 8 decimales para factores
+        - Conversión automática de valores inválidos a Decimal("0")
+        - Maneja ValueError y TypeError en conversión de montos
+        - Utilizado por formulario de calificación de factores simple
+        - No requiere autenticación (público)
+    """
     try:
         logger.debug(
             f"Factor calculation API called - User: {request.user.username if request.user.is_authenticated else 'Anonymous'}"
