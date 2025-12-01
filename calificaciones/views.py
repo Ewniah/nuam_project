@@ -1641,6 +1641,81 @@ def carga_masiva(request):
 
 
 @login_required
+@requiere_permiso("crear")
+def descargar_plantilla(request):
+    """
+    Genera y descarga una plantilla Excel para carga masiva de calificaciones.
+    
+    Crea un archivo Excel con las columnas requeridas y una fila de ejemplo
+    para facilitar la carga masiva de calificaciones tributarias.
+    
+    Retorna:
+        HttpResponse: Archivo Excel descargable con:
+            - Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+            - Filename: plantilla_carga_masiva.xlsx
+            - Columnas: metadata + 30 factores (8-37)
+    """
+    # Crear libro de Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Plantilla Carga Masiva"
+    
+    # Encabezados de metadata
+    headers = [
+        "codigo_instrumento",
+        "fecha_informe",
+        "mercado",
+        "tipo_sociedad",
+        "secuencia",
+        "numero_dividendo",
+        "ejercicio",
+        "numero_dj",
+    ]
+    
+    # Agregar headers de 30 factores
+    for i in range(8, 38):
+        headers.append(f"factor_{i}")
+    
+    ws.append(headers)
+    
+    # Fila de ejemplo
+    ejemplo = [
+        "INST001",  # codigo_instrumento
+        "2025-01-15",  # fecha_informe (YYYY-MM-DD)
+        "ACN",  # mercado
+        "A",  # tipo_sociedad
+        "1",  # secuencia
+        "0",  # numero_dividendo
+        "2025",  # ejercicio
+        "DJ-2025-001",  # numero_dj
+    ]
+    
+    # Agregar valores de ejemplo para factores (0.0333... para que sumen 1.0)
+    for i in range(30):
+        ejemplo.append("0.0333")
+    
+    ws.append(ejemplo)
+    
+    # Estilo de encabezados (opcional)
+    for cell in ws[1]:
+        cell.font = openpyxl.styles.Font(bold=True)
+        cell.fill = openpyxl.styles.PatternFill(start_color="F37021", end_color="F37021", fill_type="solid")
+        cell.font = openpyxl.styles.Font(bold=True, color="FFFFFF")
+    
+    # Preparar respuesta HTTP
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = "attachment; filename=plantilla_carga_masiva.xlsx"
+    
+    wb.save(response)
+    
+    logger.info(f"Template downloaded - User: {request.user.username}")
+    
+    return response
+
+
+@login_required
 @requiere_permiso("consultar")
 def exportar_excel(request):
     """

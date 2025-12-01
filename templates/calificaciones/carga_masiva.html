@@ -88,12 +88,11 @@
         </a>
     </div>
 
-    <!-- 2-Column Layout -->
-    <div class="row g-4">
-        <!-- LEFT COLUMN: Upload Form & Instructions -->
-        <div class="col-lg-7">
-            <!-- ZONE A: Upload Form -->
-            <div class="card shadow-sm border-0 mb-4">
+    <!-- Top Row: Upload Form + Format Instructions -->
+    <div class="row g-4 mb-4">
+        <!-- LEFT: Upload Form -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-white border-bottom">
                     <h5 class="mb-0 fw-semibold" style="color: #002A4E;">
                         <i class="fas fa-upload me-2" style="color: #F37021;"></i>Nueva Carga Masiva
@@ -129,416 +128,259 @@
                     </form>
                 </div>
             </div>
-
-            <!-- Instructions Panel (Accordion) -->
-            <div class="accordion instructions-accordion" id="instructionsAccordion">
-                <div class="accordion-item border-0 shadow-sm">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#formatInstructions">
-                            <i class="fas fa-file-excel me-2"></i>Formato Requerido (Excel/CSV)
-                        </button>
-                    </h2>
-                    <div id="formatInstructions" class="accordion-collapse collapse show" data-bs-parent="#instructionsAccordion">
-                        <div class="accordion-body">
-                            <div class="alert alert-warning mb-3">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                <strong>Importante:</strong> El archivo debe contener cabeceras exactas. Nombres en minúsculas y con guiones bajos.
-                            </div>
-
-                            <h6 class="fw-bold mb-3" style="color: #002A4E;">📋 Columnas Requeridas</h6>
-
-                            <!-- Metadata Columns -->
-                            <p class="small fw-semibold mb-2" style="color: #F37021;">METADATA (Obligatorias):</p>
-                            <div class="row g-2 mb-3">
-                                <div class="col-md-6">
-                                    <div class="required-column">
-                                        <code>codigo_instrumento</code>
-                                        <small class="d-block text-muted">Código del instrumento</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="required-column">
-                                        <code>fecha_informe</code>
-                                        <small class="d-block text-muted">Formato: YYYY-MM-DD</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="required-column">
-                                        <code>mercado</code>
-                                        <small class="d-block text-muted">ACN, CFI, FFM</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="required-column">
-                                        <code>tipo_sociedad</code>
-                                        <small class="d-block text-muted">A=Corredora, C=Bolsa</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="required-column">
-                                        <code>secuencia</code>
-                                        <small class="d-block text-muted">Número de secuencia</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="required-column">
-                                        <code>numero_dividendo</code>
-                                        <small class="d-block text-muted">Número de dividendo</small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Factors Columns -->
-                            <p class="small fw-semibold mb-2" style="color: #F37021;">FACTORES (30 columnas):</p>
-                            <div class="alert alert-info mb-0">
-                                <p class="mb-2"><strong>Opción 1:</strong> Columna <code>monto</code> (el sistema calcula los 30 factores automáticamente)</p>
-                                <p class="mb-0"><strong>Opción 2:</strong> Columnas <code>factor_8</code>, <code>factor_9</code>, ... , <code>factor_37</code> (valores calculados manualmente)</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <!-- RIGHT COLUMN: Upload History -->
-        <div class="col-lg-5">
+        <!-- RIGHT: Format Instructions -->
+        <div class="col-lg-6">
             <div class="card shadow-sm border-0 h-100">
-            <div class="card-header card-header-nuam bg-white border-bottom py-3">
-                <h5 class="mb-0 fw-bold text-nuam-secondary">
-                    <i class="fas fa-file-upload me-2"></i>Subir Archivo
-                </h5>
-            </div>
-            <div class="card-body p-4">
-                <!-- Instrucciones -->
-                <div class="alert alert-info bg-opacity-10 border-info border-opacity-25 mb-4">
-                    <div class="d-flex">
-                        <div class="me-3 text-info">
-                            <i class="fas fa-info-circle fa-2x"></i>
-                        </div>
-                        <div>
-                            <h6 class="alert-heading fw-bold mb-2 text-info">Instrucciones de Carga</h6>
-                            <ul class="mb-0 small text-muted">
-                                <li>Formatos aceptados: <strong>CSV</strong> o <strong>Excel (.xlsx)</strong></li>
-                                <li>Descarga la plantilla de ejemplo para conocer el formato requerido</li>
-                                <li>Asegúrate de que todos los instrumentos existan en el sistema</li>
-                                <li>Formato de fecha: <code>YYYY-MM-DD</code> (ejemplo: 2025-11-11)</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Formulario de upload -->
-                <form method="post" enctype="multipart/form-data" id="uploadForm">
-                    {% csrf_token %}
-
-                    <div class="mb-4">
-                        <label for="{{ form.archivo.id_for_label }}" class="form-label fw-bold text-muted small">
-                            SELECCIONAR ARCHIVO
-                        </label>
-                        <div class="upload-area border rounded p-5 text-center bg-light" id="uploadArea"
-                            style="border-style: dashed !important; border-width: 2px !important;">
-                            <div class="upload-icon mb-3">
-                                <i class="fas fa-cloud-upload-alt text-nuam-primary" style="font-size: 3rem;"></i>
-                            </div>
-                            <p class="mb-2 fw-bold text-dark">Arrastra tu archivo aquí o haz clic para seleccionar</p>
-                            <small class="text-muted">CSV o Excel (XLSX) - Máximo 10 MB</small>
-                            <input type="file" name="archivo" id="{{ form.archivo.id_for_label }}"
-                                class="form-control mt-3" accept=".csv,.xlsx" required>
-                        </div>
-                        {% if form.archivo.errors %}
-                        <div class="text-danger mt-2 small">
-                            <i class="fas fa-exclamation-triangle me-1"></i> {{ form.archivo.errors }}
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-3">
-                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-2"></i>Cancelar
-                        </a>
-                        <button type="submit" class="btn btn-nuam-primary px-4" id="btnSubmit">
-                            <i class="fas fa-upload me-2"></i>Procesar Archivo
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Panel lateral -->
-    <div class="col-lg-4">
-        <!-- Plantilla de ejemplo -->
-        <div class="card card-nuam border-0 shadow-sm mb-4">
-            <div class="card-header bg-success text-white py-3">
-                <h6 class="mb-0 fw-bold">
-                    <i class="fas fa-file-download me-2"></i>Plantilla de Ejemplo
-                </h6>
-            </div>
-            <div class="card-body">
-                <p class="small text-muted mb-3">
-                    Descarga esta plantilla para ver el formato correcto de los datos:
-                </p>
-
-                <div class="d-grid gap-2">
-                    <button onclick="descargarPlantilla(); return false;" class="btn btn-outline-success">
-                        <i class="fas fa-file-csv me-2"></i>Descargar Plantilla CSV
-                    </button>
-                </div>
-
-                <hr class="my-3">
-
-                <h6 class="small fw-bold mb-2 text-muted">COLUMNAS REQUERIDAS:</h6>
-                <ul class="small mb-0 ps-3 text-muted">
-                    <li><code>codigo_instrumento</code></li>
-                    <li><code>metodo_ingreso</code></li>
-                    <li><code>monto</code> (opcional)</li>
-                    <li><code>factor</code> (opcional)</li>
-                    <li><code>numero_dj</code></li>
-                    <li><code>fecha_informe</code></li>
-                    <li><code>observaciones</code></li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Tips -->
-        <div class="card card-nuam border-0 shadow-sm">
-            <div class="card-header bg-info text-white py-3">
-                <h6 class="mb-0 fw-bold">
-                    <i class="fas fa-lightbulb me-2"></i>Consejos
-                </h6>
-            </div>
-            <div class="card-body">
-                <ul class="small mb-0 ps-3 text-muted">
-                    <li class="mb-2">Verifica que los códigos de instrumentos existan antes de cargar</li>
-                    <li class="mb-2">El método puede ser <strong>MONTO</strong> o <strong>FACTOR</strong></li>
-                    <li class="mb-2">Si usas Excel, guarda como CSV UTF-8 para mejor compatibilidad</li>
-                    <li class="mb-2">Revisa el historial para ver errores detallados</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Historial de cargas -->
-{% if cargas_anteriores %}
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card card-nuam border-0 shadow-sm">
-            <div class="card-header card-header-nuam bg-white border-bottom py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold text-nuam-secondary">
-                        <i class="fas fa-history me-2"></i>Historial de Cargas
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-semibold" style="color: #002A4E;">
+                        <i class="fas fa-file-excel me-2" style="color: #F37021;"></i>Formato Requerido
                     </h5>
-                    <span class="badge bg-nuam-secondary rounded-pill px-3">{{ cargas_anteriores|length }} registro{{
-                        cargas_anteriores|length|pluralize:"s" }}</span>
+                    <a href="{% url 'descargar_plantilla' %}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-download me-1"></i>Descargar Plantilla
+                    </a>
+                </div>
+                <div class="card-body p-4" style="max-height: 500px; overflow-y: auto;">
+                    <div class="alert alert-warning mb-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong> El archivo debe contener cabeceras exactas. Nombres en minúsculas y con guiones bajos.
+                    </div>
+
+                    <h6 class="fw-bold mb-3" style="color: #002A4E;">📋 Columnas Requeridas</h6>
+
+                    <!-- Metadata Columns -->
+                    <p class="small fw-semibold mb-2" style="color: #F37021;">METADATA (Obligatorias):</p>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <div class="required-column">
+                                <code>codigo_instrumento</code>
+                                <small class="d-block text-muted">Código del instrumento</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="required-column">
+                                <code>fecha_informe</code>
+                                <small class="d-block text-muted">Formato: YYYY-MM-DD</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="required-column">
+                                <code>mercado</code>
+                                <small class="d-block text-muted">ACN, CFI, FFM</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="required-column">
+                                <code>tipo_sociedad</code>
+                                <small class="d-block text-muted">A=Corredora, C=Bolsa</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="required-column">
+                                <code>secuencia</code>
+                                <small class="d-block text-muted">Número de secuencia</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="required-column">
+                                <code>numero_dividendo</code>
+                                <small class="d-block text-muted">Número de dividendo</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="required-column">
+                                <code>ejercicio</code>
+                                <small class="d-block text-muted">Año fiscal</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="required-column">
+                                <code>numero_dj</code>
+                                <small class="d-block text-muted">Número DJ</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Factors Columns -->
+                    <p class="small fw-semibold mb-2" style="color: #F37021;">FACTORES (30 columnas):</p>
+                    <div class="alert alert-info mb-0">
+                        <p class="mb-2"><strong>Opción 1:</strong> Columna <code>monto</code> (el sistema calcula los 30 factores automáticamente)</p>
+                        <p class="mb-0"><strong>Opción 2:</strong> Columnas <code>factor_8</code>, <code>factor_9</code>, ... , <code>factor_37</code> (valores calculados manualmente)</p>
+                    </div>
                 </div>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="border-0 ps-4">Fecha y Hora</th>
-                                <th class="border-0">Archivo</th>
-                                <th class="border-0">Estado</th>
-                                <th class="border-0 text-center">Procesados</th>
-                                <th class="border-0 text-center">Exitosos</th>
-                                <th class="border-0 text-center">Fallidos</th>
-                                <th class="border-0 text-center pe-4">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for carga in cargas_anteriores %}
-                            <tr>
-                                <td class="ps-4">
+        </div>
+    </div>
+
+    <!-- Bottom Row: Upload History -->
+    <div class="row">
+        <div class="col-12">
+            <!-- ZONE B: Upload History -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 fw-semibold" style="color: #002A4E;">
+                        <i class="fas fa-history me-2" style="color: #F37021;"></i>Historial de Cargas
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if cargas_anteriores %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover history-table mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0 ps-3 py-3">Fecha</th>
+                                    <th class="border-0 py-3">Archivo</th>
+                                    <th class="border-0 py-3">Estado</th>
+                                    <th class="border-0 py-3 text-center">Resumen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for carga in cargas_anteriores|slice:":10" %}
+                                <tr>
+                                <td class="ps-3 py-2">
                                     <small class="text-muted">{{ carga.fecha_carga|date:"d/m/Y H:i" }}</small>
                                 </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-file-alt text-muted me-2"></i>
-                                        <span class="text-dark">{{ carga.archivo_nombre }}</span>
-                                    </div>
+                                <td class="py-2">
+                                    <small class="text-dark">{{ carga.archivo_nombre|truncatechars:20 }}</small>
                                 </td>
-                                <td>
+                                <td class="py-2">
                                     {% if carga.estado == 'EXITOSO' %}
-                                    <span
-                                        class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
-                                        <i class="fas fa-check-circle me-1"></i>{{ carga.estado }}
+                                    <span class="badge bg-success status-badge">
+                                        <i class="fas fa-check-circle me-1"></i>Exitoso
                                     </span>
                                     {% elif carga.estado == 'PARCIAL' %}
-                                    <span
-                                        class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25">
-                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ carga.estado }}
+                                    <span class="badge bg-warning text-dark status-badge">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Con Errores
                                     </span>
                                     {% elif carga.estado == 'FALLIDO' %}
-                                    <span
-                                        class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">
-                                        <i class="fas fa-times-circle me-1"></i>{{ carga.estado }}
+                                    <span class="badge bg-danger status-badge">
+                                        <i class="fas fa-times-circle me-1"></i>Fallido
                                     </span>
                                     {% else %}
-                                    <span
-                                        class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">
-                                        <i class="fas fa-spinner me-1"></i>{{ carga.estado }}
-                                    </span>
+                                    <span class="badge bg-secondary status-badge">{{ carga.estado }}</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-center">
-                                    <strong>{{ carga.registros_procesados }}</strong>
-                                </td>
-                                <td class="text-center">
-                                    <span class="text-success fw-bold">{{ carga.registros_exitosos }}</span>
-                                </td>
-                                <td class="text-center">
-                                    {% if carga.registros_fallidos > 0 %}
-                                    <span class="text-danger fw-bold">{{ carga.registros_fallidos }}</span>
-                                    {% else %}
-                                    <span class="text-muted">0</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-center pe-4">
-                                    {% if carga.errores_detalle %}
-                                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal"
-                                        data-bs-target="#errorModal{{ carga.id }}">
-                                        <i class="fas fa-eye me-1"></i>Ver Errores
-                                    </button>
+                                <td class="py-2 text-center">
+                                        <small class="d-block">
+                                            <span class="text-success fw-semibold">{{ carga.registros_exitosos }}</span> / 
+                                            <span class="text-muted">{{ carga.registros_procesados }}</span>
+                                        </small>
+                                        {% if carga.errores_detalle %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger mt-1" 
+                                                data-bs-toggle="modal" data-bs-target="#errorModal{{ carga.id }}" 
+                                                style="font-size: 0.75rem; padding: 0.15rem 0.5rem;">
+                                            <i class="fas fa-exclamation-circle me-1"></i>Ver Errores
+                                        </button>
 
-                                    <!-- Modal de errores -->
-                                    <div class="modal fade" id="errorModal{{ carga.id }}" tabindex="-1">
-                                        <div
-                                            class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                                            <div class="modal-content border-0 shadow">
-                                                <div class="modal-header bg-danger text-white">
-                                                    <h5 class="modal-title">
-                                                        <i class="fas fa-exclamation-triangle me-2"></i>Errores
-                                                        Encontrados
-                                                    </h5>
-                                                    <button type="button" class="btn-close btn-close-white"
-                                                        data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="alert alert-light border mb-3">
-                                                        <strong>Archivo:</strong> {{ carga.archivo_nombre }}<br>
-                                                        <strong>Fecha:</strong> {{ carga.fecha_carga|date:"d/m/Y H:i" }}
+                                        <!-- Modal de errores -->
+                                        <div class="modal fade" id="errorModal{{ carga.id }}" tabindex="-1">
+                                            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                                                <div class="modal-content border-0 shadow">
+                                                    <div class="modal-header bg-danger text-white">
+                                                        <h5 class="modal-title">
+                                                            <i class="fas fa-exclamation-triangle me-2"></i>Errores Encontrados
+                                                        </h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                                     </div>
-                                                    <h6 class="fw-bold mb-2">Detalle de errores:</h6>
-                                                    <pre class="bg-light p-3 rounded border"
-                                                        style="white-space: pre-wrap; font-size: 0.875rem; max-height: 300px;">{{ carga.errores_detalle }}</pre>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        data-bs-dismiss="modal">
-                                                        Cerrar
-                                                    </button>
+                                                    <div class="modal-body">
+                                                        <div class="alert alert-light border mb-3">
+                                                            <strong>Archivo:</strong> {{ carga.archivo_nombre }}<br>
+                                                            <strong>Fecha:</strong> {{ carga.fecha_carga|date:"d/m/Y H:i" }}<br>
+                                                            <strong>Procesados:</strong> {{ carga.registros_procesados }} | 
+                                                            <strong>Exitosos:</strong> {{ carga.registros_exitosos }} | 
+                                                            <strong>Fallidos:</strong> {{ carga.registros_fallidos }}
+                                                        </div>
+                                                        <h6 class="fw-bold mb-2">Detalle de errores:</h6>
+                                                        <pre class="bg-light p-3 rounded border" style="white-space: pre-wrap; font-size: 0.875rem; max-height: 300px;">{{ carga.errores_detalle }}</pre>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    {% else %}
-                                    <span class="text-muted small">Sin errores</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No hay cargas previas</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endif %}
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Función para descargar plantilla CSV
-    function descargarPlantilla() {
-        const csvContent = "codigo_instrumento,metodo_ingreso,monto,factor,numero_dj,fecha_informe,observaciones\n" +
-            "CMPC,MONTO,5000000,,1949,2025-11-10,Ejemplo de ingreso por monto\n" +
-            "BCHILE,FACTOR,,12.5,1922,2025-11-10,Ejemplo de ingreso por factor";
+    // Upload Zone interactions
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const btnSubmit = document.getElementById('btnSubmit');
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
+    // Click to select file
+    uploadZone.addEventListener('click', function() {
+        fileInput.click();
+    });
 
-        link.setAttribute("href", url);
-        link.setAttribute("download", "plantilla_calificaciones.csv");
-        link.style.visibility = 'hidden';
+    // Drag & Drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, preventDefaults, false);
+    });
 
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
     }
 
-    // Drag and Drop para el área de upload
-    const uploadArea = document.getElementById('uploadArea');
-    const fileInput = document.getElementById('{{ form.archivo.id_for_label }}');
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, () => {
+            uploadZone.classList.add('drag-over');
+        }, false);
+    });
 
-    if (uploadArea && fileInput) {
-        // Prevenir comportamiento por defecto
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, preventDefaults, false);
-        });
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, () => {
+            uploadZone.classList.remove('drag-over');
+        }, false);
+    });
 
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
+    uploadZone.addEventListener('drop', function(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        fileInput.files = files;
+        updateFileInfo(files[0]);
+    }, false);
+
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            updateFileInfo(this.files[0]);
         }
+    });
 
-        // Highlight en drag over
-        ['dragenter', 'dragover'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight(e) {
-            uploadArea.classList.add('border-primary', 'bg-white');
-            uploadArea.classList.remove('bg-light');
-        }
-
-        function unhighlight(e) {
-            uploadArea.classList.remove('border-primary', 'bg-white');
-            uploadArea.classList.add('bg-light');
-        }
-
-        // Manejar el drop
-        uploadArea.addEventListener('drop', handleDrop, false);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            fileInput.files = files;
-
-            if (files.length > 0) {
-                updateFileName(files[0].name);
-            }
-        }
-
-        // Actualizar nombre del archivo seleccionado
-        fileInput.addEventListener('change', function () {
-            if (this.files.length > 0) {
-                updateFileName(this.files[0].name);
-            }
-        });
-
-        function updateFileName(filename) {
-            const icon = uploadArea.querySelector('.upload-icon i');
-            icon.className = 'fas fa-file-check text-success';
-
-            const text = uploadArea.querySelector('p');
-            text.innerHTML = `<strong>Archivo seleccionado:</strong> ${filename}`;
-        }
+    function updateFileInfo(file) {
+        fileName.textContent = file.name;
+        fileInfo.classList.remove('d-none');
+        uploadZone.querySelector('h5').textContent = 'Archivo listo para procesar';
+        uploadZone.querySelector('.fa-cloud-upload-alt').className = 'fas fa-file-check fa-4x mb-3';
+        uploadZone.querySelector('.fa-file-check').style.color = '#28a745';
     }
 
-    // Loading al enviar formulario
-    document.getElementById('uploadForm').addEventListener('submit', function () {
-        const btn = document.getElementById('btnSubmit');
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
-        btn.disabled = true;
+    // Loading state on submit
+    document.getElementById('uploadForm').addEventListener('submit', function() {
+        btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando archivo...';
+        btnSubmit.disabled = true;
     });
 </script>
 {% endblock %}
