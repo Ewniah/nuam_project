@@ -94,13 +94,13 @@ def obtener_ip_cliente(request):
     cuando la aplicación está detrás de un proxy o load balancer. Si no existe, utiliza
     REMOTE_ADDR como fallback.
 
-    Args:
+    Parámetros:
         request (HttpRequest): El objeto de solicitud HTTP de Django.
 
-    Returns:
+    Retorna:
         str: La dirección IP del cliente (ej: "192.168.1.1").
 
-    Notes:
+    Notas:
         - X-Forwarded-For puede contener múltiples IPs separadas por comas; se toma la primera.
         - REMOTE_ADDR contiene la IP del último hop (proxy si existe).
         - Utilizado para auditoría en LogAuditoria e IntentoLogin.
@@ -120,16 +120,16 @@ def verificar_cuenta_bloqueada(username):
     Comprueba la tabla CuentaBloqueada para determinar si el usuario está bloqueado
     y calcula los minutos restantes hasta el desbloqueo automático.
 
-    Args:
+    Parámetros:
         username (str): El nombre de usuario a verificar.
 
-    Returns:
+    Retorna:
         tuple: Una tupla (bloqueada, mensaje, minutos_restantes) donde:
             - bloqueada (bool): True si la cuenta está actualmente bloqueada.
             - mensaje (str): Mensaje descriptivo del estado del bloqueo.
             - minutos_restantes (int): Minutos hasta el desbloqueo automático.
 
-    Notes:
+    Notas:
         - El tiempo de bloqueo está definido por LOCKOUT_DURATION_MINUTES (30 min por defecto).
         - Si el tiempo de bloqueo ha expirado, se desbloquea automáticamente.
         - Retorna (False, "", 0) si la cuenta no existe o no está bloqueada.
@@ -182,16 +182,16 @@ def registrar_intento_login(username, ip_address, exitoso, detalles=""):
     Función auxiliar utilizada por login_view para mantener histórico completo de intentos
     de login exitosos y fallidos, facilitando análisis de seguridad y debugging.
 
-    Args:
+    Parámetros:
         username (str): Nombre de usuario que intentó autenticarse.
         ip_address (str): Dirección IP desde donde se realizó el intento.
         exitoso (bool): True si la autenticación fue exitosa, False si falló.
-        detalles (str, optional): Información adicional sobre el intento. Default: "".
+        detalles (str, opcional): Información adicional sobre el intento. Por defecto: "".
 
-    Returns:
+    Retorna:
         None: La función no retorna valor, solo crea registro en BD.
 
-    Notes:
+    Notas:
         - Llamada automáticamente por login_view en cada intento
         - Utilizada para análisis de patrones de ataque
         - Base de datos para verificar_intentos_fallidos
@@ -210,16 +210,16 @@ def verificar_intentos_fallidos(username, ip_address):
     FAILED_ATTEMPT_WINDOW_MINUTES. Si alcanza MAX_LOGIN_ATTEMPTS, bloquea automáticamente
     la cuenta y registra la acción en auditoría.
 
-    Args:
+    Parámetros:
         username (str): Nombre de usuario a verificar.
         ip_address (str): IP desde donde se realizó el último intento.
 
-    Returns:
+    Retorna:
         tuple: (debe_bloquear, intentos) donde:
             - debe_bloquear (bool): True si se alcanzó el límite y se bloqueó la cuenta.
             - intentos (int): Número de intentos fallidos en la ventana de tiempo.
 
-    Notes:
+    Notas:
         - Ventana de tiempo: FAILED_ATTEMPT_WINDOW_MINUTES (15 minutos por defecto)
         - Umbral de bloqueo: MAX_LOGIN_ATTEMPTS (5 intentos por defecto)
         - Crea o actualiza registro en CuentaBloqueada
@@ -280,14 +280,14 @@ def procesar_excel(archivo):
     Lee archivo Excel, extrae headers de la primera fila y convierte cada fila
     subsecuente en un diccionario. Filtra filas sin código de instrumento.
 
-    Args:
+    Parámetros:
         archivo (UploadedFile): Archivo Excel cargado desde request.FILES.
 
-    Returns:
+    Retorna:
         list[dict]: Lista de diccionarios donde cada dict representa una fila con
             headers como keys. Solo incluye filas con codigo_instrumento no vacío.
 
-    Notes:
+    Notas:
         - Librería: openpyxl
         - Lee la hoja activa del workbook
         - Primera fila debe contener headers (nombres de columnas)
@@ -315,13 +315,13 @@ def procesar_csv(archivo):
     Lee archivo CSV codificado en UTF-8 y convierte cada fila en un diccionario
     usando los headers de la primera línea como keys.
 
-    Args:
+    Parámetros:
         archivo (UploadedFile): Archivo CSV cargado desde request.FILES.
 
-    Returns:
+    Retorna:
         list[dict]: Lista de diccionarios donde cada dict representa una fila CSV.
 
-    Notes:
+    Notas:
         - Librería: csv (stdlib)
         - Encoding: UTF-8 (debe especificarse en archivo)
         - Primera línea debe contener headers (nombres de columnas)
@@ -354,15 +354,15 @@ def login_view(request):
     - Bloqueo automático después de MAX_LOGIN_ATTEMPTS intentos fallidos
     - Desbloqueo automático de cuentas tras login exitoso
 
-    Args:
+    Parámetros:
         request (HttpRequest): Objeto de solicitud HTTP con datos POST (username, password).
 
-    Returns:
+    Retorna:
         HttpResponse:
             - Redirect a 'dashboard' si login exitoso.
             - Render de 'registration/login.html' si cuenta bloqueada o credenciales inválidas.
 
-    Notes:
+    Notas:
         - Sistema de bloqueo: 5 intentos fallidos → 30 minutos de bloqueo
         - Ventana de tiempo para contar intentos: 15 minutos
         - Registra acciones: LOGIN (exitoso), LOGIN_FAILED (fallido)
@@ -470,13 +470,13 @@ def logout_view(request):
     Termina la sesión activa del usuario, registra el evento en LogAuditoria y
     redirige a la página de inicio.
 
-    Args:
+    Parámetros:
         request (HttpRequest): Solicitud HTTP con usuario autenticado.
 
-    Returns:
+    Retorna:
         HttpResponse: Redirect a 'home' con mensaje informativo.
 
-    Notes:
+    Notas:
         - Requiere autenticación: @login_required
         - Registra acción LOGOUT en LogAuditoria con IP del cliente
         - Logging: INFO con username e IP
@@ -525,14 +525,14 @@ def dashboard(request):
     - Estadísticas de cargas masivas (exitosas vs fallidas)
     - Saludo contextual según hora del día
 
-    Args:
+    Parámetros:
         request (HttpRequest): Objeto de solicitud HTTP del usuario autenticado.
 
-    Returns:
+    Retorna:
         HttpResponse: Render de 'calificaciones/dashboard.html' con context dict conteniendo
             todas las estadísticas calculadas.
 
-    Notes:
+    Notas:
         - Requiere autenticación: @login_required
         - Requiere permiso: @requiere_permiso("consultar")
         - Queries optimizadas con select_related() y values().annotate()
@@ -661,19 +661,19 @@ def listar_calificaciones(request):
     instrumento, rango de fechas y número de DJ. Utiliza select_related para optimizar
     queries de relaciones FK.
 
-    Args:
+    Parámetros:
         request (HttpRequest): GET request con parámetros opcionales:
             - codigo_instrumento (str): Filtro parcial por código (ICONTAINS).
             - fecha_desde (str): Fecha mínima del informe (formato YYYY-MM-DD).
             - fecha_hasta (str): Fecha máxima del informe (formato YYYY-MM-DD).
             - numero_dj (str): Filtro parcial por número de DJ (ICONTAINS).
 
-    Returns:
+    Retorna:
         HttpResponse: Render de 'calificaciones/listar_calificaciones.html' con:
             - calificaciones: QuerySet de CalificacionTributaria filtrado
             - Parámetros de filtros en context para mantener estado del form
 
-    Notes:
+    Notas:
         - Solo muestra registros con activo=True (borrado lógico)
         - Ordenado por fecha_creacion descendente (más recientes primero)
         - Requiere permiso: 'consultar'
@@ -725,18 +725,18 @@ def crear_calificacion(request):
     Presenta formulario para crear calificación manualmente. Valida datos, asigna usuario
     creador automáticamente y registra la operación en LogAuditoria.
 
-    Args:
+    Parámetros:
         request (HttpRequest):
             - GET: Muestra formulario vacío
             - POST: Procesa formulario con datos de calificación
 
-    Returns:
+    Retorna:
         HttpResponse:
             - GET: Render de 'calificaciones/form_calificacion.html' con formulario vacío
             - POST exitoso: Redirect a 'listar_calificaciones' con mensaje de éxito
             - POST con error: Render de form con errores de validación
 
-    Notes:
+    Notas:
         - Requiere permiso: 'crear'
         - Usuario creador se asigna automáticamente (no editable)
         - Registra acción CREATE en LogAuditoria con IP del cliente
@@ -797,22 +797,22 @@ def editar_calificacion(request, pk):
     Permite modificar todos los campos de una calificación previamente creada. Valida
     que el registro exista y esté activo antes de permitir edición.
 
-    Args:
+    Parámetros:
         request (HttpRequest):
             - GET: Muestra formulario pre-poblado con datos actuales
             - POST: Procesa formulario con datos actualizados
         pk (int): Primary key de la CalificacionTributaria a editar.
 
-    Returns:
+    Retorna:
         HttpResponse:
             - GET: Render de 'calificaciones/form_calificacion.html' con form poblado
             - POST exitoso: Redirect a 'listar_calificaciones' con mensaje de éxito
             - POST con error: Render de form con errores, sin guardar cambios
 
-    Raises:
+    Excepciones:
         Http404: Si la calificación no existe o está inactiva (activo=False).
 
-    Notes:
+    Notas:
         - Requiere permiso: 'modificar'
         - Registra acción UPDATE en LogAuditoria con IP del cliente
         - Maneja IntegrityError, ValidationError y excepciones genéricas
@@ -872,22 +872,22 @@ def eliminar_calificacion(request, pk):
     No elimina físicamente el registro de la base de datos, sino que marca el campo
     activo=False, preservando la integridad de auditoría e históricos.
 
-    Args:
+    Parámetros:
         request (HttpRequest):
             - GET: Muestra página de confirmación
             - POST: Ejecuta la eliminación lógica
         pk (int): Primary key de la CalificacionTributaria a eliminar.
 
-    Returns:
+    Retorna:
         HttpResponse:
             - GET: Render de 'calificaciones/confirmar_eliminar.html' con objeto
             - POST exitoso: Redirect a 'listar_calificaciones' con mensaje de éxito
             - POST con error: Redirect a 'listar_calificaciones' con mensaje de error
 
-    Raises:
+    Excepciones:
         Http404: Si la calificación no existe o ya está inactiva.
 
-    Notes:
+    Notas:
         - Requiere permiso: 'eliminar'
         - Eliminación lógica: activo=False (registro permanece en BD)
         - Registra acción DELETE en LogAuditoria con IP del cliente
@@ -1036,15 +1036,15 @@ def listar_instrumentos(request):
     Muestra tabla de instrumentos con capacidad de búsqueda simultánea en código,
     nombre y tipo de instrumento usando operadores OR.
 
-    Args:
+    Parámetros:
         request (HttpRequest): GET request con parámetro opcional:
             - busqueda (str): Término de búsqueda (busca en código, nombre y tipo).
 
-    Returns:
+    Retorna:
         HttpResponse: Render de 'calificaciones/listar_instrumentos.html' con
             QuerySet de instrumentos filtrados.
 
-    Notes:
+    Notas:
         - Solo muestra instrumentos activos (activo=True)
         - Búsqueda case-insensitive (ICONTAINS)
         - Búsqueda multi-campo: código OR nombre OR tipo
@@ -1078,17 +1078,17 @@ def crear_instrumento(request):
     Permite agregar instrumentos que luego serán referenciados por las calificaciones
     tributarias. Registra la creación en auditoría.
 
-    Args:
+    Parámetros:
         request (HttpRequest):
             - GET: Muestra formulario vacío
             - POST: Procesa formulario con datos del instrumento
 
-    Returns:
+    Retorna:
         HttpResponse:
             - GET: Render de 'calificaciones/form_instrumento.html' con form vacío
             - POST exitoso: Redirect a 'listar_instrumentos' con mensaje de éxito
 
-    Notes:
+    Notas:
         - Requiere permiso: 'crear'
         - Campos principales: codigo_instrumento (único), nombre_instrumento, tipo_instrumento
         - Registra acción CREATE en LogAuditoria
@@ -1216,20 +1216,20 @@ def carga_masiva(request):
     Soporta creación automática de instrumentos financieros si no existen y registra
     el resultado completo de la operación en la tabla CargaMasiva.
 
-    Args:
+    Parámetros:
         request (HttpRequest): Objeto de solicitud HTTP con archivo en FILES.
 
-    Returns:
+    Retorna:
         HttpResponse:
             - POST: Redirect a 'dashboard' después de procesar.
             - GET: Render de 'calificaciones/carga_masiva.html' con formulario.
 
-    Raises:
+    Excepciones:
         ValueError: Si el formato del archivo no es soportado (.xlsx, .csv).
         PermissionError: Si hay problemas de acceso al archivo.
         KeyError: Si faltan campos requeridos en las filas del archivo.
 
-    Notes:
+    Notas:
         - Formatos soportados: .xlsx (Excel), .csv (UTF-8)
         - Campos requeridos: codigo_instrumento, fecha_informe
         - Campos opcionales: nombre_instrumento, tipo_instrumento, monto, factor,
@@ -1397,10 +1397,10 @@ def exportar_excel(request):
     Genera archivo Excel con todas las calificaciones tributarias activas incluyendo
     datos del instrumento asociado y usuario creador. Optimizado con select_related.
 
-    Args:
+    Parámetros:
         request (HttpRequest): Solicitud HTTP del usuario autenticado.
 
-    Returns:
+    Retorna:
         HttpResponse: Archivo Excel descargable con:
             - Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
             - Filename: calificaciones_YYYYMMDD.xlsx (fecha actual)
@@ -1408,7 +1408,7 @@ def exportar_excel(request):
               Método Ingreso, Número DJ, Fecha Informe, Usuario Creador, Fecha Creación,
               Observaciones
 
-    Notes:
+    Notas:
         - Requiere permiso: 'consultar'
         - Librería: openpyxl
         - Solo exporta registros activos (activo=True)
@@ -1496,10 +1496,10 @@ def exportar_csv(request):
     Genera archivo CSV compatible con Excel y otras herramientas. Formato más liviano
     que Excel, ideal para importación en otros sistemas.
 
-    Args:
+    Parámetros:
         request (HttpRequest): Solicitud HTTP del usuario autenticado.
 
-    Returns:
+    Retorna:
         HttpResponse: Archivo CSV descargable con:
             - Content-Type: text/csv
             - Encoding: UTF-8 (compatible con caracteres especiales)
@@ -1508,7 +1508,7 @@ def exportar_csv(request):
               Método Ingreso, Número DJ, Fecha Informe, Usuario Creador, Fecha Creación,
               Observaciones
 
-    Notes:
+    Notas:
         - Requiere permiso: 'consultar'
         - Librería: csv (stdlib)
         - Solo exporta registros activos (activo=True)
@@ -1595,17 +1595,17 @@ def mi_perfil(request):
     Presenta formulario para actualizar información personal: nombre, apellido,
     email, teléfono y departamento. Crea perfil automáticamente si no existe.
 
-    Args:
+    Parámetros:
         request (HttpRequest):
             - GET: Muestra formulario con datos actuales
             - POST: Actualiza información del perfil
 
-    Returns:
+    Retorna:
         HttpResponse:
             - GET: Render de 'calificaciones/mi_perfil.html' con datos del perfil
             - POST: Redirect a 'mi_perfil' tras actualización exitosa
 
-    Notes:
+    Notas:
         - Requiere autenticación: @login_required
         - No requiere permiso específico (todos pueden editar su perfil)
         - Crea PerfilUsuario automáticamente si no existe
@@ -1720,17 +1720,17 @@ def desbloquear_cuenta_manual(request, user_id):
     Permite a administradores desbloquear cuentas sin esperar los 30 minutos de
     bloqueo automático. Registra la acción en auditoría con identificación del admin.
 
-    Args:
+    Parámetros:
         request (HttpRequest): Solicitud del administrador autenticado.
         user_id (int): ID del usuario cuya cuenta se desea desbloquear.
 
-    Returns:
+    Retorna:
         HttpResponse: Redirect a 'admin_gestionar_usuarios' con mensaje de resultado.
 
-    Raises:
+    Excepciones:
         Http404: Si el usuario no existe.
 
-    Notes:
+    Notas:
         - Requiere permiso: 'admin'
         - Registra acción ACCOUNT_UNLOCKED en LogAuditoria
         - Logging: WARNING con admin y target user identificados
@@ -1818,21 +1818,21 @@ def registro_auditoria(request):
     Vista exclusiva para Administradores y Auditores que permite revisar todas las
     acciones registradas en LogAuditoria con filtros por usuario, acción y fechas.
 
-    Args:
+    Parámetros:
         request (HttpRequest): GET request con parámetros opcionales:
             - usuario (int): ID del usuario para filtrar logs.
             - accion (str): Tipo de acción (LOGIN, LOGOUT, CREATE, UPDATE, DELETE, etc.).
             - fecha_desde (str): Fecha mínima (formato YYYY-MM-DD).
             - fecha_hasta (str): Fecha máxima (formato YYYY-MM-DD).
 
-    Returns:
+    Retorna:
         HttpResponse: Render de 'calificaciones/registro_auditoria.html' con:
             - logs: QuerySet de LogAuditoria filtrado y ordenado
             - usuarios: Lista de todos los usuarios para filtro
             - acciones: Lista de acciones únicas para filtro
             - Parámetros de filtro en context
 
-    Notes:
+    Notas:
         - Requiere permiso: 'admin' (Administrador o Auditor)
         - Ordenado por fecha_hora descendente (más recientes primero)
         - Query optimizado con select_related('usuario')
@@ -1897,15 +1897,15 @@ def calcular_factores_ajax(request):
     proporcional de cada uno como: factor_i = monto_i / suma_total. Valida que la suma
     de factores sea ≈ 1.0 (con tolerancia de 0.00000001).
 
-    Args:
+    Parámetros:
         request (HttpRequest): GET request con parámetros:
-            - monto_8 (str, optional): Monto para factor 8. Default: "0".
-            - monto_9 (str, optional): Monto para factor 9. Default: "0".
-            - monto_10 (str, optional): Monto para factor 10. Default: "0".
-            - monto_11 (str, optional): Monto para factor 11. Default: "0".
-            - monto_12 (str, optional): Monto para factor 12. Default: "0".
+            - monto_8 (str, optional): Monto para factor 8. Por defecto: "0".
+            - monto_9 (str, optional): Monto para factor 9. Por defecto: "0".
+            - monto_10 (str, optional): Monto para factor 10. Por defecto: "0".
+            - monto_11 (str, optional): Monto para factor 11. Por defecto: "0".
+            - monto_12 (str, optional): Monto para factor 12. Por defecto: "0".
 
-    Returns:
+    Retorna:
         JsonResponse: JSON con estructura:
             {
                 "success": true,
@@ -1923,7 +1923,7 @@ def calcular_factores_ajax(request):
 
         JsonResponse (error): Si falla, retorna {"success": false, "error": mensaje} con status 400.
 
-    Notes:
+    Notas:
         - Precisión: 8 decimales para factores
         - Conversión automática de valores inválidos a Decimal("0")
         - Maneja ValueError y TypeError en conversión de montos
@@ -1997,13 +1997,13 @@ def home(request):
     Página de aterrizaje pública que muestra información general del sistema.
     No requiere autenticación.
 
-    Args:
+    Parámetros:
         request (HttpRequest): Solicitud HTTP (autenticada o anónima).
 
-    Returns:
+    Retorna:
         HttpResponse: Render de 'home.html' con página de inicio.
 
-    Notes:
+    Notas:
         - No requiere autenticación ni permisos
         - Template: home.html
         - Redirige aquí tras logout exitoso
