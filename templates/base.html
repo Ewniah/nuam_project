@@ -149,7 +149,7 @@
         <div class="container-fluid px-4">
             <a class="navbar-brand" href="{% url 'dashboard' %}">
                 <img src="{% static 'img/nuam_logo.png' %}" alt="NUAM" onerror="this.textContent='NUAM';this.style.fontSize='1.5rem';this.style.fontWeight='700'">
-                <span>Calificaciones</span>
+                <span>{% block navbar_section %}Calificaciones{% endblock %}</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
