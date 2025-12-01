@@ -19,11 +19,13 @@ import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-# Django Core (9 imports)
+# Django Core (11 imports)
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError, PermissionDenied
+from django.db import IntegrityError
 from django.db.models import Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -423,7 +425,11 @@ def dashboard(request):
         elif hasattr(request.user, "perfilusuario") and request.user.perfilusuario.rol:
             if request.user.perfilusuario.rol.nombre_rol in ["Administrador", "Auditor"]:
                 logs_recientes = LogAuditoria.objects.all().order_by("-fecha_hora")[:5]
-    except:
+    except AttributeError as e:
+        logger.warning(f"Profile access error for user {request.user.username}: {e}")
+        logs_recientes = None
+    except Exception as e:
+        logger.error(f"Unexpected error fetching audit logs: {e}", exc_info=True)
         logs_recientes = None
 
     # Top 5 instrumentos más utilizados
@@ -516,29 +522,39 @@ def crear_calificacion(request):
     if request.method == "POST":
         form = CalificacionTributariaForm(request.POST)
         if form.is_valid():
-            calificacion = form.save(commit=False)
-            calificacion.usuario_creador = request.user
-            calificacion.save()
-            
-            logger.info(
-                f"Calificacion created - User: {request.user.username}, "
-                f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}, "
-                f"Monto: {calificacion.monto}, Factor: {calificacion.factor}"
-            )
+            try:
+                calificacion = form.save(commit=False)
+                calificacion.usuario_creador = request.user
+                calificacion.save()
+                
+                logger.info(
+                    f"Calificacion created - User: {request.user.username}, "
+                    f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}, "
+                    f"Monto: {calificacion.monto}, Factor: {calificacion.factor}"
+                )
 
-            # Registrar en auditoría
-            ip_address = obtener_ip_cliente(request)
-            LogAuditoria.objects.create(
-                usuario=request.user,
-                accion="CREATE",
-                tabla_afectada="CalificacionTributaria",
-                registro_id=calificacion.id,
-                ip_address=ip_address,
-                detalles=f"Calificación creada: {calificacion.instrumento.codigo_instrumento}",
-            )
+                # Registrar en auditoría
+                ip_address = obtener_ip_cliente(request)
+                LogAuditoria.objects.create(
+                    usuario=request.user,
+                    accion="CREATE",
+                    tabla_afectada="CalificacionTributaria",
+                    registro_id=calificacion.id,
+                    ip_address=ip_address,
+                    detalles=f"Calificación creada: {calificacion.instrumento.codigo_instrumento}",
+                )
 
-            messages.success(request, "Calificación creada exitosamente.")
-            return redirect("listar_calificaciones")
+                messages.success(request, "Calificación creada exitosamente.")
+                return redirect("listar_calificaciones")
+            except IntegrityError as e:
+                logger.error(f"Database integrity error creating calificacion: {e}", exc_info=True)
+                messages.error(request, "Error de integridad: La calificación ya existe o hay datos duplicados.")
+            except ValidationError as e:
+                logger.warning(f"Validation error creating calificacion: {e}")
+                messages.error(request, f"Error de validación: {e}")
+            except Exception as e:
+                logger.error(f"Unexpected error creating calificacion: {e}", exc_info=True)
+                messages.error(request, f"Error inesperado al crear calificación: {str(e)}")
     else:
         form = CalificacionTributariaForm()
 
@@ -554,26 +570,36 @@ def editar_calificacion(request, pk):
     if request.method == "POST":
         form = CalificacionTributariaForm(request.POST, instance=calificacion)
         if form.is_valid():
-            calificacion = form.save()
-            
-            logger.info(
-                f"Calificacion updated - User: {request.user.username}, "
-                f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}"
-            )
+            try:
+                calificacion = form.save()
+                
+                logger.info(
+                    f"Calificacion updated - User: {request.user.username}, "
+                    f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}"
+                )
 
-            # Registrar en auditoría
-            ip_address = obtener_ip_cliente(request)
-            LogAuditoria.objects.create(
-                usuario=request.user,
-                accion="UPDATE",
-                tabla_afectada="CalificacionTributaria",
-                registro_id=calificacion.id,
-                ip_address=ip_address,
-                detalles=f"Calificación editada: {calificacion.instrumento.codigo_instrumento}",
-            )
+                # Registrar en auditoría
+                ip_address = obtener_ip_cliente(request)
+                LogAuditoria.objects.create(
+                    usuario=request.user,
+                    accion="UPDATE",
+                    tabla_afectada="CalificacionTributaria",
+                    registro_id=calificacion.id,
+                    ip_address=ip_address,
+                    detalles=f"Calificación editada: {calificacion.instrumento.codigo_instrumento}",
+                )
 
-            messages.success(request, "Calificación actualizada exitosamente.")
-            return redirect("listar_calificaciones")
+                messages.success(request, "Calificación actualizada exitosamente.")
+                return redirect("listar_calificaciones")
+            except IntegrityError as e:
+                logger.error(f"Database integrity error updating calificacion {pk}: {e}", exc_info=True)
+                messages.error(request, "Error de integridad al actualizar la calificación.")
+            except ValidationError as e:
+                logger.warning(f"Validation error updating calificacion {pk}: {e}")
+                messages.error(request, f"Error de validación: {e}")
+            except Exception as e:
+                logger.error(f"Unexpected error updating calificacion {pk}: {e}", exc_info=True)
+                messages.error(request, f"Error inesperado: {str(e)}")
     else:
         form = CalificacionTributariaForm(instance=calificacion)
 
@@ -588,27 +614,32 @@ def eliminar_calificacion(request, pk):
     calificacion = get_object_or_404(CalificacionTributaria, pk=pk, activo=True)
 
     if request.method == "POST":
-        calificacion.activo = False
-        calificacion.save()
-        
-        logger.warning(
-            f"Calificacion deleted (logical) - User: {request.user.username}, "
-            f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}"
-        )
+        try:
+            calificacion.activo = False
+            calificacion.save()
+            
+            logger.warning(
+                f"Calificacion deleted (logical) - User: {request.user.username}, "
+                f"ID: {calificacion.id}, Instrumento: {calificacion.instrumento.codigo_instrumento}"
+            )
 
-        # Registrar en auditoría
-        ip_address = obtener_ip_cliente(request)
-        LogAuditoria.objects.create(
-            usuario=request.user,
-            accion="DELETE",
-            tabla_afectada="CalificacionTributaria",
-            registro_id=calificacion.id,
-            ip_address=ip_address,
-            detalles=f"Calificación eliminada: {calificacion.instrumento.codigo_instrumento}",
-        )
+            # Registrar en auditoría
+            ip_address = obtener_ip_cliente(request)
+            LogAuditoria.objects.create(
+                usuario=request.user,
+                accion="DELETE",
+                tabla_afectada="CalificacionTributaria",
+                registro_id=calificacion.id,
+                ip_address=ip_address,
+                detalles=f"Calificación eliminada: {calificacion.instrumento.codigo_instrumento}",
+            )
 
-        messages.success(request, "Calificación eliminada exitosamente.")
-        return redirect("listar_calificaciones")
+            messages.success(request, "Calificación eliminada exitosamente.")
+            return redirect("listar_calificaciones")
+        except Exception as e:
+            logger.error(f"Error deleting calificacion {pk}: {e}", exc_info=True)
+            messages.error(request, f"Error al eliminar calificación: {str(e)}")
+            return redirect("listar_calificaciones")
 
     return render(request, "calificaciones/confirmar_eliminar.html", {"objeto": calificacion})
 
@@ -917,9 +948,18 @@ def carga_masiva(request):
                         )
 
                         exitosos += 1
+                    except KeyError as e:
+                        fallidos += 1
+                        errores.append(f"Fila {i}: Campo requerido faltante - {str(e)}")
+                        logger.warning(f"Bulk upload row {i} missing field: {e}")
+                    except ValueError as e:
+                        fallidos += 1
+                        errores.append(f"Fila {i}: Valor inválido - {str(e)}")
+                        logger.warning(f"Bulk upload row {i} invalid value: {e}")
                     except Exception as e:
                         fallidos += 1
                         errores.append(f"Fila {i}: {str(e)}")
+                        logger.error(f"Bulk upload row {i} unexpected error: {e}", exc_info=True)
 
                 # Actualizar registro de carga
                 carga.registros_procesados = len(registros)
@@ -964,6 +1004,18 @@ def carga_masiva(request):
                     f"Procesados {exitosos} registros correctamente. {fallidos} con errores.",
                 )
 
+            except ValueError as e:
+                logger.error(f"File format error - File: {archivo.name}, Error: {str(e)}")
+                carga.estado = "FALLIDO"
+                carga.errores_detalle = f"Error de formato: {str(e)}"
+                carga.save()
+                messages.error(request, f"Error al procesar archivo: Formato inválido - {str(e)}")
+            except PermissionError as e:
+                logger.error(f"File access error - File: {archivo.name}, Error: {str(e)}")
+                carga.estado = "FALLIDO"
+                carga.errores_detalle = f"Error de acceso al archivo: {str(e)}"
+                carga.save()
+                messages.error(request, f"Error al acceder al archivo: {str(e)}")
             except Exception as e:
                 logger.error(
                     f"Critical error in bulk upload - User: {request.user.username}, "
@@ -973,7 +1025,7 @@ def carga_masiva(request):
                 carga.estado = "FALLIDO"
                 carga.errores_detalle = str(e)
                 carga.save()
-                messages.error(request, f"Error al procesar archivo: {str(e)}")
+                messages.error(request, f"Error inesperado al procesar archivo: {str(e)}")
 
             return redirect("dashboard")
     else:
@@ -1385,7 +1437,8 @@ def calcular_factores_ajax(request):
         for key, value in montos.items():
             try:
                 montos_decimal[key] = Decimal(value) if value else Decimal("0")
-            except:
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Invalid decimal value for {key}: {value}, Error: {e}")
                 montos_decimal[key] = Decimal("0")
 
         # Calcular suma total
