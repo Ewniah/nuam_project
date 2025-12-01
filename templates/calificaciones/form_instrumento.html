@@ -293,7 +293,68 @@ document.addEventListener('DOMContentLoaded', function() {
             helpText.innerHTML = `<i class="fas fa-lightbulb me-1" style="color: #F37021;"></i>${tipText}`;
         }
     });
+    
+    // ========================================
+    // 6. TOOLTIPS INFORMATIVOS - COBERTURA 100%
+    // ========================================
+    const INSTRUMENT_FIELD_DESCRIPTIONS = {
+        'codigo_instrumento': 'Nemo o Ticker de Bolsa (Ej: CHILE, COPEC, CMPC). <strong>Se convertirá automáticamente a mayúsculas</strong>. Si se deja vacío, se generará automáticamente.',
+        'nombre_instrumento': 'Nombre legal completo o fantasía del instrumento financiero. Ej: "Banco de Chile", "Fondo Mutuo Renta Fija BCI". <strong>Mínimo 3 caracteres</strong>.',
+        'tipo_instrumento': 'Clasificación del activo financiero según mercado:<br>• <strong>Acción</strong>: Participación en capital<br>• <strong>Fondo Mutuo</strong>: Cartera diversificada<br>• <strong>CFI</strong>: Cuota de Fondo de Inversión<br>• <strong>Bono</strong>: Instrumento de deuda<br>• <strong>ETF</strong>: Fondo cotizado en bolsa',
+        'activo': 'Estado del instrumento en el sistema:<br>• <strong>✓ Activo</strong>: Disponible para nuevas calificaciones<br>• <strong>✗ Inactivo</strong>: No aparecerá en selectores (históricos se mantienen)'
+    };
+    
+    // Agregar tooltips a todos los labels de campos
+    Object.keys(INSTRUMENT_FIELD_DESCRIPTIONS).forEach(fieldId => {
+        const label = document.querySelector(`label[for="id_${fieldId}"]`);
+        if (label && !label.querySelector('.fa-question-circle')) {
+            const helpIcon = document.createElement('i');
+            helpIcon.className = 'fas fa-question-circle ms-2 text-muted';
+            helpIcon.style.cursor = 'help';
+            helpIcon.style.fontSize = '0.875rem';
+            helpIcon.setAttribute('data-bs-toggle', 'tooltip');
+            helpIcon.setAttribute('data-bs-placement', 'top');
+            helpIcon.setAttribute('data-bs-html', 'true');
+            helpIcon.setAttribute('title', `<small>${INSTRUMENT_FIELD_DESCRIPTIONS[fieldId]}</small>`);
+            
+            label.appendChild(helpIcon);
+        }
+    });
+    
+    // Inicializar tooltips de Bootstrap
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {
+            boundary: 'window',
+            customClass: 'tooltip-nuam'
+        });
+    });
+    
+    console.log(`ℹ️ ${tooltipTriggerList.length} tooltips de instrumentos inicializados`);
 });
 </script>
+
+<style>
+    /* Estilo personalizado para tooltips */
+    .tooltip-nuam .tooltip-inner {
+        background-color: #002A4E;
+        color: white;
+        text-align: left;
+        max-width: 320px;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        box-shadow: 0 4px 12px rgba(0, 42, 78, 0.3);
+    }
+    
+    .tooltip-nuam .tooltip-arrow::before {
+        border-top-color: #002A4E;
+    }
+    
+    label i.fa-question-circle:hover {
+        color: #F37021 !important;
+        transform: scale(1.15);
+        transition: all 0.2s ease;
+    }
+</style>
 
 {% endblock %}

@@ -1127,57 +1127,74 @@
         }
         
         // ========================================
-        // 7. TOOLTIPS CONTEXTUALES (DJ 1949/1922)
+        // 7. TOOLTIPS CONTEXTUALES - COBERTURA 100% (DJ 1949/1922)
         // ========================================
         
-        const FACTOR_DESCRIPTIONS = {
-            'factor_8': 'Con crédito por IDPC generados a contar del 01.01.2017 (Art. 14 A N°1 LIR)',
-            'factor_9': 'Con crédito por IDPC acumulados hasta el 31.12.2016 (Art. 14 A N°2 LIR)',
-            'factor_10': 'Con derecho a crédito por pago de IDPC voluntario (Art. 14 A N°3 LIR)',
-            'factor_11': 'Sin derecho a crédito (Art. 14 A N°4 LIR)',
-            'factor_12': 'Rentas provenientes del registro RAP / Art 14 TER A',
-            'factor_13': 'Otras rentas percibidas Sin Prioridad (Art. 14 A N°5 LIR)',
-            'factor_14': 'Incremento por crédito empresas constructoras (DJ 1949 §14)',
-            'factor_15': 'Rentas exentas de impuestos finales (DJ 1949 §15)',
-            'factor_16': 'Rentas o cantidades afectas a IGC o IA (DJ 1949 §16)',
-            'factor_17': 'Dividendos y retiros de sociedades anónimas (DJ 1949 §17)',
-            'factor_18': 'Rentas presuntas de bienes raíces agrícolas (DJ 1949 §18)',
-            'factor_19': 'Rentas presuntas de transporte terrestre de carga (DJ 1949 §19)',
-            'factor_20': 'Utilidades afectadas con ISFUT (Ley 20.780 Art. 38 bis)',
-            'factor_21': 'Rentas generadas hasta 1983 / ISFUT Ley 21.210 (DJ 1949 §21)',
-            'factor_22': 'Dividendos de sociedades extranjeras (DJ 1949 §22)',
-            'factor_23': 'Rentas exentas del impuesto adicional (DJ 1949 §23)',
-            'factor_24': 'Cantidades no constitutivas de renta (DJ 1949 §24)',
-            'factor_25': 'Devoluciones de capital y reajustes (DJ 1949 §25)',
-            'factor_26': 'Rentas exentas o no gravadas en Chile (DJ 1949 §26)',
-            'factor_27': 'Otras cantidades percibidas sin retención (DJ 1949 §27)',
-            'factor_28': 'Dividendos con retención final (DJ 1949 §28)',
-            'factor_29': 'Rentas de fondos mutuos (DJ 1949 §29)',
-            'factor_30': 'Rentas de capitales mobiliarios (DJ 1949 §30)',
-            'factor_31': 'Ganancias de capital en acciones (DJ 1949 §31)',
-            'factor_32': 'Rentas del Art. 17 N°8 letra a) LIR (DJ 1949 §32)',
-            'factor_33': 'Retiros o dividendos afectos a impuesto único (DJ 1949 §33)',
-            'factor_34': 'Otras rentas con retención final (DJ 1949 §34)',
-            'factor_35': 'Rentas del Art. 20 N°2 LIR (DJ 1949 §35)',
-            'factor_36': 'Cantidades reinvertidas (DJ 1949 §36)',
-            'factor_37': 'Otras cantidades agregadas o rebajadas (DJ 1949 §37)'
+        const ALL_FIELD_DESCRIPTIONS = {
+            // === CAMPOS ADMINISTRATIVOS ===
+            'instrumento': 'Activo financiero sobre el cual se declara el dividendo. Seleccione el instrumento previamente registrado en el sistema.',
+            'fecha_informe': 'Fecha oficial del evento o reparto del dividendo. Formato: DD/MM/AAAA. Esta fecha determina el ejercicio tributario aplicable.',
+            'mercado': 'Mercado de origen del instrumento (Acciones, CFI, Fondos Mutuos). Define el tipo de operación y normativa aplicable.',
+            'secuencia': 'Número correlativo único del evento. Identifica de forma inequívoca cada distribución de dividendos en el sistema.',
+            'numero_dividendo': 'Número identificador del dividendo según registros de la entidad emisora. Permite trazabilidad con documentos oficiales.',
+            'tipo_sociedad': 'Clasificación jurídica: <strong>A</strong> = Abierta (cotiza en bolsa), <strong>C</strong> = Cerrada (no cotiza). Afecta régimen tributario.',
+            'valor_historico': 'Valor del activo al momento del evento. Base histórica para cálculos de ganancias de capital y revalorizaciones.',
+            'numero_dj': 'Declaración Jurada aplicable según normativa SII: <strong>1949</strong> (SA) o <strong>1922</strong> (otras sociedades). Campo calculado automáticamente.',
+            'ejercicio': 'Año tributario al que corresponde la calificación (AAAA). Ej: 2024. Determina las reglas fiscales vigentes aplicables.',
+            'metodo_ingreso': 'Método de ingreso seleccionado: <strong>MONTO</strong> (ingresa monto y sistema calcula factores) o <strong>FACTOR</strong> (ingresa factores directamente).',
+            'monto': 'Monto total líquido a repartir en pesos chilenos (CLP). Base de cálculo para distribución proporcional en los 30 factores.',
+            
+            // === FACTORES TRIBUTARIOS (8-37) - DJ 1949/1922 ===
+            'factor_8': 'Con crédito por IDPC generados a contar del 01.01.2017 (Art. 14 A N°1 LIR). Rentas empresariales con derecho a crédito tributario completo.',
+            'factor_9': 'Con crédito por IDPC acumulados hasta el 31.12.2016 (Art. 14 A N°2 LIR). Rentas del régimen transitorio con crédito histórico.',
+            'factor_10': 'Con derecho a crédito por pago de IDPC voluntario (Art. 14 A N°3 LIR). Empresas que optaron por régimen semi-integrado con pago voluntario.',
+            'factor_11': 'Sin derecho a crédito (Art. 14 A N°4 LIR). Utilidades sin beneficio tributario, típicamente de empresas extranjeras o rentas exentas.',
+            'factor_12': 'Rentas provenientes del registro RAP (Rentas Afectas a Pago) o Art. 14 TER A LIR. Régimen especial de tributación simplificada.',
+            'factor_13': 'Otras rentas percibidas sin prioridad de imputación (Art. 14 A N°5 LIR). Rentas residuales no clasificadas en otros factores.',
+            'factor_14': 'Exceso de distribuciones desproporcionadas (DJ 1949 §14). Ajuste por repartos que exceden proporción accionaria en sociedades cerradas.',
+            'factor_15': 'Utilidades afectas con ISFUT - Impuesto Sustitutivo Final Único Tributación (Ley 20.780 Art. 38 bis). Rentas históricas con régimen especial.',
+            'factor_16': 'Rentas generadas hasta 31.12.1983 / ISFUT Ley 21.210 (DJ 1949 §16). Utilidades antiguas con tratamiento preferencial por antigüedad.',
+            'factor_17': 'Rentas exentas del Impuesto Global Complementario (IGC). Ingresos no gravados para personas naturales residentes.',
+            'factor_18': 'Ingresos no constitutivos de renta (Art. 17 LIR). Operaciones excluidas de base imponible por ley (herencias, seguros, etc.).',
+            'factor_19': 'Rentas o cantidades con retención final efectuada. Montos que ya tributaron en fuente y no requieren declaración adicional.',
+            'factor_20': 'Rentas no sujetas a tributación en Chile. Ingresos de fuente extranjera o bajo tratados de doble tributación.',
+            'factor_21': 'Rentas sujetas a restitución de créditos (Art. 56 N°3 LIR). Ajustes por uso indebido de créditos fiscales anteriores.',
+            'factor_22': 'Cantidades que generan crédito IPE (Impuesto Pagado en el Extranjero). Permite imputar impuestos pagados en jurisdicciones foráneas.',
+            'factor_23': 'Crédito por donaciones (Art. 69 Ley 19.885). Beneficio tributario por aportes a entidades sin fines de lucro autorizadas.',
+            'factor_24': 'Crédito por inversiones en activos fijos (Art. 33 bis LIR). Incentivo fiscal por adquisición de bienes de capital productivos.',
+            'factor_25': 'Otros créditos contra el impuesto. Créditos fiscales diversos no clasificados en factores anteriores (capacitación, I+D, etc.).',
+            'factor_26': 'Pérdida tributaria arrastrable del ejercicio. Déficit operacional que puede compensarse en ejercicios futuros según Art. 31 LIR.',
+            'factor_27': 'Gastos rechazados agregados a la renta líquida. Desembolsos no aceptados por SII y que incrementan base imponible (multas, lujo, etc.).',
+            'factor_28': 'Ajustes por diferencias temporarias contables. Correcciones entre resultado contable y tributario (depreciación, provisiones, etc.).',
+            'factor_29': 'Rentas exentas de impuesto adicional (IA). Ingresos no gravados para no residentes bajo Art. 59 y siguientes LIR.',
+            'factor_30': 'Cantidades no gravadas por beneficios especiales. Montos protegidos por leyes sectoriales (zonas francas, incentivos regionales).',
+            'factor_31': 'Dividendos de sociedades extranjeras (DJ 1949 §31). Utilidades recibidas desde empresas del exterior, sujetas a Art. 41 A LIR.',
+            'factor_32': 'Rentas de fondos de inversión privados (FIP). Resultados de vehículos de inversión colectiva regulados por SVS/CMF.',
+            'factor_33': 'Ganancias de capital en acciones (Art. 17 N°8 LIR). Mayor valor en venta de títulos accionarios con tratamiento preferencial.',
+            'factor_34': 'Retiros o dividendos afectos a impuesto único (35% Art. 21 LIR). Distribuciones de gastos rechazados con tasa fija sin derecho a crédito.',
+            'factor_35': 'Rentas del Art. 20 N°2 LIR (actividades profesionales). Honorarios y servicios personales de trabajadores independientes.',
+            'factor_36': 'Cantidades reinvertidas con suspensión de impuestos. Utilidades destinadas a capitalización que difieren tributación (Art. 14 letra D N°3).',
+            'factor_37': 'Otras cantidades agregadas o rebajadas a la renta líquida. Ajustes residuales diversos según fiscalización o correcciones de declaraciones.'
         };
         
-        // Agregar tooltips a cada factor
-        Object.keys(FACTOR_DESCRIPTIONS).forEach(factorId => {
-            const label = document.querySelector(`label[for="id_${factorId}"]`);
+        // Agregar tooltips a TODOS los campos
+        Object.keys(ALL_FIELD_DESCRIPTIONS).forEach(fieldId => {
+            const label = document.querySelector(`label[for="id_${fieldId}"]`);
             if (label) {
-                // Crear ícono de ayuda
-                const helpIcon = document.createElement('i');
-                helpIcon.className = 'fas fa-question-circle ms-2 text-muted';
-                helpIcon.style.cursor = 'help';
-                helpIcon.style.fontSize = '0.875rem';
-                helpIcon.setAttribute('data-bs-toggle', 'tooltip');
-                helpIcon.setAttribute('data-bs-placement', 'top');
-                helpIcon.setAttribute('data-bs-html', 'true');
-                helpIcon.setAttribute('title', `<small>${FACTOR_DESCRIPTIONS[factorId]}</small>`);
-                
-                label.appendChild(helpIcon);
+                // Verificar si ya tiene un ícono de ayuda
+                if (!label.querySelector('.fa-question-circle')) {
+                    // Crear ícono de ayuda
+                    const helpIcon = document.createElement('i');
+                    helpIcon.className = 'fas fa-question-circle ms-2 text-muted';
+                    helpIcon.style.cursor = 'help';
+                    helpIcon.style.fontSize = '0.875rem';
+                    helpIcon.setAttribute('data-bs-toggle', 'tooltip');
+                    helpIcon.setAttribute('data-bs-placement', 'top');
+                    helpIcon.setAttribute('data-bs-html', 'true');
+                    helpIcon.setAttribute('title', `<small>${ALL_FIELD_DESCRIPTIONS[fieldId]}</small>`);
+                    
+                    label.appendChild(helpIcon);
+                }
             }
         });
         
