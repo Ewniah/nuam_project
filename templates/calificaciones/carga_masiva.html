@@ -55,20 +55,32 @@
     .required-column {
         background-color: #f8f9fa;
         border-left: 3px solid #F37021;
-        padding: 0.5rem;
-        margin-bottom: 0.5rem;
+        padding: 0.35rem 0.5rem;
+        margin-bottom: 0.35rem;
         border-radius: 4px;
     }
 
+    .required-column code {
+        font-size: 0.8rem;
+    }
+
+    .required-column small {
+        font-size: 0.7rem;
+    }
+
     .history-table {
-        font-size: 0.875rem;
+        font-size: 0.8rem;
+    }
+
+    .history-table td {
+        padding: 0.4rem 0.5rem !important;
     }
 
     .status-badge {
-        padding: 0.4rem 0.8rem;
-        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
         font-weight: 500;
-        font-size: 0.875rem;
+        font-size: 0.75rem;
     }
 </style>
 {% endblock %}
@@ -141,72 +153,67 @@
                         <i class="fas fa-download me-1"></i>Descargar Plantilla
                     </a>
                 </div>
-                <div class="card-body p-4" style="max-height: 500px; overflow-y: auto;">
-                    <div class="alert alert-warning mb-3">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Importante:</strong> El archivo debe contener cabeceras exactas. Nombres en minúsculas y con guiones bajos.
+                <div class="card-body p-3">
+                    <div class="alert alert-warning mb-2 py-2">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <small><strong>Importante:</strong> Cabeceras exactas en minúsculas con guiones bajos.</small>
                     </div>
 
-                    <h6 class="fw-bold mb-3" style="color: #002A4E;">📋 Columnas Requeridas</h6>
+                    <h6 class="fw-bold mb-2" style="color: #002A4E; font-size: 0.95rem;">📋 Columnas Requeridas</h6>
 
                     <!-- Metadata Columns -->
-                    <p class="small fw-semibold mb-2" style="color: #F37021;">METADATA (Obligatorias):</p>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-6">
+                    <p class="small fw-semibold mb-1" style="color: #F37021; font-size: 0.85rem;">METADATA (8 columnas obligatorias):</p>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-4">
                             <div class="required-column">
                                 <code>codigo_instrumento</code>
-                                <small class="d-block text-muted">Código del instrumento</small>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="required-column">
                                 <code>fecha_informe</code>
-                                <small class="d-block text-muted">Formato: YYYY-MM-DD</small>
+                                <small class="d-block text-muted">YYYY-MM-DD</small>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="required-column">
                                 <code>mercado</code>
                                 <small class="d-block text-muted">ACN, CFI, FFM</small>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="required-column">
                                 <code>tipo_sociedad</code>
-                                <small class="d-block text-muted">A=Corredora, C=Bolsa</small>
+                                <small class="d-block text-muted">A/C</small>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="required-column">
                                 <code>secuencia</code>
-                                <small class="d-block text-muted">Número de secuencia</small>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="required-column">
                                 <code>numero_dividendo</code>
-                                <small class="d-block text-muted">Número de dividendo</small>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="required-column">
                                 <code>ejercicio</code>
-                                <small class="d-block text-muted">Año fiscal</small>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="required-column">
                                 <code>numero_dj</code>
-                                <small class="d-block text-muted">Número DJ</small>
                             </div>
                         </div>
                     </div>
 
                     <!-- Factors Columns -->
-                    <p class="small fw-semibold mb-2" style="color: #F37021;">FACTORES (30 columnas):</p>
-                    <div class="alert alert-info mb-0">
-                        <p class="mb-2"><strong>Opción 1:</strong> Columna <code>monto</code> (el sistema calcula los 30 factores automáticamente)</p>
-                        <p class="mb-0"><strong>Opción 2:</strong> Columnas <code>factor_8</code>, <code>factor_9</code>, ... , <code>factor_37</code> (valores calculados manualmente)</p>
+                    <p class="small fw-semibold mb-1 mt-2" style="color: #F37021; font-size: 0.85rem;">FACTORES (30 columnas):</p>
+                    <div class="alert alert-info mb-0 py-2">
+                        <p class="mb-1" style="font-size: 0.8rem;"><strong>Opción 1:</strong> Columna <code>monto</code> (auto-calcula factores)</p>
+                        <p class="mb-0" style="font-size: 0.8rem;"><strong>Opción 2:</strong> <code>factor_8</code> a <code>factor_37</code> (manual)</p>
                     </div>
                 </div>
             </div>
@@ -218,10 +225,10 @@
         <div class="col-12">
             <!-- ZONE B: Upload History -->
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-white border-bottom">
-                    <h5 class="mb-0 fw-semibold" style="color: #002A4E;">
-                        <i class="fas fa-history me-2" style="color: #F37021;"></i>Historial de Cargas
-                    </h5>
+                <div class="card-header bg-white border-bottom py-2">
+                    <h6 class="mb-0 fw-semibold" style="color: #002A4E; font-size: 0.95rem;">
+                        <i class="fas fa-history me-2" style="color: #F37021;"></i>Últimas 5 Cargas
+                    </h6>
                 </div>
                 <div class="card-body p-0">
                     {% if cargas_anteriores %}
@@ -229,48 +236,47 @@
                         <table class="table table-sm table-hover history-table mb-0">
                             <thead class="bg-light">
                                 <tr>
-                                    <th class="border-0 ps-3 py-3">Fecha</th>
-                                    <th class="border-0 py-3">Archivo</th>
-                                    <th class="border-0 py-3">Estado</th>
-                                    <th class="border-0 py-3 text-center">Resumen</th>
+                                    <th class="border-0 ps-2 py-2" style="font-size: 0.8rem;">Fecha</th>
+                                    <th class="border-0 py-2" style="font-size: 0.8rem;">Archivo</th>
+                                    <th class="border-0 py-2" style="font-size: 0.8rem;">Estado</th>
+                                    <th class="border-0 py-2 text-center" style="font-size: 0.8rem;">Resumen</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for carga in cargas_anteriores|slice:":10" %}
+                                {% for carga in cargas_anteriores|slice:":5" %}
                                 <tr>
-                                <td class="ps-3 py-2">
-                                    <small class="text-muted">{{ carga.fecha_carga|date:"d/m/Y H:i" }}</small>
+                                <td class="ps-2">
+                                    <small class="text-muted" style="font-size: 0.75rem;">{{ carga.fecha_carga|date:"d/m/y H:i" }}</small>
                                 </td>
-                                <td class="py-2">
-                                    <small class="text-dark">{{ carga.archivo_nombre|truncatechars:20 }}</small>
+                                <td>
+                                    <small class="text-dark" style="font-size: 0.75rem;">{{ carga.archivo_nombre|truncatechars:25 }}</small>
                                 </td>
-                                <td class="py-2">
+                                <td>
                                     {% if carga.estado == 'EXITOSO' %}
                                     <span class="badge bg-success status-badge">
-                                        <i class="fas fa-check-circle me-1"></i>Exitoso
+                                        <i class="fas fa-check me-1"></i>OK
                                     </span>
                                     {% elif carga.estado == 'PARCIAL' %}
                                     <span class="badge bg-warning text-dark status-badge">
-                                        <i class="fas fa-exclamation-triangle me-1"></i>Con Errores
+                                        <i class="fas fa-exclamation me-1"></i>Errores
                                     </span>
                                     {% elif carga.estado == 'FALLIDO' %}
                                     <span class="badge bg-danger status-badge">
-                                        <i class="fas fa-times-circle me-1"></i>Fallido
+                                        <i class="fas fa-times me-1"></i>Falló
                                     </span>
                                     {% else %}
                                     <span class="badge bg-secondary status-badge">{{ carga.estado }}</span>
                                     {% endif %}
                                 </td>
-                                <td class="py-2 text-center">
-                                        <small class="d-block">
-                                            <span class="text-success fw-semibold">{{ carga.registros_exitosos }}</span> / 
-                                            <span class="text-muted">{{ carga.registros_procesados }}</span>
+                                <td class="text-center">
+                                        <small class="d-block" style="font-size: 0.75rem;">
+                                            <span class="text-success fw-semibold">{{ carga.registros_exitosos }}</span> / {{ carga.registros_procesados }}
                                         </small>
                                         {% if carga.errores_detalle %}
-                                        <button type="button" class="btn btn-sm btn-outline-danger mt-1" 
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
                                                 data-bs-toggle="modal" data-bs-target="#errorModal{{ carga.id }}" 
-                                                style="font-size: 0.75rem; padding: 0.15rem 0.5rem;">
-                                            <i class="fas fa-exclamation-circle me-1"></i>Ver Errores
+                                                style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">
+                                            <i class="fas fa-info-circle"></i>
                                         </button>
 
                                         <!-- Modal de errores -->
@@ -308,9 +314,9 @@
                         </table>
                     </div>
                     {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                        <p class="text-muted mb-0">No hay cargas previas</p>
+                    <div class="text-center py-3">
+                        <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0" style="font-size: 0.85rem;">No hay cargas previas</p>
                     </div>
                     {% endif %}
                 </div>
