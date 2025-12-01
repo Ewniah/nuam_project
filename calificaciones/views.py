@@ -274,7 +274,26 @@ def verificar_intentos_fallidos(username, ip_address):
 
 
 def procesar_excel(archivo):
-    """Procesa archivo Excel y retorna lista de registros"""
+    """
+    Procesa archivo Excel (.xlsx) y extrae registros para carga masiva.
+
+    Lee archivo Excel, extrae headers de la primera fila y convierte cada fila
+    subsecuente en un diccionario. Filtra filas sin código de instrumento.
+
+    Args:
+        archivo (UploadedFile): Archivo Excel cargado desde request.FILES.
+
+    Returns:
+        list[dict]: Lista de diccionarios donde cada dict representa una fila con
+            headers como keys. Solo incluye filas con codigo_instrumento no vacío.
+
+    Notes:
+        - Librería: openpyxl
+        - Lee la hoja activa del workbook
+        - Primera fila debe contener headers (nombres de columnas)
+        - Filas sin codigo_instrumento se omiten automáticamente
+        - Utilizada por carga_masiva() para importación batch
+    """
     wb = openpyxl.load_workbook(archivo)
     sheet = wb.active
     registros = []
@@ -290,7 +309,26 @@ def procesar_excel(archivo):
 
 
 def procesar_csv(archivo):
-    """Procesa archivo CSV y retorna lista de registros"""
+    """
+    Procesa archivo CSV y extrae registros para carga masiva.
+
+    Lee archivo CSV codificado en UTF-8 y convierte cada fila en un diccionario
+    usando los headers de la primera línea como keys.
+
+    Args:
+        archivo (UploadedFile): Archivo CSV cargado desde request.FILES.
+
+    Returns:
+        list[dict]: Lista de diccionarios donde cada dict representa una fila CSV.
+
+    Notes:
+        - Librería: csv (stdlib)
+        - Encoding: UTF-8 (debe especificarse en archivo)
+        - Primera línea debe contener headers (nombres de columnas)
+        - Separador: coma (,)
+        - Utilizada por carga_masiva() para importación batch
+        - No filtra filas vacías (lo hace carga_masiva)
+    """
     contenido = archivo.read().decode("utf-8")
     reader = csv.DictReader(io.StringIO(contenido))
     return list(reader)
@@ -426,7 +464,25 @@ def login_view(request):
 
 @login_required
 def logout_view(request):
-    """Cierra sesión y registra en auditoría"""
+    """
+    Cierra la sesión del usuario y registra la acción en auditoría.
+
+    Termina la sesión activa del usuario, registra el evento en LogAuditoria y
+    redirige a la página de inicio.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP con usuario autenticado.
+
+    Returns:
+        HttpResponse: Redirect a 'home' con mensaje informativo.
+
+    Notes:
+        - Requiere autenticación: @login_required
+        - Registra acción LOGOUT en LogAuditoria con IP del cliente
+        - Logging: INFO con username e IP
+        - Limpia la sesión de Django completamente
+        - Mensaje informativo al usuario tras logout
+    """
     user = request.user
     ip_address = obtener_ip_cliente(request)
 
@@ -1533,7 +1589,29 @@ def exportar_csv(request):
 
 @login_required
 def mi_perfil(request):
-    """Muestra y permite editar el perfil del usuario actual"""
+    """
+    Muestra y permite editar el perfil del usuario autenticado.
+
+    Presenta formulario para actualizar información personal: nombre, apellido,
+    email, teléfono y departamento. Crea perfil automáticamente si no existe.
+
+    Args:
+        request (HttpRequest):
+            - GET: Muestra formulario con datos actuales
+            - POST: Actualiza información del perfil
+
+    Returns:
+        HttpResponse:
+            - GET: Render de 'calificaciones/mi_perfil.html' con datos del perfil
+            - POST: Redirect a 'mi_perfil' tras actualización exitosa
+
+    Notes:
+        - Requiere autenticación: @login_required
+        - No requiere permiso específico (todos pueden editar su perfil)
+        - Crea PerfilUsuario automáticamente si no existe
+        - Actualiza User (first_name, last_name, email) y PerfilUsuario (telefono, departamento)
+        - No permite cambiar username o password (requiere vistas específicas)
+    """
     try:
         perfil = request.user.perfilusuario
     except PerfilUsuario.DoesNotExist:
@@ -1637,8 +1715,28 @@ def admin_gestionar_usuarios(request):
 @requiere_permiso("admin")
 def desbloquear_cuenta_manual(request, user_id):
     """
-    Desbloquea manualmente una cuenta de usuario.
-    Registra la acción en LogAuditoria con ACCOUNT_UNLOCKED.
+    Desbloquea manualmente una cuenta de usuario bloqueada por intentos fallidos.
+
+    Permite a administradores desbloquear cuentas sin esperar los 30 minutos de
+    bloqueo automático. Registra la acción en auditoría con identificación del admin.
+
+    Args:
+        request (HttpRequest): Solicitud del administrador autenticado.
+        user_id (int): ID del usuario cuya cuenta se desea desbloquear.
+
+    Returns:
+        HttpResponse: Redirect a 'admin_gestionar_usuarios' con mensaje de resultado.
+
+    Raises:
+        Http404: Si el usuario no existe.
+
+    Notes:
+        - Requiere permiso: 'admin'
+        - Registra acción ACCOUNT_UNLOCKED en LogAuditoria
+        - Logging: WARNING con admin y target user identificados
+        - Marca bloqueada=False y actualiza fecha_desbloqueo
+        - Muestra warning si la cuenta no estaba bloqueada
+        - Acción crítica requerida por feedback del profesor
     """
     # Obtener el usuario a desbloquear
     user = get_object_or_404(User, id=user_id)
@@ -1714,7 +1812,33 @@ def ver_historial_login_usuario(request, user_id):
 @login_required
 @requiere_permiso("consultar")
 def registro_auditoria(request):
-    """Muestra el registro completo de auditoría (solo para Administrador y Auditor)"""
+    """
+    Muestra el registro completo de auditoría del sistema con capacidad de filtrado.
+
+    Vista exclusiva para Administradores y Auditores que permite revisar todas las
+    acciones registradas en LogAuditoria con filtros por usuario, acción y fechas.
+
+    Args:
+        request (HttpRequest): GET request con parámetros opcionales:
+            - usuario (int): ID del usuario para filtrar logs.
+            - accion (str): Tipo de acción (LOGIN, LOGOUT, CREATE, UPDATE, DELETE, etc.).
+            - fecha_desde (str): Fecha mínima (formato YYYY-MM-DD).
+            - fecha_hasta (str): Fecha máxima (formato YYYY-MM-DD).
+
+    Returns:
+        HttpResponse: Render de 'calificaciones/registro_auditoria.html' con:
+            - logs: QuerySet de LogAuditoria filtrado y ordenado
+            - usuarios: Lista de todos los usuarios para filtro
+            - acciones: Lista de acciones únicas para filtro
+            - Parámetros de filtro en context
+
+    Notes:
+        - Requiere permiso: 'admin' (Administrador o Auditor)
+        - Ordenado por fecha_hora descendente (más recientes primero)
+        - Query optimizado con select_related('usuario')
+        - Limitado a MAX_AUDIT_LOG_RECORDS registros por defecto
+        - Acciones incluyen: LOGIN, LOGOUT, CREATE, UPDATE, DELETE, ACCOUNT_LOCKED, ACCOUNT_UNLOCKED
+    """
     logs = LogAuditoria.objects.all().select_related("usuario").order_by("-fecha_hora")
 
     # Filtros
@@ -1867,5 +1991,22 @@ def calcular_factores_ajax(request):
 
 
 def home(request):
-    """Vista para la página de inicio"""
+    """
+    Vista para la página de inicio del sistema NUAM.
+
+    Página de aterrizaje pública que muestra información general del sistema.
+    No requiere autenticación.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP (autenticada o anónima).
+
+    Returns:
+        HttpResponse: Render de 'home.html' con página de inicio.
+
+    Notes:
+        - No requiere autenticación ni permisos
+        - Template: home.html
+        - Redirige aquí tras logout exitoso
+        - Puede incluir enlaces a login, información del sistema, etc.
+    """
     return render(request, "home.html")
