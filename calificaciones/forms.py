@@ -17,6 +17,9 @@ class CalificacionTributariaForm(forms.ModelForm):
                 'class': 'form-select',
                 'required': True
             }),
+            'origen': forms.Select(attrs={
+                'class': 'form-select'
+            }),
             'numero_dj': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Ej: 1949 o 1922'
@@ -67,6 +70,7 @@ class CalificacionTributariaForm(forms.ModelForm):
         
         labels = {
             'instrumento': 'Instrumento Financiero',
+            'origen': 'Origen de los Datos',
             'numero_dj': 'Número DJ',
             'fecha_informe': 'Fecha del Informe',
             'secuencia': 'Secuencia',

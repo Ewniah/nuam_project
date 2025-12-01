@@ -110,6 +110,19 @@ class CalificacionTributaria(models.Model):
     # Información DJ
     numero_dj = models.CharField(max_length=10, blank=True, help_text="DJ 1949 o 1922")
     
+    # Origen de los datos (para reglas de prioridad en carga masiva)
+    ORIGEN_CHOICES = [
+        ('BOLSA', 'Bolsa de Valores'),
+        ('CORREDORA', 'Corredora de Bolsa'),
+        ('MANUAL', 'Ingreso Manual'),
+    ]
+    origen = models.CharField(
+        max_length=10,
+        choices=ORIGEN_CHOICES,
+        default='MANUAL',
+        help_text="Origen de los datos. CORREDORA tiene prioridad sobre BOLSA"
+    )
+    
     # ==========================================
     # CAMPOS METADATA ADMINISTRATIVOS
     # Según especificación "3.1 Archivo de carga" (HDU_Inacap.xlsx)

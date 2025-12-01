@@ -1498,8 +1498,10 @@ def carga_masiva(request):
                     logger.error(f"Unsupported file format: {archivo.name}")
                     raise ValueError("Formato de archivo no soportado")
 
-                # Procesar registros
-                exitosos = 0
+                # Procesar registros con lógica de UPDATE y reglas de prioridad
+                creados = 0
+                actualizados = 0
+                omitidos = 0
                 fallidos = 0
                 errores = []
 
@@ -1514,39 +1516,110 @@ def carga_masiva(request):
                             },
                         )
 
-                        # Preparar datos de calificación con mapeo dinámico de factores
-                        calificacion_data = {
-                            'instrumento': instrumento,
-                            'usuario_creador': request.user,
-                            'monto': Decimal(str(registro["monto"])) if registro.get("monto") else None,
-                            'factor': Decimal(str(registro["factor"])) if registro.get("factor") else None,
-                            'metodo_ingreso': registro.get("metodo_ingreso", "MONTO"),
-                            'numero_dj': registro.get("numero_dj", ""),
-                            'fecha_informe': registro["fecha_informe"],
-                            'observaciones': registro.get("observaciones", ""),
-                            # Campos metadata administrativos (TASK-004 - HDU_Inacap.xlsx)
-                            'secuencia': int(registro["secuencia"]) if registro.get("secuencia") else 0,
-                            'numero_dividendo': int(registro["numero_dividendo"]) if registro.get("numero_dividendo") else 0,
-                            'tipo_sociedad': registro.get("tipo_sociedad", None),
-                            'valor_historico': Decimal(str(registro["valor_historico"])) if registro.get("valor_historico") else Decimal('0'),
-                            'mercado': registro.get("mercado", None),
-                            'ejercicio': int(registro["ejercicio"]) if registro.get("ejercicio") else 0,
-                        }
-                        
-                        # Mapear dinámicamente todos los factores (8-37) desde el archivo
-                        for factor_num in range(8, 38):
-                            factor_key = f'factor_{factor_num}'
-                            if factor_key in registro and registro[factor_key]:
-                                try:
-                                    calificacion_data[factor_key] = Decimal(str(registro[factor_key]))
-                                except (ValueError, TypeError):
-                                    # Si el valor no es válido, dejar en None (default=0 en modelo)
-                                    calificacion_data[factor_key] = None
-                        
-                        # Crear calificación con todos los datos
-                        CalificacionTributaria.objects.create(**calificacion_data)
+                        # Determinar origen del archivo actual (por defecto BOLSA)
+                        nuevo_origen = registro.get('origen', 'BOLSA').upper()
+                        if nuevo_origen not in ['BOLSA', 'CORREDORA', 'MANUAL']:
+                            nuevo_origen = 'BOLSA'
 
-                        exitosos += 1
+                        # PASO 1: Intentar obtener registro existente
+                        try:
+                            obj = CalificacionTributaria.objects.get(
+                                instrumento=instrumento,
+                                fecha_informe=registro["fecha_informe"],
+                                numero_dj=registro.get("numero_dj", "")
+                            )
+                            
+                            # PASO 2: REGLA DE PRIORIDAD - CORREDORA > BOLSA
+                            # Si el registro existente es de CORREDORA y el nuevo es de BOLSA, NO actualizar
+                            is_existing_corredora = obj.origen == 'CORREDORA'
+                            is_new_bolsa = nuevo_origen == 'BOLSA'
+                            
+                            if is_existing_corredora and is_new_bolsa:
+                                omitidos += 1
+                                errores.append(
+                                    f"Fila {i}: OMITIDO - Registro existente de Corredora tiene prioridad sobre Bolsa. "
+                                    f"Instrumento: {instrumento.codigo_instrumento}, Fecha: {registro['fecha_informe']}"
+                                )
+                                logger.info(
+                                    f"Row {i} skipped due to priority rule: CORREDORA > BOLSA - "
+                                    f"Instrumento: {instrumento.codigo_instrumento}"
+                                )
+                                continue  # Skip esta iteración
+                            
+                            # PASO 3: ACTUALIZAR REGISTRO (Si pasa regla de prioridad)
+                            # Actualizar metadata
+                            obj.usuario_creador = request.user
+                            obj.monto = Decimal(str(registro["monto"])) if registro.get("monto") else None
+                            obj.factor = Decimal(str(registro["factor"])) if registro.get("factor") else None
+                            obj.metodo_ingreso = registro.get("metodo_ingreso", "MONTO")
+                            obj.numero_dj = registro.get("numero_dj", "")
+                            obj.observaciones = registro.get("observaciones", "")
+                            obj.origen = nuevo_origen
+                            
+                            # Actualizar campos administrativos
+                            obj.secuencia = int(registro["secuencia"]) if registro.get("secuencia") else 0
+                            obj.numero_dividendo = int(registro["numero_dividendo"]) if registro.get("numero_dividendo") else 0
+                            obj.tipo_sociedad = registro.get("tipo_sociedad", None)
+                            obj.valor_historico = Decimal(str(registro["valor_historico"])) if registro.get("valor_historico") else Decimal('0')
+                            obj.mercado = registro.get("mercado", None)
+                            obj.ejercicio = int(registro["ejercicio"]) if registro.get("ejercicio") else 0
+                            
+                            # Actualizar dinámicamente todos los factores (8-37)
+                            for factor_num in range(8, 38):
+                                factor_key = f'factor_{factor_num}'
+                                if factor_key in registro and registro[factor_key]:
+                                    try:
+                                        setattr(obj, factor_key, Decimal(str(registro[factor_key])))
+                                    except (ValueError, TypeError):
+                                        setattr(obj, factor_key, Decimal('0'))
+                                else:
+                                    setattr(obj, factor_key, Decimal('0'))
+                            
+                            obj.save()
+                            actualizados += 1
+                            logger.info(
+                                f"Row {i} updated successfully - Instrumento: {instrumento.codigo_instrumento}, "
+                                f"Origen: {nuevo_origen}"
+                            )
+                        
+                        except CalificacionTributaria.DoesNotExist:
+                            # PASO 4: CREAR NUEVO REGISTRO (Si no existe)
+                            calificacion_data = {
+                                'instrumento': instrumento,
+                                'usuario_creador': request.user,
+                                'monto': Decimal(str(registro["monto"])) if registro.get("monto") else None,
+                                'factor': Decimal(str(registro["factor"])) if registro.get("factor") else None,
+                                'metodo_ingreso': registro.get("metodo_ingreso", "MONTO"),
+                                'numero_dj': registro.get("numero_dj", ""),
+                                'fecha_informe': registro["fecha_informe"],
+                                'observaciones': registro.get("observaciones", ""),
+                                'origen': nuevo_origen,
+                                # Campos metadata administrativos
+                                'secuencia': int(registro["secuencia"]) if registro.get("secuencia") else 0,
+                                'numero_dividendo': int(registro["numero_dividendo"]) if registro.get("numero_dividendo") else 0,
+                                'tipo_sociedad': registro.get("tipo_sociedad", None),
+                                'valor_historico': Decimal(str(registro["valor_historico"])) if registro.get("valor_historico") else Decimal('0'),
+                                'mercado': registro.get("mercado", None),
+                                'ejercicio': int(registro["ejercicio"]) if registro.get("ejercicio") else 0,
+                            }
+                            
+                            # Mapear dinámicamente todos los factores (8-37)
+                            for factor_num in range(8, 38):
+                                factor_key = f'factor_{factor_num}'
+                                if factor_key in registro and registro[factor_key]:
+                                    try:
+                                        calificacion_data[factor_key] = Decimal(str(registro[factor_key]))
+                                    except (ValueError, TypeError):
+                                        calificacion_data[factor_key] = Decimal('0')
+                                else:
+                                    calificacion_data[factor_key] = Decimal('0')
+                            
+                            CalificacionTributaria.objects.create(**calificacion_data)
+                            creados += 1
+                            logger.info(
+                                f"Row {i} created successfully - Instrumento: {instrumento.codigo_instrumento}, "
+                                f"Origen: {nuevo_origen}"
+                            )
                     except ValidationError as e:
                         # Captura errores de validación del modelo (ej: suma de factores > 1)
                         fallidos += 1
@@ -1578,48 +1651,65 @@ def carga_masiva(request):
                         errores.append(f"Fila {i}: {str(e)}")
                         logger.error(f"Bulk upload row {i} unexpected error: {e}", exc_info=True)
 
-                # Actualizar registro de carga
+                # Calcular totales
+                exitosos = creados + actualizados
+                
+                # Actualizar registro de carga con estadísticas detalladas
                 carga.registros_procesados = len(registros)
                 carga.registros_exitosos = exitosos
                 carga.registros_fallidos = fallidos
-                carga.errores_detalle = "\n".join(errores)
+                carga.errores_detalle = "\n".join(errores) if errores else "Ningún error"
 
-                if fallidos == 0:
+                if fallidos == 0 and omitidos == 0:
                     carga.estado = "EXITOSO"
                     logger.info(
                         f"Bulk upload completed successfully - User: {request.user.username}, "
-                        f"File: {archivo.name}, Records: {exitosos}/{len(registros)}"
+                        f"File: {archivo.name}, Created: {creados}, Updated: {actualizados}, Total: {exitosos}/{len(registros)}"
                     )
                 elif exitosos > 0:
                     carga.estado = "PARCIAL"
                     logger.warning(
-                        f"Bulk upload partially failed - User: {request.user.username}, "
-                        f"File: {archivo.name}, Success: {exitosos}, Failed: {fallidos}"
+                        f"Bulk upload partially completed - User: {request.user.username}, "
+                        f"File: {archivo.name}, Created: {creados}, Updated: {actualizados}, "
+                        f"Skipped: {omitidos}, Failed: {fallidos}"
                     )
                 else:
                     carga.estado = "FALLIDO"
                     logger.error(
                         f"Bulk upload failed completely - User: {request.user.username}, "
-                        f"File: {archivo.name}, Total records: {len(registros)}"
+                        f"File: {archivo.name}, Total records: {len(registros)}, Failed: {fallidos}"
                     )
 
                 carga.save()
 
-                # Registrar en auditoría
+                # Registrar en auditoría con detalles completos
                 ip_address = obtener_ip_cliente(request)
                 LogAuditoria.objects.create(
                     usuario=request.user,
-                    accion="CREATE",
-                    tabla_afectada="CargaMasiva",
+                    accion="BULK_UPLOAD",
+                    tabla_afectada="CalificacionTributaria",
                     registro_id=carga.id,
                     ip_address=ip_address,
-                    detalles=f"Carga masiva: {exitosos} exitosos, {fallidos} fallidos",
+                    detalles=(
+                        f"Carga masiva completada: {creados} creados, {actualizados} actualizados, "
+                        f"{omitidos} omitidos (prioridad), {fallidos} fallidos"
+                    ),
                 )
 
-                messages.success(
-                    request,
-                    f"Procesados {exitosos} registros correctamente. {fallidos} con errores.",
-                )
+                # Mensaje de éxito con detalles
+                if omitidos > 0:
+                    messages.success(
+                        request,
+                        f"✅ Procesados {exitosos} registros correctamente ({creados} nuevos, {actualizados} actualizados). "
+                        f"⚠️ {omitidos} omitidos por regla de prioridad (Corredora > Bolsa). "
+                        f"❌ {fallidos} con errores."
+                    )
+                else:
+                    messages.success(
+                        request,
+                        f"✅ Procesados {exitosos} registros correctamente ({creados} nuevos, {actualizados} actualizados). "
+                        f"❌ {fallidos} con errores."
+                    )
 
             except ValueError as e:
                 logger.error(f"File format error - File: {archivo.name}, Error: {str(e)}")
@@ -1680,6 +1770,7 @@ def descargar_plantilla(request, formato='xlsx'):
     headers = [
         "codigo_instrumento",
         "fecha_informe",
+        "origen",  # NUEVO: Campo de origen para reglas de prioridad
         "mercado",
         "tipo_sociedad",
         "secuencia",
@@ -1696,6 +1787,7 @@ def descargar_plantilla(request, formato='xlsx'):
     ejemplo = [
         "INST001",  # codigo_instrumento
         "2025-01-15",  # fecha_informe (YYYY-MM-DD)
+        "BOLSA",  # origen (BOLSA, CORREDORA, MANUAL)
         "ACN",  # mercado
         "A",  # tipo_sociedad
         "1",  # secuencia
