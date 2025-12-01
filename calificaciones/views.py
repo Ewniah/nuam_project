@@ -670,7 +670,7 @@ def crear_calificacion(request):
     creador automáticamente y registra la operación en LogAuditoria.
 
     Args:
-        request (HttpRequest): 
+        request (HttpRequest):
             - GET: Muestra formulario vacío
             - POST: Procesa formulario con datos de calificación
 
