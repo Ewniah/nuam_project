@@ -32,11 +32,50 @@ class PerfilUsuario(models.Model):
 
 class InstrumentoFinanciero(models.Model):
     """Cátalogo de instrumentos financieros. Ej: Acciones, Bonos, ETFs, etc."""
-    codigo_instrumento = models.CharField(max_length=50, unique=True)  # Ticker
+    codigo_instrumento = models.CharField(max_length=50, unique=True, blank=True)  # Ticker - autogenerado si vacío
     nombre_instrumento = models.CharField(max_length=255)
     tipo_instrumento = models.CharField(max_length=100)  # Acción, Bono, ETF, etc.
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     activo = models.BooleanField(default=True)
+
+    def _generar_codigo_unico(self):
+        """Genera un código único basado en el nombre del instrumento."""
+        import re
+        from django.utils.text import slugify
+        
+        # Extraer iniciales o acrónimo del nombre
+        palabras = self.nombre_instrumento.upper().split()
+        
+        # Opción 1: Si tiene menos de 3 palabras, usar iniciales
+        if len(palabras) <= 3:
+            codigo_base = ''.join([p[0] for p in palabras if p])
+        else:
+            # Opción 2: Usar primeras 2-3 iniciales de palabras principales (excluir artículos/preposiciones)
+            palabras_clave = [p for p in palabras if p not in ['S.A.', 'S.A', 'SA', 'DE', 'DEL', 'LA', 'LAS', 'LOS', 'EL']]
+            codigo_base = ''.join([p[0] for p in palabras_clave[:4] if p])
+        
+        # Limitar a 10 caracteres
+        codigo_base = codigo_base[:10]
+        
+        # Verificar unicidad
+        codigo = codigo_base
+        contador = 1
+        while InstrumentoFinanciero.objects.filter(codigo_instrumento=codigo).exclude(pk=self.pk).exists():
+            # Agregar sufijo numérico si existe duplicado
+            codigo = f"{codigo_base}{contador}"
+            contador += 1
+            if contador > 999:  # Límite de seguridad
+                import uuid
+                codigo = f"{codigo_base[:6]}{str(uuid.uuid4())[:4].upper()}"
+                break
+        
+        return codigo
+
+    def save(self, *args, **kwargs):
+        """Genera código automáticamente si está vacío."""
+        if not self.codigo_instrumento:
+            self.codigo_instrumento = self._generar_codigo_unico()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.codigo_instrumento} - {self.nombre_instrumento}"

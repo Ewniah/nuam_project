@@ -120,8 +120,8 @@ class InstrumentoFinancieroForm(forms.ModelForm):
         widgets = {
             'codigo_instrumento': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ej: CMPC, BCHILE',
-                'required': True
+                'placeholder': 'Opcional - Se generará automáticamente si se deja vacío',
+                'required': False
             }),
             'nombre_instrumento': forms.TextInput(attrs={
                 'class': 'form-control',

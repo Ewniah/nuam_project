@@ -21,22 +21,92 @@
         {% endif %}
     </div>
 
-    <!-- Search Bar -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body p-3">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-10">
-                    <label class="form-label small fw-semibold" style="color: #002A4E;">Buscar Instrumento</label>
-                    <input type="text" name="busqueda" class="form-control" placeholder="Código, nombre o tipo..." value="{{ request.GET.busqueda }}">
+    <!-- Barra de Búsqueda Mejorada -->
+    <div class="card shadow-sm border-0 mb-4" style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3">
+                <div class="col-lg-4 col-md-6">
+                    <label class="form-label small fw-semibold mb-2" style="color: #002A4E;">
+                        <i class="fas fa-search me-1" style="color: #F37021;"></i>Buscar por Código o Nombre
+                    </label>
+                    <input type="text" 
+                           name="busqueda" 
+                           class="form-control form-control-sm" 
+                           style="border: 2px solid #dee2e6;"
+                           placeholder="Ej: CMPC, Banco Chile..." 
+                           value="{{ request.GET.busqueda }}">
+                    <small class="form-text text-muted"><i class="fas fa-info-circle me-1"></i>Busca por código, nombre o tipo de instrumento</small>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn w-100" style="background-color: #F37021; color: white;">
-                        <i class="fas fa-search me-2"></i>Buscar
-                    </button>
+                
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label small fw-semibold mb-2" style="color: #002A4E;">
+                        <i class="fas fa-tag me-1" style="color: #F37021;"></i>Estado
+                    </label>
+                    <select name="estado" class="form-select form-select-sm" style="border: 2px solid #dee2e6;">
+                        <option value="">🔍 Todos los estados</option>
+                        <option value="activo" {% if request.GET.estado == 'activo' %}selected{% endif %}>✅ Activos</option>
+                        <option value="inactivo" {% if request.GET.estado == 'inactivo' %}selected{% endif %}>❌ Inactivos</option>
+                    </select>
+                    <small class="form-text text-muted"><i class="fas fa-info-circle me-1"></i>Filtra por estado del instrumento</small>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label small fw-semibold mb-2" style="color: #002A4E;">
+                        <i class="fas fa-sort-alpha-down me-1" style="color: #F37021;"></i>Ordenar por
+                    </label>
+                    <select name="orden" class="form-select form-select-sm" style="border: 2px solid #dee2e6;">
+                        <option value="codigo" {% if request.GET.orden == 'codigo' or not request.GET.orden %}selected{% endif %}>📋 Código (A-Z)</option>
+                        <option value="nombre" {% if request.GET.orden == 'nombre' %}selected{% endif %}>📝 Nombre (A-Z)</option>
+                        <option value="reciente" {% if request.GET.orden == 'reciente' %}selected{% endif %}>🕐 Más recientes</option>
+                    </select>
+                    <small class="form-text text-muted"><i class="fas fa-info-circle me-1"></i>Ordena los resultados</small>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label small fw-semibold mb-2" style="color: #002A4E;">
+                        <i class="fas fa-cog me-1" style="color: #F37021;"></i>Acciones
+                    </label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-sm flex-fill shadow-sm" style="background-color: #F37021; color: white; font-weight: 600; border: 2px solid #F37021;">
+                            <i class="fas fa-search me-1"></i>Buscar
+                        </button>
+                        <a href="{% url 'listar_instrumentos' %}" class="btn btn-sm btn-outline-secondary shadow-sm" title="Limpiar filtros" style="border: 2px solid #dee2e6;">
+                            <i class="fas fa-eraser"></i>
+                        </a>
+                    </div>
+                    <small class="form-text text-muted"><i class="fas fa-info-circle me-1"></i>Aplica o limpia filtros</small>
                 </div>
             </form>
         </div>
     </div>
+
+    <!-- Indicadores de Filtros Activos -->
+    {% if request.GET.busqueda or request.GET.estado or request.GET.orden %}
+    <div class="alert alert-info alert-dismissible fade show d-flex align-items-center mb-3" role="alert" style="border-left: 4px solid #F37021;">
+        <i class="fas fa-filter me-3" style="color: #F37021; font-size: 1.5rem;"></i>
+        <div class="flex-grow-1">
+            <strong>Filtros activos:</strong>
+            {% if request.GET.busqueda %}
+                <span class="badge bg-primary ms-2">
+                    <i class="fas fa-search me-1"></i>Búsqueda: "{{ request.GET.busqueda }}"
+                </span>
+            {% endif %}
+            {% if request.GET.estado %}
+                <span class="badge bg-success ms-2">
+                    <i class="fas fa-tag me-1"></i>Estado: {{ request.GET.estado|title }}
+                </span>
+            {% endif %}
+            {% if request.GET.orden %}
+                <span class="badge bg-info ms-2">
+                    <i class="fas fa-sort me-1"></i>Orden: {{ request.GET.orden|title }}
+                </span>
+            {% endif %}
+        </div>
+        <a href="{% url 'listar_instrumentos' %}" class="btn btn-sm btn-outline-secondary ms-3">
+            <i class="fas fa-times me-1"></i>Quitar filtros
+        </a>
+    </div>
+    {% endif %}
 
     <!-- Tabla de Instrumentos -->
     <div class="card shadow-sm border-0">
@@ -74,7 +144,7 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-building me-3" style="color: #F37021;"></i>
-                                    <strong>{{ instrumento.nombre_instrumento }}</strong>
+                                    {{ instrumento.nombre_instrumento }}
                                 </div>
                             </td>
                             <td>

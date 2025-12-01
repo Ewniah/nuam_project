@@ -39,53 +39,56 @@
                     {% endif %}
 
                     <!-- Código del Instrumento -->
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label for="{{ form.codigo_instrumento.id_for_label }}"
-                            class="form-label fw-bold text-muted small">
-                            CÓDIGO DEL INSTRUMENTO *
+                            class="form-label fw-semibold" style="color: #002A4E;">
+                            CÓDIGO DEL INSTRUMENTO <span class="text-muted small">(opcional)</span>
                         </label>
                         {{ form.codigo_instrumento }}
                         {% if form.codigo_instrumento.errors %}
-                        <div class="text-danger mt-2 small">{{ form.codigo_instrumento.errors }}</div>
+                        <div class="text-danger mt-1 small">{{ form.codigo_instrumento.errors }}</div>
                         {% endif %}
-                        <div class="form-text small">Código único que identifica el instrumento (ej: CMPC, BCHILE)</div>
+                        <div class="form-text small text-muted">
+                            <i class="fas fa-magic" style="color: #F37021;"></i> 
+                            Si se deja vacío, se generará automáticamente basado en el nombre (ej: "Empresas CMPC" → "ECMPC")
+                        </div>
                     </div>
 
                     <!-- Nombre del Instrumento -->
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label for="{{ form.nombre_instrumento.id_for_label }}"
-                            class="form-label fw-bold text-muted small">
+                            class="form-label fw-semibold" style="color: #002A4E;">
                             NOMBRE DEL INSTRUMENTO *
                         </label>
                         {{ form.nombre_instrumento }}
                         {% if form.nombre_instrumento.errors %}
-                        <div class="text-danger mt-2 small">{{ form.nombre_instrumento.errors }}</div>
+                        <div class="text-danger mt-1 small">{{ form.nombre_instrumento.errors }}</div>
                         {% endif %}
-                        <div class="form-text small">Nombre completo del instrumento financiero</div>
+                        <div class="form-text small text-muted">Nombre completo del instrumento financiero</div>
                     </div>
 
                     <!-- Tipo de Instrumento -->
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label for="{{ form.tipo_instrumento.id_for_label }}"
-                            class="form-label fw-bold text-muted small">
+                            class="form-label fw-semibold" style="color: #002A4E;">
                             TIPO DE INSTRUMENTO *
                         </label>
                         {{ form.tipo_instrumento }}
                         {% if form.tipo_instrumento.errors %}
-                        <div class="text-danger mt-2 small">{{ form.tipo_instrumento.errors }}</div>
+                        <div class="text-danger mt-1 small">{{ form.tipo_instrumento.errors }}</div>
                         {% endif %}
-                        <div class="form-text small">Categoría del instrumento (Acción, Bono, Fondo Mutuo, etc.)</div>
+                        <div class="form-text small text-muted">Categoría del instrumento (Acción, Bono, Fondo Mutuo, etc.)</div>
                     </div>
 
                     <!-- Estado Activo -->
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <div class="form-check form-switch">
                             {{ form.activo }}
-                            <label class="form-check-label fw-bold" for="{{ form.activo.id_for_label }}">
+                            <label class="form-check-label fw-semibold" for="{{ form.activo.id_for_label }}" style="color: #002A4E;">
                                 Instrumento Activo
                             </label>
                         </div>
-                        <div class="form-text small">Desactive si el instrumento ya no está disponible</div>
+                        <div class="form-text small text-muted">Desactive si el instrumento ya no está disponible</div>
                     </div>
 
                     <!-- Botones de Acción -->

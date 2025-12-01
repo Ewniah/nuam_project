@@ -1190,29 +1190,30 @@ def editar_calificacion_factores(request, pk):
 @requiere_permiso("consultar")
 def listar_instrumentos(request):
     """
-    Lista todos los instrumentos financieros activos con búsqueda multi-campo.
+    Lista todos los instrumentos financieros con búsqueda y filtros avanzados.
 
-    Muestra tabla de instrumentos con capacidad de búsqueda simultánea en código,
-    nombre y tipo de instrumento usando operadores OR.
+    Muestra tabla de instrumentos con capacidad de búsqueda multi-campo, filtrado
+    por estado y ordenamiento personalizado.
 
     Parámetros:
-        request (HttpRequest): GET request con parámetro opcional:
-            - busqueda (str): Término de búsqueda (busca en código, nombre y tipo).
+        request (HttpRequest): GET request con parámetros opcionales:
+            - busqueda (str): Término de búsqueda (código, nombre o tipo)
+            - estado (str): 'activo' o 'inactivo' para filtrar por estado
+            - orden (str): 'codigo', 'nombre' o 'reciente' para ordenamiento
 
     Retorna:
         HttpResponse: Render de 'calificaciones/listar_instrumentos.html' con
-            QuerySet de instrumentos filtrados.
+            QuerySet de instrumentos filtrados y ordenados.
 
     Notas:
-        - Solo muestra instrumentos activos (activo=True)
-        - Búsqueda case-insensitive (ICONTAINS)
-        - Búsqueda multi-campo: código OR nombre OR tipo
-        - Ordenado por codigo_instrumento ascendente
+        - Búsqueda case-insensitive multi-campo (código OR nombre OR tipo)
+        - Filtro por estado activo/inactivo
+        - Ordenamiento flexible (código, nombre alfabético o fecha creación)
         - Requiere autenticación pero NO requiere permiso específico
     """
-    instrumentos = InstrumentoFinanciero.objects.filter(activo=True)
+    instrumentos = InstrumentoFinanciero.objects.all()
 
-    # Búsqueda
+    # Filtro de búsqueda
     busqueda = request.GET.get("busqueda")
     if busqueda:
         instrumentos = instrumentos.filter(
@@ -1221,7 +1222,21 @@ def listar_instrumentos(request):
             | Q(tipo_instrumento__icontains=busqueda)
         )
 
-    instrumentos = instrumentos.order_by("codigo_instrumento")
+    # Filtro por estado
+    estado = request.GET.get("estado")
+    if estado == "activo":
+        instrumentos = instrumentos.filter(activo=True)
+    elif estado == "inactivo":
+        instrumentos = instrumentos.filter(activo=False)
+
+    # Ordenamiento
+    orden = request.GET.get("orden", "codigo")
+    if orden == "nombre":
+        instrumentos = instrumentos.order_by("nombre_instrumento")
+    elif orden == "reciente":
+        instrumentos = instrumentos.order_by("-fecha_creacion")
+    else:  # 'codigo' por defecto
+        instrumentos = instrumentos.order_by("codigo_instrumento")
 
     return render(
         request, "calificaciones/listar_instrumentos.html", {"instrumentos": instrumentos}
@@ -2348,59 +2363,60 @@ def registro_auditoria(request):
     Parámetros:
         request (HttpRequest): GET request con parámetros opcionales:
             - usuario (int): ID del usuario para filtrar logs.
-            - accion (str): Tipo de acción (LOGIN, LOGOUT, CREATE, UPDATE, DELETE, etc.).
+            - categoria (str): Categoría de logs ('todas', 'crud', 'sesiones', 'cargas').
             - fecha_desde (str): Fecha mínima (formato YYYY-MM-DD).
             - fecha_hasta (str): Fecha máxima (formato YYYY-MM-DD).
 
     Retorna:
         HttpResponse: Render de 'calificaciones/registro_auditoria.html' con:
-            - logs: QuerySet de LogAuditoria filtrado y ordenado (limited to 50 per page)
+            - logs: QuerySet completo de LogAuditoria
+            - logs_crud: Logs de operaciones CREATE, UPDATE, DELETE
+            - logs_sesiones: Logs de LOGIN, LOGOUT, FAILED_LOGIN, ACCOUNT_LOCKED
+            - logs_cargas: Logs de BULK_UPLOAD
             - usuarios: Lista de todos los usuarios para filtro
-            - acciones: Lista de acciones únicas para filtro
             - Parámetros de filtro en context
 
     Notas:
         - Requiere permiso: 'admin' (Administrador o Auditor)
         - Ordenado por fecha_hora descendente (más recientes primero)
         - Query optimizado con select_related('usuario')
-        - Limitado a 50 registros por página
-        - Acciones incluyen: LOGIN, LOGOUT, CREATE, UPDATE, DELETE, ACCOUNT_LOCKED, ACCOUNT_UNLOCKED
+        - Limitado a 100 registros por categoría
     """
-    logs = LogAuditoria.objects.all().select_related("usuario").order_by("-fecha_hora")
+    logs_base = LogAuditoria.objects.all().select_related("usuario").order_by("-fecha_hora")
 
-    # Filtros
+    # Filtros comunes
     usuario_id = request.GET.get("usuario")
-    accion = request.GET.get("accion")
     fecha_desde = request.GET.get("fecha_desde")
     fecha_hasta = request.GET.get("fecha_hasta")
+    categoria = request.GET.get("categoria", "todas")
 
+    # Aplicar filtros comunes
     if usuario_id:
-        logs = logs.filter(usuario_id=usuario_id)
-
-    if accion:
-        logs = logs.filter(accion=accion)
+        logs_base = logs_base.filter(usuario_id=usuario_id)
 
     if fecha_desde:
-        logs = logs.filter(fecha_hora__date__gte=fecha_desde)
+        logs_base = logs_base.filter(fecha_hora__date__gte=fecha_desde)
 
     if fecha_hasta:
-        logs = logs.filter(fecha_hora__date__lte=fecha_hasta)
+        logs_base = logs_base.filter(fecha_hora__date__lte=fecha_hasta)
 
-    # Limitar a 50 registros (audit logs can be very large)
-    logs = logs[:50]
+    # Separar logs por categoría
+    logs_crud = logs_base.filter(accion__in=['CREATE', 'UPDATE', 'DELETE'])[:100]
+    logs_sesiones = logs_base.filter(accion__in=['LOGIN', 'LOGOUT', 'FAILED_LOGIN', 'ACCOUNT_LOCKED', 'ACCOUNT_UNLOCKED'])[:100]
+    logs_cargas = logs_base.filter(accion__in=['BULK_UPLOAD', 'BULK_UPLOAD_SUCCESS', 'BULK_UPLOAD_ERROR'])[:100]
+    logs = logs_base[:100]
 
     # Lista de usuarios para filtro
     usuarios = User.objects.filter(is_active=True).order_by("username")
 
-    # ✅ Lista de acciones disponibles
-    acciones = LogAuditoria.ACCIONES
-
     context = {
         "logs": logs,
+        "logs_crud": logs_crud,
+        "logs_sesiones": logs_sesiones,
+        "logs_cargas": logs_cargas,
         "usuarios": usuarios,
-        "acciones": acciones,
         "usuario_filtro": usuario_id,
-        "accion_filtro": accion,
+        "categoria": categoria,
         "fecha_desde": fecha_desde,
         "fecha_hasta": fecha_hasta,
     }

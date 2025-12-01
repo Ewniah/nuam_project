@@ -20,138 +20,244 @@
         </span>
     </div>
 
-    <!-- Filtros -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-white border-bottom">
-            <h6 class="mb-0 fw-semibold" style="color: #002A4E;">
-                <i class="fas fa-filter me-2" style="color: #F37021;"></i>Filtros de Búsqueda
-            </h6>
-        </div>
-        <div class="card-body p-3">
-            <form method="get" class="row g-3">
-                <div class="col-md-2">
-                    <label class="form-label small fw-semibold" style="color: #002A4E;">Acción</label>
-                    <select name="accion" class="form-select form-select-sm">
-                        <option value="">Todas</option>
-                        {% for codigo, nombre in acciones %}
-                        <option value="{{ codigo }}" {% if accion_filtro==codigo %}selected{% endif %}>
-                            {{ nombre }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+    <!-- Tabs de Categorías (Compactas) -->
+    <ul class="nav nav-tabs mb-3" id="auditoriaTabs" role="tablist" style="font-size: 0.9rem;">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold py-2 px-3" id="todas-tab" data-bs-toggle="tab" data-bs-target="#todas" type="button" role="tab">
+                <i class="fas fa-list me-1"></i>Todas
+                <span class="badge rounded-pill ms-1" style="background-color: #002A4E; font-size: 0.7rem;">{{ logs|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold py-2 px-3" id="crud-tab" data-bs-toggle="tab" data-bs-target="#crud" type="button" role="tab">
+                <i class="fas fa-database me-1"></i>CRUD
+                <span class="badge bg-primary rounded-pill ms-1" style="font-size: 0.7rem;">{{ logs_crud|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold py-2 px-3" id="sesiones-tab" data-bs-toggle="tab" data-bs-target="#sesiones" type="button" role="tab">
+                <i class="fas fa-sign-in-alt me-1"></i>Sesiones
+                <span class="badge bg-success rounded-pill ms-1" style="font-size: 0.7rem;">{{ logs_sesiones|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold py-2 px-3" id="cargas-tab" data-bs-toggle="tab" data-bs-target="#cargas" type="button" role="tab">
+                <i class="fas fa-upload me-1"></i>Cargas
+                <span class="badge rounded-pill ms-1" style="background-color: #F37021; font-size: 0.7rem;">{{ logs_cargas|length }}</span>
+            </button>
+        </li>
+    </ul>
 
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold" style="color: #002A4E;">Usuario</label>
-                    <select name="usuario" class="form-select form-select-sm">
-                        <option value="">Todos</option>
+    <!-- Filtros Mejorados -->
+    <div class="card shadow-sm border-0 mb-4" style="background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);">
+        <div class="card-body p-4" style="min-height: 140px;">
+            <form method="get" class="row g-3" id="filtrosForm">
+                <input type="hidden" name="categoria" id="categoriaInput" value="{{ categoria }}">
+                
+                <!-- Usuario -->
+                <div class="col-lg-3 col-md-4">
+                    <label class="form-label small fw-semibold mb-2" style="color: #002A4E;">
+                        <i class="fas fa-user me-1" style="color: #F37021;"></i>Filtrar por Usuario
+                    </label>
+                    <select name="usuario" class="form-select form-select-sm" style="border: 2px solid #dee2e6;">
+                        <option value="">👥 Todos los usuarios</option>
                         {% for u in usuarios %}
-                        <option value="{{ u.id }}" {% if usuario_filtro==u.id|stringformat:"s" %}selected{% endif %}>
-                            {{ u.username }}
+                        <option value="{{ u.id }}" {% if usuario_filtro == u.id|stringformat:"s" %}selected{% endif %}>
+                            {{ u.username }}{% if u.get_full_name %} ({{ u.get_full_name }}){% endif %}
                         </option>
                         {% endfor %}
                     </select>
+                    <small class="form-text text-muted"><i class="fas fa-info-circle me-1"></i>Selecciona un usuario específico</small>
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label small fw-semibold" style="color: #002A4E;">Desde</label>
-                    <input type="date" name="fecha_desde" class="form-control form-control-sm" value="{{ fecha_desde }}">
+                <!-- Fecha Desde -->
+                <div class="col-lg-3 col-md-4">
+                    <label class="form-label small fw-semibold mb-2" style="color: #002A4E;">
+                        <i class="fas fa-calendar-alt me-1" style="color: #F37021;"></i>Desde
+                    </label>
+                    <input type="date" 
+                           name="fecha_desde" 
+                           class="form-control form-control-sm" 
+                           style="border: 2px solid #dee2e6;"
+                           value="{{ fecha_desde }}"
+                           max="{{ fecha_hasta|default:'' }}">
+                    <small class="form-text text-muted"><i class="fas fa-info-circle me-1"></i>Fecha inicial del rango</small>
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label small fw-semibold" style="color: #002A4E;">Hasta</label>
-                    <input type="date" name="fecha_hasta" class="form-control form-control-sm" value="{{ fecha_hasta }}">
+                <!-- Fecha Hasta -->
+                <div class="col-lg-3 col-md-4">
+                    <label class="form-label small fw-semibold mb-2" style="color: #002A4E;">
+                        <i class="fas fa-calendar-check me-1" style="color: #F37021;"></i>Hasta
+                    </label>
+                    <input type="date" 
+                           name="fecha_hasta" 
+                           class="form-control form-control-sm" 
+                           style="border: 2px solid #dee2e6;"
+                           value="{{ fecha_hasta }}"
+                           min="{{ fecha_desde|default:'' }}">
+                    <small class="form-text text-muted"><i class="fas fa-info-circle me-1"></i>Fecha final del rango</small>
                 </div>
 
-                <div class="col-md-3 d-flex align-items-end gap-2">
-                    <button type="submit" class="btn btn-sm flex-fill" style="background-color: #F37021; color: white;">
-                        <i class="fas fa-search me-1"></i>Buscar
-                    </button>
-                    <a href="{% url 'registro_auditoria' %}" class="btn btn-sm btn-outline-secondary">
-                        <i class="fas fa-redo"></i>
-                    </a>
+                <!-- Botones de Acción -->
+                <div class="col-lg-3 col-md-12">
+                    <label class="form-label small fw-semibold mb-2" style="color: #002A4E;">
+                        <i class="fas fa-cog me-1" style="color: #F37021;"></i>Acciones
+                    </label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-sm flex-fill shadow-sm" style="background-color: #F37021; color: white; font-weight: 600; border: 2px solid #F37021;">
+                            <i class="fas fa-search me-2"></i>Buscar
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary shadow-sm" onclick="limpiarFiltros()" title="Limpiar todos los filtros" style="border: 2px solid #dee2e6;">
+                            <i class="fas fa-eraser"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary shadow-sm" onclick="aplicarFiltroRapido('hoy')" title="Ver registros de hoy" style="border: 2px solid #0d6efd;">
+                            <i class="fas fa-clock"></i>
+                        </button>
+                    </div>
+                    <small class="form-text text-muted"><i class="fas fa-info-circle me-1"></i>Usa el reloj para ver solo hoy</small>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Tabla de auditoría -->
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="border-0 ps-4 py-3">Fecha/Hora</th>
-                            <th class="border-0 py-3">Usuario</th>
-                            <th class="border-0 py-3">IP</th>
-                            <th class="border-0 py-3 text-center">Acción</th>
-                            <th class="border-0 py-3">Tabla Afectada</th>
-                            <th class="border-0 py-3 pe-4">Detalles</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for log in logs %}
-                        <tr>
-                            <td class="ps-4">
-                                <small class="text-muted">
-                                    <i class="far fa-calendar-alt me-1"></i>{{ log.fecha_hora|date:"d/m/Y" }}<br>
-                                    <i class="far fa-clock me-1"></i>{{ log.fecha_hora|date:"H:i:s" }}
-                                </small>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-user-circle me-2" style="color: #F37021;"></i>
-                                    <strong>{{ log.usuario.username }}</strong>
-                                </div>
-                            </td>
-                            <td><small class="text-muted font-monospace">{{ log.ip_address|default:"-" }}</small></td>
-                            <td class="text-center">
-                                {% if log.accion == 'CREATE' or log.accion == 'LOGIN' %}
-                                <span class="badge bg-success px-2 py-1">
-                                    <i class="fas fa-{% if log.accion == 'CREATE' %}plus-circle{% else %}sign-in-alt{% endif %} me-1"></i>{{ log.get_accion_display }}
-                                </span>
-                                {% elif log.accion == 'UPDATE' %}
-                                <span class="badge bg-warning text-dark px-2 py-1">
-                                    <i class="fas fa-edit me-1"></i>{{ log.get_accion_display }}
-                                </span>
-                                {% elif log.accion == 'DELETE' or log.accion == 'FAILED_LOGIN' or log.accion == 'ACCOUNT_LOCKED' %}
-                                <span class="badge bg-danger px-2 py-1">
-                                    <i class="fas fa-{% if log.accion == 'DELETE' %}trash{% else %}exclamation-triangle{% endif %} me-1"></i>{{ log.get_accion_display }}
-                                </span>
-                                {% elif log.accion == 'LOGOUT' %}
-                                <span class="badge bg-secondary px-2 py-1">
-                                    <i class="fas fa-sign-out-alt me-1"></i>{{ log.get_accion_display }}
-                                </span>
-                                {% else %}
-                                <span class="badge bg-info px-2 py-1">
-                                    <i class="fas fa-info-circle me-1"></i>{{ log.get_accion_display }}
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if log.tabla_afectada %}
-                                <code style="color: #F37021;">{{ log.tabla_afectada }}</code>
-                                <small class="text-muted d-block">#{{ log.registro_id|default:"-" }}</small>
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td class="pe-4">{{ log.detalles|truncatechars:60 }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center py-5">
-                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                                <p class="text-muted mb-0">No hay registros de auditoría con los filtros aplicados</p>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    <!-- Indicadores de Filtros Activos -->
+    {% if usuario_filtro or fecha_desde or fecha_hasta %}
+    <div class="alert alert-info alert-dismissible fade show d-flex align-items-center mb-3" role="alert" style="border-left: 4px solid #F37021;">
+        <i class="fas fa-filter me-3" style="color: #F37021; font-size: 1.5rem;"></i>
+        <div class="flex-grow-1">
+            <strong>Filtros activos:</strong>
+            {% if usuario_filtro %}
+                <span class="badge bg-primary ms-2">
+                    <i class="fas fa-user me-1"></i>
+                    Usuario: {% for u in usuarios %}{% if u.id|stringformat:"s" == usuario_filtro %}{{ u.username }}{% endif %}{% endfor %}
+                </span>
+            {% endif %}
+            {% if fecha_desde %}
+                <span class="badge bg-success ms-2">
+                    <i class="fas fa-calendar-alt me-1"></i>Desde: {{ fecha_desde }}
+                </span>
+            {% endif %}
+            {% if fecha_hasta %}
+                <span class="badge bg-success ms-2">
+                    <i class="fas fa-calendar-check me-1"></i>Hasta: {{ fecha_hasta }}
+                </span>
+            {% endif %}
+        </div>
+        <a href="{% url 'registro_auditoria' %}" class="btn btn-sm btn-outline-secondary ms-3">
+            <i class="fas fa-times me-1"></i>Quitar filtros
+        </a>
+    </div>
+    {% endif %}
 
+    <!-- Tab Content -->
+    <div class="tab-content" id="auditoriaTabsContent">
+        <!-- TAB: TODAS -->
+        <div class="tab-pane fade show active" id="todas" role="tabpanel">
+            {% include 'calificaciones/partials/_tabla_auditoria.html' with logs=logs titulo="Todas las Acciones" %}
+        </div>
+
+        <!-- TAB: CRUD -->
+        <div class="tab-pane fade" id="crud" role="tabpanel">
+            {% include 'calificaciones/partials/_tabla_auditoria.html' with logs=logs_crud titulo="Operaciones CRUD" %}
+        </div>
+
+        <!-- TAB: SESIONES -->
+        <div class="tab-pane fade" id="sesiones" role="tabpanel">
+            {% include 'calificaciones/partials/_tabla_auditoria.html' with logs=logs_sesiones titulo="Inicios y Cierres de Sesión" %}
+        </div>
+
+        <!-- TAB: CARGAS MASIVAS -->
+        <div class="tab-pane fade" id="cargas" role="tabpanel">
+            {% include 'calificaciones/partials/_tabla_auditoria.html' with logs=logs_cargas titulo="Cargas Masivas" %}
         </div>
     </div>
 </div>
+
+<script>
+// ========================================
+// FUNCIONES DE FILTROS INTELIGENTES
+// ========================================
+
+// Limpiar todos los filtros
+function limpiarFiltros() {
+    window.location.href = '{% url "registro_auditoria" %}';
+}
+
+// Aplicar filtros rápidos predefinidos
+function aplicarFiltroRapido(tipo) {
+    const form = document.getElementById('filtrosForm');
+    const hoy = new Date().toISOString().split('T')[0];
+    
+    switch(tipo) {
+        case 'hoy':
+            document.querySelector('input[name="fecha_desde"]').value = hoy;
+            document.querySelector('input[name="fecha_hasta"]').value = hoy;
+            form.submit();
+            break;
+        case 'semana':
+            const hace7dias = new Date();
+            hace7dias.setDate(hace7dias.getDate() - 7);
+            document.querySelector('input[name="fecha_desde"]').value = hace7dias.toISOString().split('T')[0];
+            document.querySelector('input[name="fecha_hasta"]').value = hoy;
+            form.submit();
+            break;
+        case 'mes':
+            const hace30dias = new Date();
+            hace30dias.setDate(hace30dias.getDate() - 30);
+            document.querySelector('input[name="fecha_desde"]').value = hace30dias.toISOString().split('T')[0];
+            document.querySelector('input[name="fecha_hasta"]').value = hoy;
+            form.submit();
+            break;
+    }
+}
+
+// Mantener la categoría activa al filtrar
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoria = urlParams.get('categoria');
+    
+    if (categoria && categoria !== 'todas') {
+        const tab = document.querySelector(`#${categoria}-tab`);
+        if (tab) {
+            const bsTab = new bootstrap.Tab(tab);
+            bsTab.show();
+        }
+    }
+    
+    // Actualizar input hidden al cambiar de tab
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(button => {
+        button.addEventListener('shown.bs.tab', function(e) {
+            const tabId = e.target.id.replace('-tab', '');
+            document.getElementById('categoriaInput').value = tabId;
+        });
+    });
+    
+    // Validación de fechas
+    const fechaDesde = document.querySelector('input[name="fecha_desde"]');
+    const fechaHasta = document.querySelector('input[name="fecha_hasta"]');
+    
+    fechaDesde.addEventListener('change', function() {
+        fechaHasta.setAttribute('min', this.value);
+        if (fechaHasta.value && fechaHasta.value < this.value) {
+            fechaHasta.value = this.value;
+        }
+    });
+    
+    fechaHasta.addEventListener('change', function() {
+        fechaDesde.setAttribute('max', this.value);
+        if (fechaDesde.value && fechaDesde.value > this.value) {
+            fechaDesde.value = this.value;
+        }
+    });
+    
+    // Animación al aplicar filtros
+    const form = document.getElementById('filtrosForm');
+    form.addEventListener('submit', function() {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Buscando...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+
 {% endblock %}
