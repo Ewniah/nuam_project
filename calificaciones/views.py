@@ -514,128 +514,144 @@ def logout_view(request):
 @requiere_permiso("consultar")
 def dashboard(request):
     """
-    Dashboard principal con estadísticas agregadas del sistema NUAM.
+    Dashboard principal con diseño de 3 zonas: Acciones Rápidas, KPIs/Charts, Auditoría.
 
-    Presenta un resumen ejecutivo con:
-    - Totales: calificaciones activas, instrumentos financieros, usuarios activos
-    - Distribuciones: calificaciones por método de ingreso, instrumentos por tipo
-    - Actividad reciente: calificaciones de últimos 30 días, top 5 recientes
-    - Logs de auditoría (solo Admin/Auditor): últimos 5 registros
-    - Top 5 instrumentos más utilizados
-    - Estadísticas de cargas masivas (exitosas vs fallidas)
-    - Saludo contextual según hora del día
+    Presenta un dashboard moderno optimizado para eficiencia del usuario:
+    - ZONA A: Acciones rápidas (Nueva Calificación, Carga Masiva, Buscar/Listar)
+    - ZONA B: KPIs totales + Charts interactivos (distribución mercado, cargas recientes)
+    - ZONA C: Registro de actividad reciente (últimos 10 logs de auditoría)
 
     Parámetros:
         request (HttpRequest): Objeto de solicitud HTTP del usuario autenticado.
 
     Retorna:
         HttpResponse: Render de 'calificaciones/dashboard.html' con context dict conteniendo
-            todas las estadísticas calculadas.
+            métricas, datos de gráficos y logs de auditoría.
 
     Notas:
         - Requiere autenticación: @login_required
         - Requiere permiso: @requiere_permiso("consultar")
-        - Queries optimizadas con select_related() y values().annotate()
-        - Actividad reciente usa RECENT_ACTIVITY_DAYS (7 días por defecto)
+        - Charts implementados con Chart.js (CDN incluido en template)
+        - Datos preparados para Doughnut chart (mercado) y Bar chart (cargas)
     """
     from datetime import datetime
+    from django.db.models import Count
 
     logger.debug(
         f"Dashboard access - User: {request.user.username}, IP: {obtener_ip_cliente(request)}"
     )
 
-    # Mensaje de bienvenida según hora del día
-    hora_actual = datetime.now().hour
-    if hora_actual < 12:
-        saludo = "Buenos días"
-        icono_saludo = "☀️"
-    elif hora_actual < 19:
-        saludo = "Buenas tardes"
-        icono_saludo = "🌤️"
-    else:
-        saludo = "Buenas noches"
-        icono_saludo = "🌙"
+    # ========== ZONA A: No requiere datos (solo enlaces estáticos) ==========
 
-    # Estadísticas generales
+    # ========== ZONA B: KPIs y Datos de Charts ==========
+    
+    # KPI: Totales
     total_calificaciones = CalificacionTributaria.objects.filter(activo=True).count()
     total_instrumentos = InstrumentoFinanciero.objects.filter(activo=True).count()
     total_usuarios = User.objects.filter(is_active=True).count()
-
-    logger.info(
-        f"Dashboard stats - User: {request.user.username}, "
-        f"Calificaciones: {total_calificaciones}, Instrumentos: {total_instrumentos}, "
-        f"Usuarios: {total_usuarios}"
-    )
-
-    # Calificaciones por método
-    calificaciones_por_metodo = list(
-        CalificacionTributaria.objects.filter(activo=True)
-        .values("metodo_ingreso")
-        .annotate(total=Count("id"))
-    )
-
-    # Instrumentos por tipo
-    instrumentos_por_tipo = list(
-        InstrumentoFinanciero.objects.filter(activo=True)
-        .values("tipo_instrumento")
-        .annotate(total=Count("id"))
-    )
-
-    # Actividad reciente (últimos 30 días)
-    fecha_limite = datetime.now().date() - timedelta(days=30)
-    calificaciones_recientes_30d = CalificacionTributaria.objects.filter(
-        activo=True, fecha_creacion__gte=fecha_limite
+    cargas_hoy = CargaMasiva.objects.filter(
+        fecha_carga__date=timezone.now().date()
+    ).count()
+    
+    # KPI: Calificaciones del mes actual
+    inicio_mes = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    calificaciones_mes = CalificacionTributaria.objects.filter(
+        activo=True,
+        fecha_creacion__gte=inicio_mes
+    ).count()
+    
+    # KPI: Calificaciones de esta semana
+    inicio_semana = timezone.now().date() - timedelta(days=timezone.now().weekday())
+    calificaciones_semana = CalificacionTributaria.objects.filter(
+        activo=True,
+        fecha_creacion__date__gte=inicio_semana
     ).count()
 
-    # ✅ CORRECCIÓN: Usar el mismo nombre que en el template
-    calificaciones_recientes = (
-        CalificacionTributaria.objects.filter(activo=True)
-        .select_related("instrumento", "usuario_creador")
-        .order_by("-fecha_creacion")[:5]
+    logger.info(
+        f"Dashboard KPIs - User: {request.user.username}, "
+        f"Calificaciones: {total_calificaciones}, Instrumentos: {total_instrumentos}, "
+        f"Cargas hoy: {cargas_hoy}, Mes: {calificaciones_mes}, Semana: {calificaciones_semana}"
     )
 
-    # Logs de auditoría recientes (solo para admin y auditor)
-    logs_recientes = None
-    try:
-        if request.user.is_superuser:
-            logs_recientes = LogAuditoria.objects.all().order_by("-fecha_hora")[:5]
-        elif hasattr(request.user, "perfilusuario") and request.user.perfilusuario.rol:
-            if request.user.perfilusuario.rol.nombre_rol in ["Administrador", "Auditor"]:
-                logs_recientes = LogAuditoria.objects.all().order_by("-fecha_hora")[:5]
-    except AttributeError as e:
-        logger.warning(f"Profile access error for user {request.user.username}: {e}")
-        logs_recientes = None
-    except Exception as e:
-        logger.error(f"Unexpected error fetching audit logs: {e}", exc_info=True)
-        logs_recientes = None
-
-    # Top 5 instrumentos más utilizados
-    top_instrumentos = list(
+    # Chart 1: Distribución por Mercado (Doughnut)
+    mercado_stats = (
         CalificacionTributaria.objects.filter(activo=True)
-        .values("instrumento__codigo_instrumento", "instrumento__nombre_instrumento")
+        .values("mercado")
+        .annotate(total=Count("id"))
+        .order_by("mercado")
+    )
+    labels_mercado = [item["mercado"] or "Sin Mercado" for item in mercado_stats]
+    data_mercado = [item["total"] for item in mercado_stats]
+
+    # Chart 2: Cargas de los últimos 7 días (Bar)
+    labels_cargas = []
+    data_cargas = []
+    for i in range(6, -1, -1):  # De 6 días atrás a hoy
+        fecha = timezone.now().date() - timedelta(days=i)
+        labels_cargas.append(fecha.strftime("%d/%m"))
+        cargas_dia = CargaMasiva.objects.filter(fecha_carga__date=fecha).count()
+        data_cargas.append(cargas_dia)
+    
+    # Chart 3: Distribución por Origen/Tipo Sociedad (Pie)
+    origen_stats = (
+        CalificacionTributaria.objects.filter(activo=True)
+        .values("tipo_sociedad")
+        .annotate(total=Count("id"))
+        .order_by("tipo_sociedad")
+    )
+    labels_origen = [
+        "Corredora" if item["tipo_sociedad"] == "A" 
+        else "Bolsa" if item["tipo_sociedad"] == "C" 
+        else "Sin Tipo" 
+        for item in origen_stats
+    ]
+    data_origen = [item["total"] for item in origen_stats]
+    
+    # Chart 4: Top 5 Instrumentos Más Usados (Horizontal Bar)
+    top_instrumentos = (
+        CalificacionTributaria.objects.filter(activo=True)
+        .values("instrumento__codigo_instrumento")
         .annotate(total=Count("id"))
         .order_by("-total")[:5]
     )
+    labels_top_instrumentos = [item["instrumento__codigo_instrumento"] or "Sin Código" for item in top_instrumentos]
+    data_top_instrumentos = [item["total"] for item in top_instrumentos]
 
-    # Estadísticas de cargas masivas
-    cargas_exitosas = CargaMasiva.objects.filter(estado="EXITOSO").count()
-    cargas_fallidas = CargaMasiva.objects.filter(estado="FALLIDO").count()
+    # ========== ZONA C: Actividad Reciente ==========
+    
+    # Últimos 10 logs de auditoría
+    ultimos_logs = LogAuditoria.objects.select_related("usuario").order_by("-fecha_hora")[:10]
 
     context = {
+        # KPIs
         "total_calificaciones": total_calificaciones,
         "total_instrumentos": total_instrumentos,
         "total_usuarios": total_usuarios,
-        "calificaciones_recientes_30d": calificaciones_recientes_30d,
-        "calificaciones_por_metodo": calificaciones_por_metodo,
-        "instrumentos_por_tipo": instrumentos_por_tipo,
-        "calificaciones_recientes": calificaciones_recientes,  # ✅ Nombre correcto
-        "logs_recientes": logs_recientes,
-        "top_instrumentos": top_instrumentos,
-        "today": datetime.now(),
-        "saludo": saludo,
-        "icono_saludo": icono_saludo,
-        "cargas_exitosas": cargas_exitosas,
-        "cargas_fallidas": cargas_fallidas,
+        "cargas_hoy": cargas_hoy,
+        "calificaciones_mes": calificaciones_mes,
+        "calificaciones_semana": calificaciones_semana,
+        
+        # Chart 1: Distribución Mercado
+        "labels_mercado": labels_mercado,
+        "data_mercado": data_mercado,
+        
+        # Chart 2: Cargas Recientes
+        "labels_cargas": labels_cargas,
+        "data_cargas": data_cargas,
+        
+        # Chart 3: Distribución Origen
+        "labels_origen": labels_origen,
+        "data_origen": data_origen,
+        
+        # Chart 4: Top Instrumentos
+        "labels_top_instrumentos": labels_top_instrumentos,
+        "data_top_instrumentos": data_top_instrumentos,
+        
+        # Auditoría
+        "ultimos_logs": ultimos_logs,
+        
+        # Metadata
+        "today": timezone.now(),
     }
 
     return render(request, "calificaciones/dashboard.html", context)
