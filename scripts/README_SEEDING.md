@@ -9,6 +9,7 @@ Este documento describe el proceso completo para limpiar la base de datos y pobl
 ## 🗑️ PASO 1: Flush Database (Limpiar BD)
 
 **¿Qué hace?**
+
 - Elimina TODOS los datos de la base de datos
 - Mantiene el esquema (tablas, columnas, relaciones)
 - Mantiene las migraciones aplicadas
@@ -36,6 +37,7 @@ Loaded 0 object(s) from 0 fixture(s)
 ## 🌱 PASO 2: Poblar Base de Datos Maestra
 
 **¿Qué hace?**
+
 - Crea roles y usuarios con permisos RBAC
 - Crea instrumentos financieros variados
 - Crea calificaciones con 30 factores completos
@@ -57,25 +59,26 @@ python scripts/poblar_bd_maestra.py
 
 ### 3 Roles RBAC
 
-| Rol                  | Permisos                                      |
-| -------------------- | --------------------------------------------- |
-| Administrador        | Acceso total, gestión de usuarios            |
-| Analista Financiero  | CRUD calificaciones e instrumentos            |
-| Auditor              | Solo lectura, acceso a auditoría              |
+| Rol                 | Permisos                           |
+| ------------------- | ---------------------------------- |
+| Administrador       | Acceso total, gestión de usuarios  |
+| Analista Financiero | CRUD calificaciones e instrumentos |
+| Auditor             | Solo lectura, acceso a auditoría   |
 
 ### 5 Usuarios
 
-| Username   | Password      | Rol                  | Email               |
-| ---------- | ------------- | -------------------- | ------------------- |
-| `admin`    | `admin123`    | Administrador        | admin@nuam.cl       |
-| `analista1`| `analista123` | Analista Financiero  | analista1@nuam.cl   |
-| `analista2`| `analista123` | Analista Financiero  | analista2@nuam.cl   |
-| `auditor1` | `auditor123`  | Auditor              | auditor1@nuam.cl    |
-| `demo`     | `demo123`     | Administrador        | demo@nuam.cl        |
+| Username    | Password      | Rol                 | Email             |
+| ----------- | ------------- | ------------------- | ----------------- |
+| `admin`     | `admin123`    | Administrador       | admin@nuam.cl     |
+| `analista1` | `analista123` | Analista Financiero | analista1@nuam.cl |
+| `analista2` | `analista123` | Analista Financiero | analista2@nuam.cl |
+| `auditor1`  | `auditor123`  | Auditor             | auditor1@nuam.cl  |
+| `demo`      | `demo123`     | Administrador       | demo@nuam.cl      |
 
 ### 14 Instrumentos Financieros
 
 **Acciones (5):**
+
 - Banco de Chile (BCH-2024)
 - Empresas CMPC S.A. (CMPC-2024)
 - Copec S.A. (COPEC-2024)
@@ -83,25 +86,30 @@ python scripts/poblar_bd_maestra.py
 - Cencosud S.A. (CENCOSUD-2024)
 
 **Bonos (3):**
+
 - Bono Tesorería General 2025
 - Bono Corporativo Entel
 - Bono Banco BCI 2026
 
 **Fondos (2):**
+
 - Fondo Independencia (CFI-INDEP)
 - Fondo BCI Moneda Chilena (CFI-MONEDA)
 
 **Depósitos (2):**
+
 - Depósito a Plazo Santander
 - Depósito a Plazo Itaú
 
 **Otros (2):**
+
 - Pagaré Empresa XYZ
 - Letra de Cambio ABC
 
 ### 30 Calificaciones Tributarias
 
 **Características:**
+
 - ✅ **30 factores completos** (factor_8 a factor_37)
 - ✅ Factores con valores realistas (0.001 - 0.08)
 - ✅ **REGLA A cumplida:** Todos los factores entre 0 y 1
@@ -117,6 +125,7 @@ python scripts/poblar_bd_maestra.py
 **Distribución temporal:** Últimos 7 días
 
 **Estados:**
+
 - ✅ EXITOSO (60% aprox.)
 - ⚠️ PARCIAL (20% aprox.)
 - ❌ FALLIDO (20% aprox.)
@@ -126,6 +135,7 @@ python scripts/poblar_bd_maestra.py
 ### 50 Logs de Auditoría
 
 **Tipos de acciones:**
+
 - LOGIN / LOGOUT
 - CREATE / UPDATE / DELETE
 - BULK_UPLOAD
@@ -138,6 +148,7 @@ python scripts/poblar_bd_maestra.py
 ### 20 Intentos de Login
 
 **Mix:**
+
 - Logins exitosos (usuarios legítimos)
 - Logins fallidos (credenciales incorrectas)
 - Intentos sospechosos (usernames inválidos)
@@ -219,15 +230,18 @@ python manage.py runserver
 Después del seeding, el Dashboard debe mostrar:
 
 1. **Métricas principales:**
+
    - Total de calificaciones: ~30
    - Total de instrumentos: ~14
    - Cargas masivas (últimos 7 días): ~10
 
 2. **Gráfico Chart.js:**
+
    - Barras con datos de últimos 7 días
    - Estados: EXITOSO, PARCIAL, FALLIDO
 
 3. **Tabla de actividad reciente:**
+
    - Últimos 10 logs de auditoría
    - Acciones variadas (LOGIN, CREATE, UPDATE, etc.)
 
@@ -288,6 +302,7 @@ El script usa `generar_factores_validos()` que:
 ### Idempotencia
 
 El script NO es completamente idempotente:
+
 - Si se ejecuta múltiples veces, creará registros duplicados
 - Usuarios e instrumentos se protegen con `get_or_create()`
 - Calificaciones, logs y cargas siempre se crean nuevos
@@ -297,6 +312,7 @@ El script NO es completamente idempotente:
 ### Transaccionalidad
 
 El script NO usa transacciones explícitas:
+
 - Si falla a mitad, algunos datos quedarán en BD
 - Para limpieza completa, ejecutar flush y reintentar
 
