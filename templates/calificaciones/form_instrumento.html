@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="container-fluid px-4">
-    <!-- Page Header -->
+    <!-- Encabezado de página -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold mb-1" style="color: #002A4E;">
@@ -38,7 +38,7 @@
                     </div>
                     {% endif %}
 
-                    <!-- Código del Instrumento -->
+                    <!-- Campo: Código del instrumento -->
                     <div class="mb-3">
                         <label for="{{ form.codigo_instrumento.id_for_label }}"
                             class="form-label fw-semibold" style="color: #002A4E;">
@@ -54,7 +54,7 @@
                         </div>
                     </div>
 
-                    <!-- Nombre del Instrumento -->
+                    <!-- Campo: Nombre del instrumento -->
                     <div class="mb-3">
                         <label for="{{ form.nombre_instrumento.id_for_label }}"
                             class="form-label fw-semibold" style="color: #002A4E;">
@@ -67,7 +67,7 @@
                         <div class="form-text small text-muted">Nombre completo del instrumento financiero</div>
                     </div>
 
-                    <!-- Tipo de Instrumento -->
+                    <!-- Campo: Tipo de instrumento -->
                     <div class="mb-3">
                         <label for="{{ form.tipo_instrumento.id_for_label }}"
                             class="form-label fw-semibold" style="color: #002A4E;">
@@ -80,7 +80,7 @@
                         <div class="form-text small text-muted">Categoría del instrumento (Acción, Bono, Fondo Mutuo, etc.)</div>
                     </div>
 
-                    <!-- Estado Activo -->
+                    <!-- Campo: Estado activo -->
                     <div class="mb-3">
                         <div class="form-check form-switch">
                             {{ form.activo }}
@@ -91,7 +91,7 @@
                         <div class="form-text small text-muted">Desactive si el instrumento ya no está disponible</div>
                     </div>
 
-                    <!-- Botones de Acción -->
+                    <!-- Botones de acción -->
                     <hr class="my-4">
                     <div class="d-flex justify-content-end gap-3">
                         <a href="{% url 'listar_instrumentos' %}" class="btn btn-outline-secondary">

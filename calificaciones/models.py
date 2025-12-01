@@ -5,7 +5,7 @@ from decimal import Decimal
 
 
 class Rol(models.Model):
-    """Se definen roles de usuario RBAC: Admin, Analista, Auditor, etc."""
+    """Roles RBAC del sistema: Admin, Analista, Auditor."""
     nombre_rol = models.CharField(max_length=50, unique=True)
     descripcion = models.TextField()
 
@@ -17,7 +17,7 @@ class Rol(models.Model):
 
 
 class PerfilUsuario(models.Model):
-    """Se extiende el modelo User para incluir roles y datos adicionales."""
+    """Extensión de User con rol y datos adicionales (teléfono, departamento)."""
     usuario = models.OneToOneField(User, on_delete=models.CASCADE)
     rol = models.ForeignKey(Rol, on_delete=models.SET_NULL, null=True)
     telefono = models.CharField(max_length=20, blank=True)
@@ -31,7 +31,7 @@ class PerfilUsuario(models.Model):
 
 
 class InstrumentoFinanciero(models.Model):
-    """Cátalogo de instrumentos financieros. Ej: Acciones, Bonos, ETFs, etc."""
+    """Catálogo de instrumentos: Acciones, Bonos, ETFs. Código autogenerado si vacío."""
     codigo_instrumento = models.CharField(max_length=50, unique=True, blank=True)  # Ticker - autogenerado si vacío
     nombre_instrumento = models.CharField(max_length=255)
     tipo_instrumento = models.CharField(max_length=100)  # Acción, Bono, ETF, etc.
@@ -39,7 +39,7 @@ class InstrumentoFinanciero(models.Model):
     activo = models.BooleanField(default=True)
 
     def _generar_codigo_unico(self):
-        """Genera un código único basado en el nombre del instrumento."""
+        """Genera código único desde nombre (iniciales/acrónimo). Máx 10 chars."""
         import re
         from django.utils.text import slugify
         
@@ -72,7 +72,7 @@ class InstrumentoFinanciero(models.Model):
         return codigo
 
     def save(self, *args, **kwargs):
-        """Genera código automáticamente si está vacío."""
+        """Autogenera codigo_instrumento si vacío."""
         if not self.codigo_instrumento:
             self.codigo_instrumento = self._generar_codigo_unico()
         super().save(*args, **kwargs)
@@ -89,9 +89,9 @@ class InstrumentoFinanciero(models.Model):
 
 class CalificacionTributaria(models.Model):
     """
-    Tabla central: Calificaciones tributarias según DJ 1949 y DJ 1922 del SII.
-    Permite ingreso por MONTO o FACTOR con conversión automática.
-    Fórmula: Factor = Monto / 1.000.000
+    Calificaciones tributarias DJ 1949/1922.
+    30 factores (8-37). Ingreso por MONTO o FACTOR.
+    Origen: BOLSA < CORREDORA (regla de prioridad en carga masiva).
     """
     METODO_CALCULO = [
         ('MONTO', 'Ingreso por Monto'),
@@ -233,13 +233,9 @@ class CalificacionTributaria(models.Model):
     
     def clean(self):
         """
-        Validación estricta de integridad de datos tributarios.
-        
-        REGLA A: Cada factor debe estar entre 0 y 1 (rango válido)
-        REGLA B: La suma de factores 8-16 no puede superar 1.0
-        
-        Raises:
-            ValidationError: Si alguna regla es violada
+        Valida integridad tributaria:
+        REGLA A: 0 <= factor_i <= 1 (rango individual)
+        REGLA B: suma(factores 8-16) <= 1.0 (límite crítico)
         """
         from django.core.exceptions import ValidationError
         
@@ -266,28 +262,21 @@ class CalificacionTributaria(models.Model):
             )
 
     def calcular_factor_desde_monto(self):
-        """Calcula factor desde monto: Factor = Monto / 1.000.000"""
+        """Factor = Monto / 1.000.000"""
         if self.monto and self.monto > 0:
             self.factor = self.monto / Decimal('1000000')
             return self.factor
         return None
 
     def calcular_monto_desde_factor(self):
-        """Calcula monto desde factor: Monto = Factor * 1.000.000"""
+        """Monto = Factor * 1.000.000"""
         if self.factor and self.factor > 0:
             self.monto = self.factor * Decimal('1000000')
             return self.monto
         return None
 
     def save(self, *args, **kwargs):
-        """
-        Guarda el registro con validación estricta de integridad de datos.
-        
-        Proceso:
-            1. Cálculos legacy (monto ↔ factor)
-            2. Validación completa via full_clean()
-            3. Persistencia en base de datos
-        """
+        """Guarda con cálculo automático (monto↔factor) y validación full_clean()."""
         # Cálculo legacy de compatibilidad
         if self.metodo_ingreso == 'MONTO' and self.monto:
             self.calcular_factor_desde_monto()
@@ -313,7 +302,7 @@ class CalificacionTributaria(models.Model):
 
 
 class LogAuditoria(models.Model):
-    """Registro inmutable de operaciones (cumplimiento Ley 21.663)"""
+    """Auditoría inmutable. Cumplimiento Ley 21.663."""
     ACCIONES = [
         ('CREATE', 'Crear'),
         ('READ', 'Consultar'),
@@ -343,7 +332,7 @@ class LogAuditoria(models.Model):
 
 
 class IntentoLogin(models.Model):
-    """ Creación de registros para intentos de login fallidos y exitosos """
+    """Registro de intentos de login (exitosos/fallidos) para auditoría de seguridad."""
     username = models.CharField(max_length=150)
     ip_address = models.GenericIPAddressField()
     fecha_hora = models.DateTimeField(auto_now_add=True)
@@ -363,7 +352,7 @@ class IntentoLogin(models.Model):
 
 
 class CuentaBloqueada(models.Model):
-    """ Creación de registros para cuentas bloqueadas tras múltiples intentos fallidos"""
+    """Bloqueo de cuentas tras intentos fallidos (5 intentos = 30 min de bloqueo)."""
     usuario = models.OneToOneField(User, on_delete=models.CASCADE)
     fecha_bloqueo = models.DateTimeField(auto_now_add=True)
     fecha_desbloqueo = models.DateTimeField(null=True, blank=True)
@@ -380,7 +369,7 @@ class CuentaBloqueada(models.Model):
 
 
 class CargaMasiva(models.Model):
-    """Trazabilidad de cargas masivas de archivos CSV/Excel"""
+    """Trazabilidad de cargas masivas (CSV/Excel). Estados: EXITOSO, PARCIAL, FALLIDO."""
     ESTADOS = [
         ('PROCESANDO', 'Procesando'),
         ('EXITOSO', 'Exitoso'),
@@ -407,11 +396,7 @@ class CargaMasiva(models.Model):
 
 
 class ArchivoCargado(models.Model):
-    """
-    Registro de archivos cargados para detectar duplicados.
-    Usa hash SHA-256 para identificar archivos idénticos.
-    (NUEVO - Hora 8: Detección de Duplicados)
-    """
+    """Detección de archivos duplicados vía hash SHA-256."""
     nombre_archivo = models.CharField(max_length=255)
     hash_archivo = models.CharField(max_length=64, unique=True, db_index=True)  # SHA-256
     fecha_carga = models.DateTimeField(auto_now_add=True)
@@ -420,15 +405,7 @@ class ArchivoCargado(models.Model):
     
     @staticmethod
     def calcular_hash(archivo):
-        """
-        Calcula el hash SHA-256 de un archivo.
-        
-        Args:
-            archivo: FileField o archivo subido
-        
-        Returns:
-            str: Hash SHA-256 en hexadecimal
-        """
+        """Retorna hash SHA-256 del archivo en hexadecimal."""
         import hashlib
         
         hash_sha256 = hashlib.sha256()

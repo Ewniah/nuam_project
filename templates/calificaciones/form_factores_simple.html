@@ -22,7 +22,7 @@
 </div>
 
 <div class="row">
-    <!-- Columna Izquierda: Formulario -->
+    <!-- Columna izquierda: Formulario -->
     <div class="col-lg-6">
         <div class="card card-nuam border-0 shadow-sm mb-4">
             <div class="card-header card-header-nuam bg-white border-bottom py-3">
@@ -34,7 +34,7 @@
                 <form id="formFactores" method="post">
                     {% csrf_token %}
 
-                    <!-- Campos Generales (Renderizados desde el form de Django) -->
+                    <!-- Campos generales (renderizados desde el formulario Django) -->
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label for="{{ form.instrumento.id_for_label }}"
@@ -84,7 +84,7 @@
 
                     <hr class="text-muted opacity-25">
 
-                    <!-- Sección de Factores Específicos -->
+                    <!-- Sección de factores específicos -->
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="fw-bold text-nuam-secondary mb-0">Detalle de Montos</h6>
                         <span class="badge bg-light text-dark border">

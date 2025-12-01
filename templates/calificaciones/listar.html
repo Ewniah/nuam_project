@@ -380,7 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </h2>
             <p class="text-muted mb-0">Gestión completa de calificaciones tributarias con 30 factores</p>
         </div>
-        <!-- Botones de Acciones - RBAC Protected -->
+        <!-- Botones de acciones - Protegidos por RBAC -->
         <div class="d-flex gap-2">
             {% comment %} RBAC: Crear/Cargar - Solo Admin y Analista {% endcomment %}
             {% if user.is_superuser or user.perfilusuario.rol.nombre_rol == 'Administrador' or user.perfilusuario.rol.nombre_rol == 'Analista Financiero' %}
@@ -410,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h5 class="mb-0 fw-semibold text-dark">
                     <i class="fas fa-filter me-2" style="color: #F37021;"></i>Filtros de Búsqueda
                 </h5>
-                <!-- BOTONES DE EXPORTACIÓN PROMINENTES -->
+                <!-- Botones de exportación destacados -->
                 <div class="d-flex gap-2">
                     <a href="{% url 'exportar_excel' %}?codigo_instrumento={{ codigo_instrumento }}&mercado={{ mercado }}&tipo_sociedad={{ tipo_sociedad }}&ejercicio={{ ejercicio }}&numero_dj={{ numero_dj }}" 
                        class="btn btn-success btn-sm">
@@ -475,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                min="2000"
                                max="2100">
                     </div>
-                    <!-- Botones -->
+                    <!-- Botones de acción -->
                     <div class="col-md-3">
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-nuam-primary btn-sm flex-fill" style="height: 31px;">
@@ -491,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 
-    <!-- ZONA B - GRID DE DATOS -->
+    <!-- ZONA B - Grilla de datos -->
     <div class="grid-zone">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="pagination-info">
@@ -517,7 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <th style="min-width: 80px;">Origen</th>
                         <th style="min-width: 100px;">Fuente</th>
                         <th style="min-width: 80px;">Mercado</th>
-                        <!-- 30 Factores -->
+                        <!-- 30 factores tributarios -->
                         {% for i in "87654321098765432109876543210987"|make_list %}
                             {% if forloop.counter <= 30 %}
                                 <th style="min-width: 70px;">F{{ forloop.counter|add:7 }}</th>
@@ -552,7 +552,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </td>
                         <td>{{ cal.mercado|default:"-" }}</td>
                         
-                        <!-- 30 Factores -->
+                        <!-- 30 factores tributarios -->
                         <td class="factor-cell">{{ cal.factor_8|floatformat:4|default:"0.0000" }}</td>
                         <td class="factor-cell">{{ cal.factor_9|floatformat:4|default:"0.0000" }}</td>
                         <td class="factor-cell">{{ cal.factor_10|floatformat:4|default:"0.0000" }}</td>

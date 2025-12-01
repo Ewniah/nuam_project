@@ -1,17 +1,17 @@
 """
-Unified View Module for NUAM Calificaciones System
-Consolidated from: views.py, views_admin.py, views_factores.py
-Migration Date: 2025-11-30
-Task: 1.3 - View Unification
-Total Functions: 30 (22 routed + 6 utilities + 2 helpers)
-Total Routes: 22 (100% preserved)
+Módulo de Vistas Unificado - Sistema NUAM Calificaciones
+Consolidado de: views.py, views_admin.py, views_factores.py
+Fecha de Migración: 2025-11-30
+Tarea: 1.3 - Unificación de Vistas
+Total de Funciones: 30 (22 con rutas + 6 utilidades + 2 ayudantes)
+Total de Rutas: 22 (100% preservadas)
 """
 
 # ============================================================================
-# IMPORTS - PEP 8 Organized
+# IMPORTACIONES - Organizadas según PEP 8
 # ============================================================================
 
-# Standard Library (6 imports)
+# Biblioteca Estándar (6 imports)
 import csv
 import io
 import json
@@ -19,7 +19,7 @@ import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-# Django Core (12 imports)
+# Núcleo de Django (12 imports)
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -32,10 +32,10 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
-# Third-Party (1 import)
+# Terceros (1 import)
 import openpyxl
 
-# Local Application (4 imports)
+# Aplicación Local (4 imports)
 from .forms import (
     CalificacionTributariaForm,
     InstrumentoFinancieroForm,
@@ -59,53 +59,39 @@ from .models import (
 from .permissions import requiere_permiso
 
 # ============================================================================
-# LOGGING CONFIGURATION
+# CONFIGURACIÓN DE LOGGING
 # ============================================================================
 logger = logging.getLogger(__name__)
 
 # ============================================================================
-# CONFIGURATION CONSTANTS
+# CONSTANTES DE CONFIGURACIÓN
 # ============================================================================
 
-# Authentication & Security
+# Autenticación y Seguridad
 MAX_LOGIN_ATTEMPTS = 5
 LOCKOUT_DURATION_MINUTES = 30
 FAILED_ATTEMPT_WINDOW_MINUTES = 15
 
-# Pagination & Limits
+# Paginación y Límites
 MAX_AUDIT_LOG_RECORDS = 1000
 MAX_LOGIN_HISTORY_RECORDS = 50
 RECENT_ACTIVITY_DAYS = 7
 
 
 # ============================================================================
-# SECTION 1: UTILITIES AND HELPERS
+# SECCIÓN 1: UTILIDADES Y FUNCIONES AUXILIARES
 # ============================================================================
-# Functions: obtener_ip_cliente, verificar_cuenta_bloqueada,
+# Funciones: obtener_ip_cliente, verificar_cuenta_bloqueada,
 #            registrar_intento_login, verificar_intentos_fallidos,
 #            procesar_excel, procesar_csv
-# Lines: 52-250 (approx. 200 lines)
+# Líneas: 52-250 (aprox. 200 líneas)
 # ============================================================================
 
 
 def obtener_ip_cliente(request):
     """
-    Obtiene la dirección IP real del cliente considerando proxies y balanceadores de carga.
-
-    Esta función prioriza el header X-Forwarded-For para obtener la IP original del cliente
-    cuando la aplicación está detrás de un proxy o load balancer. Si no existe, utiliza
-    REMOTE_ADDR como fallback.
-
-    Parámetros:
-        request (HttpRequest): El objeto de solicitud HTTP de Django.
-
-    Retorna:
-        str: La dirección IP del cliente (ej: "192.168.1.1").
-
-    Notas:
-        - X-Forwarded-For puede contener múltiples IPs separadas por comas; se toma la primera.
-        - REMOTE_ADDR contiene la IP del último hop (proxy si existe).
-        - Utilizado para auditoría en LogAuditoria e IntentoLogin.
+    Extrae IP del cliente desde X-Forwarded-For o REMOTE_ADDR.
+    Prioriza X-Forwarded-For para detectar IP real tras proxies.
     """
     x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
     if x_forwarded_for:
@@ -117,24 +103,9 @@ def obtener_ip_cliente(request):
 
 def verificar_cuenta_bloqueada(username):
     """
-    Verifica si una cuenta de usuario está bloqueada por intentos fallidos de login.
-
-    Comprueba la tabla CuentaBloqueada para determinar si el usuario está bloqueado
-    y calcula los minutos restantes hasta el desbloqueo automático.
-
-    Parámetros:
-        username (str): El nombre de usuario a verificar.
-
-    Retorna:
-        tuple: Una tupla (bloqueada, mensaje, minutos_restantes) donde:
-            - bloqueada (bool): True si la cuenta está actualmente bloqueada.
-            - mensaje (str): Mensaje descriptivo del estado del bloqueo.
-            - minutos_restantes (int): Minutos hasta el desbloqueo automático.
-
-    Notas:
-        - El tiempo de bloqueo está definido por LOCKOUT_DURATION_MINUTES (30 min por defecto).
-        - Si el tiempo de bloqueo ha expirado, se desbloquea automáticamente.
-        - Retorna (False, "", 0) si la cuenta no existe o no está bloqueada.
+    Verifica bloqueo de cuenta por intentos fallidos.
+    Retorna: (bloqueada, mensaje, minutos_restantes).
+    Desbloqueo automático tras 30 minutos.
     """
     try:
         user = User.objects.get(username=username)
@@ -178,27 +149,7 @@ def verificar_cuenta_bloqueada(username):
 
 
 def registrar_intento_login(username, ip_address, exitoso, detalles=""):
-    """
-    Registra todos los intentos de autenticación en la tabla IntentoLogin para auditoría.
-
-    Función auxiliar utilizada por login_view para mantener histórico completo de intentos
-    de login exitosos y fallidos, facilitando análisis de seguridad y debugging.
-
-    Parámetros:
-        username (str): Nombre de usuario que intentó autenticarse.
-        ip_address (str): Dirección IP desde donde se realizó el intento.
-        exitoso (bool): True si la autenticación fue exitosa, False si falló.
-        detalles (str, opcional): Información adicional sobre el intento. Por defecto: "".
-
-    Retorna:
-        None: La función no retorna valor, solo crea registro en BD.
-
-    Notas:
-        - Llamada automáticamente por login_view en cada intento
-        - Utilizada para análisis de patrones de ataque
-        - Base de datos para verificar_intentos_fallidos
-        - Visible en admin panel de gestión de usuarios
-    """
+    """Registra intento de login en IntentoLogin para auditoría."""
     IntentoLogin.objects.create(
         username=username, ip_address=ip_address, exitoso=exitoso, detalles=detalles
     )
@@ -206,27 +157,9 @@ def registrar_intento_login(username, ip_address, exitoso, detalles=""):
 
 def verificar_intentos_fallidos(username, ip_address):
     """
-    Verifica intentos fallidos recientes y bloquea la cuenta si excede el umbral.
-
-    Cuenta los intentos fallidos de login en la ventana de tiempo definida por
-    FAILED_ATTEMPT_WINDOW_MINUTES. Si alcanza MAX_LOGIN_ATTEMPTS, bloquea automáticamente
-    la cuenta y registra la acción en auditoría.
-
-    Parámetros:
-        username (str): Nombre de usuario a verificar.
-        ip_address (str): IP desde donde se realizó el último intento.
-
-    Retorna:
-        tuple: (debe_bloquear, intentos) donde:
-            - debe_bloquear (bool): True si se alcanzó el límite y se bloqueó la cuenta.
-            - intentos (int): Número de intentos fallidos en la ventana de tiempo.
-
-    Notas:
-        - Ventana de tiempo: FAILED_ATTEMPT_WINDOW_MINUTES (15 minutos por defecto)
-        - Umbral de bloqueo: MAX_LOGIN_ATTEMPTS (5 intentos por defecto)
-        - Crea o actualiza registro en CuentaBloqueada
-        - Registra acción ACCOUNT_LOCKED en LogAuditoria
-        - Retorna (False, intentos) si el usuario no existe
+    Cuenta intentos fallidos en ventana de 15 min.
+    Bloquea cuenta si alcanza límite (5 intentos).
+    Retorna: (debe_bloquear, total_intentos).
     """
     INTENTOS_MAXIMOS = MAX_LOGIN_ATTEMPTS
     VENTANA_TIEMPO = FAILED_ATTEMPT_WINDOW_MINUTES
@@ -276,26 +209,7 @@ def verificar_intentos_fallidos(username, ip_address):
 
 
 def procesar_excel(archivo):
-    """
-    Procesa archivo Excel (.xlsx) y extrae registros para carga masiva.
-
-    Lee archivo Excel, extrae headers de la primera fila y convierte cada fila
-    subsecuente en un diccionario. Filtra filas sin código de instrumento.
-
-    Parámetros:
-        archivo (UploadedFile): Archivo Excel cargado desde request.FILES.
-
-    Retorna:
-        list[dict]: Lista de diccionarios donde cada dict representa una fila con
-            headers como keys. Solo incluye filas con codigo_instrumento no vacío.
-
-    Notas:
-        - Librería: openpyxl
-        - Lee la hoja activa del workbook
-        - Primera fila debe contener headers (nombres de columnas)
-        - Filas sin codigo_instrumento se omiten automáticamente
-        - Utilizada por carga_masiva() para importación batch
-    """
+    """Parsea Excel a lista de diccionarios. Filtra filas sin codigo_instrumento."""
     wb = openpyxl.load_workbook(archivo)
     sheet = wb.active
     registros = []
@@ -311,36 +225,17 @@ def procesar_excel(archivo):
 
 
 def procesar_csv(archivo):
-    """
-    Procesa archivo CSV y extrae registros para carga masiva.
-
-    Lee archivo CSV codificado en UTF-8 y convierte cada fila en un diccionario
-    usando los headers de la primera línea como keys.
-
-    Parámetros:
-        archivo (UploadedFile): Archivo CSV cargado desde request.FILES.
-
-    Retorna:
-        list[dict]: Lista de diccionarios donde cada dict representa una fila CSV.
-
-    Notas:
-        - Librería: csv (stdlib)
-        - Encoding: UTF-8 (debe especificarse en archivo)
-        - Primera línea debe contener headers (nombres de columnas)
-        - Separador: coma (,)
-        - Utilizada por carga_masiva() para importación batch
-        - No filtra filas vacías (lo hace carga_masiva)
-    """
+    """Parsea CSV (UTF-8) a lista de diccionarios usando headers de primera fila."""
     contenido = archivo.read().decode("utf-8")
     reader = csv.DictReader(io.StringIO(contenido))
     return list(reader)
 
 
 # ============================================================================
-# SECTION 2: AUTHENTICATION AND SECURITY
+# SECCIÓN 2: AUTENTICACIÓN Y SEGURIDAD
 # ============================================================================
-# Functions: login_view, logout_view
-# Lines: 251-370 (approx. 120 lines)
+# Funciones: login_view, logout_view
+# Líneas: 251-370 (aprox. 120 líneas)
 # ============================================================================
 
 
@@ -392,7 +287,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            # Login exitoso
+            # Inicio de sesión exitoso
             login(request, user)
 
             logger.info(
@@ -421,7 +316,7 @@ def login_view(request):
             messages.success(request, f"¡Bienvenido {user.first_name or user.username}!")
             return redirect("dashboard")
         else:
-            # Login fallido
+            # Inicio de sesión fallido
             logger.warning(
                 f"Failed login attempt - Username: {username}, IP: {ip_address}, "
                 f"Reason: Invalid credentials"
@@ -505,10 +400,10 @@ def logout_view(request):
 
 
 # ============================================================================
-# SECTION 3: DASHBOARD AND REPORTING
+# SECCIÓN 3: DASHBOARD Y REPORTES
 # ============================================================================
-# Functions: dashboard
-# Lines: 371-470 (approx. 100 lines)
+# Funciones: dashboard
+# Líneas: 371-470 (aprox. 100 líneas)
 # ============================================================================
 
 
@@ -660,12 +555,12 @@ def dashboard(request):
 
 
 # ============================================================================
-# SECTION 4: CALIFICACIONES CRUD OPERATIONS
+# SECCIÓN 4: OPERACIONES CRUD DE CALIFICACIONES
 # ============================================================================
-# Functions: listar_calificaciones, crear_calificacion, editar_calificacion,
+# Funciones: listar_calificaciones, crear_calificacion, editar_calificacion,
 #            eliminar_calificacion, crear_calificacion_factores,
 #            editar_calificacion_factores
-# Lines: 471-650 (approx. 180 lines)
+# Líneas: 471-650 (aprox. 180 líneas)
 # ============================================================================
 
 
@@ -708,7 +603,7 @@ def listar_calificaciones(request):
         "instrumento", "usuario_creador"
     )
 
-    # NUEVOS FILTROS - Metadata fields (Phase 3)
+    # NUEVOS FILTROS - Campos de metadata (Fase 3)
     mercado = request.GET.get("mercado", "").strip()
     tipo_sociedad = request.GET.get("tipo_sociedad", "").strip()
     ejercicio = request.GET.get("ejercicio", "").strip()
@@ -726,7 +621,7 @@ def listar_calificaciones(request):
         except ValueError:
             logger.warning(f"Invalid ejercicio filter value: {ejercicio}")
 
-    # FILTROS EXISTENTES (legacy compatibility)
+    # FILTROS EXISTENTES (compatibilidad legacy)
     codigo_instrumento = request.GET.get("codigo_instrumento", "").strip()
     fecha_desde = request.GET.get("fecha_desde", "").strip()
     fecha_hasta = request.GET.get("fecha_hasta", "").strip()
@@ -749,7 +644,7 @@ def listar_calificaciones(request):
     # Ordenamiento
     calificaciones = calificaciones.order_by("-fecha_creacion")
 
-    # PAGINACIÓN - Server-side (50 records per page for CPU optimization)
+    # PAGINACIÓN - Lado del servidor (50 registros por página para optimización de CPU)
     paginator = Paginator(calificaciones, 50)
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
@@ -763,11 +658,11 @@ def listar_calificaciones(request):
     context = {
         "calificaciones": page_obj,  # Paginado
         "page_obj": page_obj,
-        # New filters
+        # Filtros nuevos
         "mercado": mercado,
         "tipo_sociedad": tipo_sociedad,
         "ejercicio": ejercicio,
-        # Legacy filters
+        # Filtros legacy
         "codigo_instrumento": codigo_instrumento,
         "fecha_desde": fecha_desde,
         "fecha_hasta": fecha_hasta,
@@ -859,7 +754,7 @@ def crear_calificacion(request):
         elif 'fondo' in tipo_lower or 'cfi' in tipo_lower or 'fm' in tipo_lower:
             dj_recomendado = '1922'
         else:
-            dj_recomendado = '1949'  # Default
+            dj_recomendado = '1949'  # Por defecto
         
         instrumentos_map[str(instrumento.id)] = {
             'tipo': instrumento.tipo_instrumento,
@@ -1182,11 +1077,11 @@ def editar_calificacion_factores(request, pk):
 
 
 # ============================================================================
-# SECTION 5: INSTRUMENTOS CRUD OPERATIONS
+# SECCIÓN 5: OPERACIONES CRUD DE INSTRUMENTOS
 # ============================================================================
-# Functions: listar_instrumentos, crear_instrumento, editar_instrumento,
+# Funciones: listar_instrumentos, crear_instrumento, editar_instrumento,
 #            eliminar_instrumento
-# Lines: 740-860 (approx. 120 lines)
+# Líneas: 740-860 (aprox. 120 líneas)
 # ============================================================================
 
 
@@ -1430,10 +1325,10 @@ def eliminar_instrumento(request, pk):
 
 
 # ============================================================================
-# SECTION 6: BULK OPERATIONS
+# SECCIÓN 6: OPERACIONES MASIVAS
 # ============================================================================
-# Functions: carga_masiva, exportar_excel, exportar_csv
-# Lines: 861-1100 (approx. 240 lines)
+# Funciones: carga_masiva, exportar_excel, exportar_csv
+# Líneas: 861-1100 (aprox. 240 líneas)
 # ============================================================================
 
 
@@ -1546,7 +1441,7 @@ def carga_masiva(request):
                                     f"Row {i} skipped due to priority rule: CORREDORA > BOLSA - "
                                     f"Instrumento: {instrumento.codigo_instrumento}"
                                 )
-                                continue  # Skip esta iteración
+                                continue  # Saltar esta iteración
                             
                             # PASO 3: ACTUALIZAR REGISTRO (Si pasa regla de prioridad)
                             # Actualizar metadata
@@ -2146,11 +2041,11 @@ def exportar_csv(request):
 
 
 # ============================================================================
-# SECTION 7: USER MANAGEMENT
+# SECCIÓN 7: GESTIÓN DE USUARIOS
 # ============================================================================
-# Functions: mi_perfil, registro, admin_gestionar_usuarios,
+# Funciones: mi_perfil, registro, admin_gestionar_usuarios,
 #            desbloquear_cuenta_manual, ver_historial_login_usuario
-# Lines: 1101-1300 (approx. 200 lines)
+# Líneas: 1101-1300 (aprox. 200 líneas)
 # ============================================================================
 
 
@@ -2442,10 +2337,10 @@ def ver_historial_login_usuario(request, user_id):
 
 
 # ============================================================================
-# SECTION 8: AUDITING AND COMPLIANCE
+# SECCIÓN 8: AUDITORÍA Y CUMPLIMIENTO
 # ============================================================================
-# Functions: registro_auditoria
-# Lines: 1301-1350 (approx. 50 lines)
+# Funciones: registro_auditoria
+# Líneas: 1301-1350 (aprox. 50 líneas)
 # ============================================================================
 
 
@@ -2523,10 +2418,10 @@ def registro_auditoria(request):
 
 
 # ============================================================================
-# SECTION 9: API ENDPOINTS AND MISCELLANEOUS
+# SECCIÓN 9: ENDPOINTS API Y MISCELÁNEOS
 # ============================================================================
-# Functions: calcular_factores_ajax, home
-# Lines: 1351-1480 (approx. 130 lines)
+# Funciones: calcular_factores_ajax, home
+# Líneas: 1351-1480 (aprox. 130 líneas)
 # ============================================================================
 
 
@@ -2668,7 +2563,7 @@ def home(request):
 
 
 # ============================================================================
-# ADMIN PANEL - CUSTOM ADMINISTRATION INTERFACE
+# PANEL DE ADMINISTRACIÓN - INTERFAZ DE ADMINISTRACIÓN PERSONALIZADA
 # ============================================================================
 
 @login_required

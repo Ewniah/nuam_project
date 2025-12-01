@@ -25,18 +25,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Leer archivo .env
 environ.Env.read_env(BASE_DIR / '.env')
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# Configuración de inicio rápido para desarrollo - no apta para producción
+# Ver https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# ADVERTENCIA DE SEGURIDAD: mantener la clave secreta protegida en producción
 SECRET_KEY = env('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# ADVERTENCIA DE SEGURIDAD: no ejecutar con debug activado en producción
 DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
-# Application definition
+# Definición de aplicaciones
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -45,8 +45,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.humanize',  # Se agrega humanize para formatos legibles
-    'calificaciones',  # Se agrega la aplicación de calificaciones
+    'django.contrib.humanize',  # Humanize para formatos legibles de números y fechas
+    'calificaciones',  # Aplicación de calificaciones tributarias
 ]
 
 MIDDLEWARE = [
@@ -79,9 +79,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'nuam_project.wsgi.application'
 
-# Database
+# Base de datos
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-# Se configura la base de datos PostgreSQL
+# Configuración de base de datos PostgreSQL
 
 DATABASES = {
     'default': {
@@ -94,7 +94,7 @@ DATABASES = {
     }
 }
 
-# Password validation
+# Validación de contraseñas
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -112,9 +112,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
+# Internacionalización
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
-# Se configura el idioma y la zona horaria para Chile
+# Configuración de idioma y zona horaria para Chile
 
 LANGUAGE_CODE = 'es-cl'
 
@@ -129,12 +129,12 @@ USE_L10N = True
 
 USE_THOUSAND_SEPARATOR = True
 
-# Opcional: Para forzar separadores
+# Configuración de separadores numéricos
 DECIMAL_SEPARATOR = ','
 THOUSAND_SEPARATOR = '.'
 NUMBER_GROUPING = 3
 
-# Static files (CSS, JavaScript, Images)
+# Archivos estáticos (CSS, JavaScript, Imágenes)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 # Configuración de archivos estáticos
 
@@ -148,11 +148,11 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Redireccionamiento después de login
+# Redirección después del inicio de sesión
 LOGIN_REDIRECT_URL = '/'
-LOGIN_URL = '/login/'
+LOGIN_URL = 'login'
 
-# Default primary key field type
+# Tipo de campo de clave primaria por defecto
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
