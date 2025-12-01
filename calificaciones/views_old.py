@@ -1,58 +1,39 @@
-"""
-Unified View Module for NUAM Calificaciones System
-Consolidated from: views.py, views_admin.py, views_factores.py
-Migration Date: 2025-11-30
-Task: 1.3 - View Unification
-Total Functions: 30 (22 routed + 6 utilities + 2 helpers)
-Total Routes: 22 (100% preserved)
-"""
-
-# ============================================================================
-# IMPORTS - PEP 8 Organized
-# ============================================================================
-
-# Standard Library (5 imports)
-import csv
-import io
-import json
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.http import HttpResponse, JsonResponse
+from django.db.models import Count, Q
+from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
-
-# Django Core (9 imports)
-from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.db.models import Count, Q
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render, redirect, get_object_or_404
-from django.utils import timezone
-
-# Third-Party (1 import)
 import openpyxl
+import csv
+import io
 
-# Local Application (4 imports)
-from .forms import (
-    CalificacionTributariaForm, InstrumentoFinancieroForm, CargaMasivaForm,
-    RegistroForm, CalificacionFactoresSimpleForm
-)
 from .models import (
-    CalificacionTributaria, InstrumentoFinanciero, LogAuditoria, 
-    CargaMasiva, Rol, PerfilUsuario, IntentoLogin, CuentaBloqueada, ArchivoCargado
+    CalificacionTributaria, 
+    InstrumentoFinanciero, 
+    LogAuditoria, 
+    CargaMasiva,
+    Rol, 
+    PerfilUsuario,
+    IntentoLogin,  # Se agregó para auditoría de login
+    CuentaBloqueada  # Se agregó para manejo de cuentas bloqueadas
+)
+from .forms import (
+    CalificacionTributariaForm, 
+    InstrumentoFinancieroForm, 
+    CargaMasivaForm,
+    RegistroForm
 )
 from .permissions import requiere_permiso
-from .utils.calculadora_factores import calcular_clasificacion_sii
 
 
-# ============================================================================
-# SECTION 1: UTILITIES AND HELPERS
-# ============================================================================
-# Functions: obtener_ip_cliente, verificar_cuenta_bloqueada, 
-#            registrar_intento_login, verificar_intentos_fallidos,
-#            procesar_excel, procesar_csv
-# Lines: 52-250 (approx. 200 lines)
-# ============================================================================
-
+# ==========================================
+# Nueva función: Obtener IP del cliente
+# ==========================================
 def obtener_ip_cliente(request):
     """Obtiene la IP real del cliente considerando proxies"""
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -63,6 +44,9 @@ def obtener_ip_cliente(request):
     return ip
 
 
+# ==========================================
+# Nueva función: Verificar si la cuenta está bloqueada
+# ==========================================
 def verificar_cuenta_bloqueada(username):
     """
     Verifica si una cuenta está bloqueada
@@ -102,7 +86,9 @@ def verificar_cuenta_bloqueada(username):
     except User.DoesNotExist:
         return False, "", 0
 
-
+# ==========================================
+# Nueva función: Registrar intento de login
+# ==========================================
 def registrar_intento_login(username, ip_address, exitoso, detalles=""):
     """Registra todos los intentos de login en la base de datos"""
     IntentoLogin.objects.create(
@@ -113,6 +99,9 @@ def registrar_intento_login(username, ip_address, exitoso, detalles=""):
     )
 
 
+# ==========================================
+# Nueva función: Verificar intentos fallidos y bloquear cuenta si es necesario
+# ==========================================
 def verificar_intentos_fallidos(username, ip_address):
     """
     Verifica intentos fallidos en los últimos 15 minutos
@@ -168,36 +157,9 @@ def verificar_intentos_fallidos(username, ip_address):
     return False, intentos_fallidos
 
 
-def procesar_excel(archivo):
-    """Procesa archivo Excel y retorna lista de registros"""
-    wb = openpyxl.load_workbook(archivo)
-    sheet = wb.active
-    registros = []
-    
-    headers = [cell.value for cell in sheet[1]]
-    
-    for row in sheet.iter_rows(min_row=2, values_only=True):
-        registro = dict(zip(headers, row))
-        if registro.get('codigo_instrumento'):
-            registros.append(registro)
-    
-    return registros
-
-
-def procesar_csv(archivo):
-    """Procesa archivo CSV y retorna lista de registros"""
-    contenido = archivo.read().decode('utf-8')
-    reader = csv.DictReader(io.StringIO(contenido))
-    return list(reader)
-
-
-# ============================================================================
-# SECTION 2: AUTHENTICATION AND SECURITY
-# ============================================================================
-# Functions: login_view, logout_view
-# Lines: 251-370 (approx. 120 lines)
-# ============================================================================
-
+# ==========================================
+# Vista de Login con auditoría y bloqueo de cuentas actualizada
+# ==========================================
 def login_view(request):
     """Vista de login con auditoría completa y sistema de bloqueo"""
     if request.method == 'POST':
@@ -277,6 +239,9 @@ def login_view(request):
     return render(request, 'registration/login.html')
 
 
+# ==========================================
+# Vista de logout con auditoría actualizada
+# ==========================================
 @login_required
 def logout_view(request):
     """Cierra sesión y registra en auditoría"""
@@ -296,13 +261,9 @@ def logout_view(request):
     return redirect('login')
 
 
-# ============================================================================
-# SECTION 3: DASHBOARD AND REPORTING
-# ============================================================================
-# Functions: dashboard
-# Lines: 371-470 (approx. 100 lines)
-# ============================================================================
-
+# ==========================================
+# VISTAS PRINCIPALES
+# ==========================================
 @login_required
 @requiere_permiso('consultar')
 def dashboard(request):
@@ -398,15 +359,9 @@ def dashboard(request):
     return render(request, 'calificaciones/dashboard.html', context)
 
 
-# ============================================================================
-# SECTION 4: CALIFICACIONES CRUD OPERATIONS
-# ============================================================================
-# Functions: listar_calificaciones, crear_calificacion, editar_calificacion,
-#            eliminar_calificacion, crear_calificacion_factores,
-#            editar_calificacion_factores
-# Lines: 471-650 (approx. 180 lines)
-# ============================================================================
-
+# ==========================================
+# VISTAS DE CALIFICACIONES
+# ==========================================
 @login_required
 @requiere_permiso('consultar')
 def listar_calificaciones(request):
@@ -536,105 +491,9 @@ def eliminar_calificacion(request, pk):
     return render(request, 'calificaciones/confirmar_eliminar.html', {'objeto': calificacion})
 
 
-@login_required
-@requiere_permiso('crear')
-def crear_calificacion_factores(request):
-    """Vista para crear calificaciones con el formulario simplificado de 5 factores"""
-    if request.method == 'POST':
-        form = CalificacionFactoresSimpleForm(request.POST)
-        
-        if form.is_valid():
-            calificacion = form.save(commit=False)
-            calificacion.usuario_creador = request.user
-            
-            try:
-                calificacion.save()
-                
-                ip_address = obtener_ip_cliente(request)
-                LogAuditoria.objects.create(
-                    usuario=request.user,
-                    accion='CREATE',
-                    tabla_afectada='CalificacionTributaria',
-                    registro_id=calificacion.id,
-                    ip_address=ip_address,
-                    detalles=f'Calificación creada con factores: {calificacion.instrumento.codigo_instrumento}'
-                )
-                
-                messages.success(
-                    request,
-                    'Calificación creada exitosamente. Factores calculados automáticamente.'
-                )
-                return redirect('listar_calificaciones')
-                
-            except Exception as e:
-                messages.error(request, f'Error al guardar la calificación: {str(e)}')
-        else:
-            messages.error(request, 'Por favor corrija los errores en el formulario.')
-    else:
-        form = CalificacionFactoresSimpleForm()
-    
-    instrumentos = InstrumentoFinanciero.objects.filter(activo=True)
-    tipos_instrumentos = {inst.id: inst.tipo_instrumento for inst in instrumentos}
-    
-    context = {
-        'form': form,
-        'titulo': 'Nueva Calificación con Factores',
-        'accion': 'Crear',
-        'tipos_instrumentos_json': json.dumps(tipos_instrumentos)
-    }
-    
-    return render(request, 'calificaciones/form_factores_simple.html', context)
-
-
-@login_required
-@requiere_permiso('modificar')
-def editar_calificacion_factores(request, pk):
-    """Vista para editar calificaciones con el formulario simplificado de 5 factores"""
-    calificacion = get_object_or_404(CalificacionTributaria, pk=pk, activo=True)
-    
-    if request.method == 'POST':
-        form = CalificacionFactoresSimpleForm(request.POST, instance=calificacion)
-        if form.is_valid():
-            calificacion = form.save(commit=False)
-            calificacion.usuario_creador = request.user
-            calificacion.save()
-            
-            ip_address = obtener_ip_cliente(request)
-            LogAuditoria.objects.create(
-                usuario=request.user,
-                accion='UPDATE',
-                tabla_afectada='CalificacionTributaria',
-                registro_id=calificacion.id,
-                ip_address=ip_address,
-                detalles=f'Calificación editada: {calificacion.instrumento.codigo_instrumento}'
-            )
-            
-            messages.success(request, 'Calificación actualizada exitosamente.')
-            return redirect('listar_calificaciones')
-    else:
-        form = CalificacionFactoresSimpleForm(instance=calificacion)
-    
-    instrumentos = InstrumentoFinanciero.objects.filter(activo=True)
-    tipos_instrumentos = {inst.id: inst.tipo_instrumento for inst in instrumentos}
-    
-    context = {
-        'form': form,
-        'calificacion': calificacion,
-        'titulo': 'Editar Calificación',
-        'accion': 'Actualizar',
-        'tipos_instrumentos_json': json.dumps(tipos_instrumentos)
-    }
-    return render(request, 'calificaciones/form_factores_simple.html', context)
-
-
-# ============================================================================
-# SECTION 5: INSTRUMENTOS CRUD OPERATIONS
-# ============================================================================
-# Functions: listar_instrumentos, crear_instrumento, editar_instrumento,
-#            eliminar_instrumento
-# Lines: 740-860 (approx. 120 lines)
-# ============================================================================
-
+# ==========================================
+# VISTAS DE INSTRUMENTOS
+# ==========================================
 @login_required
 @requiere_permiso('consultar')
 def listar_instrumentos(request):
@@ -754,13 +613,9 @@ def eliminar_instrumento(request, pk):
     return render(request, 'calificaciones/confirmar_eliminar.html', {'objeto': instrumento})
 
 
-# ============================================================================
-# SECTION 6: BULK OPERATIONS
-# ============================================================================
-# Functions: carga_masiva, exportar_excel, exportar_csv
-# Lines: 861-1100 (approx. 240 lines)
-# ============================================================================
-
+# ==========================================
+# CARGA MASIVA
+# ==========================================
 @login_required
 @requiere_permiso('crear')
 def carga_masiva(request):
@@ -864,6 +719,32 @@ def carga_masiva(request):
     return render(request, 'calificaciones/carga_masiva.html', {'form': form})
 
 
+def procesar_excel(archivo):
+    """Procesa archivo Excel y retorna lista de registros"""
+    wb = openpyxl.load_workbook(archivo)
+    sheet = wb.active
+    registros = []
+    
+    headers = [cell.value for cell in sheet[1]]
+    
+    for row in sheet.iter_rows(min_row=2, values_only=True):
+        registro = dict(zip(headers, row))
+        if registro.get('codigo_instrumento'):
+            registros.append(registro)
+    
+    return registros
+
+
+def procesar_csv(archivo):
+    """Procesa archivo CSV y retorna lista de registros"""
+    contenido = archivo.read().decode('utf-8')
+    reader = csv.DictReader(io.StringIO(contenido))
+    return list(reader)
+
+
+# ==========================================
+# EXPORTACIÓN DE DATOS
+# ==========================================
 @login_required
 @requiere_permiso('consultar')
 def exportar_excel(request):
@@ -968,14 +849,9 @@ def exportar_csv(request):
     return response
 
 
-# ============================================================================
-# SECTION 7: USER MANAGEMENT
-# ============================================================================
-# Functions: mi_perfil, registro, admin_gestionar_usuarios,
-#            desbloquear_cuenta_manual, ver_historial_login_usuario
-# Lines: 1101-1300 (approx. 200 lines)
-# ============================================================================
-
+# ==========================================
+# PERFIL DE USUARIO
+# ==========================================
 @login_required
 def mi_perfil(request):
     """Muestra y permite editar el perfil del usuario actual"""
@@ -1007,6 +883,9 @@ def mi_perfil(request):
     return render(request, 'calificaciones/mi_perfil.html', context)
 
 
+# ==========================================
+# REGISTRO DE USUARIOS
+# ==========================================
 def registro(request):
     """Permite el registro de nuevos usuarios"""
     if request.method == 'POST':
@@ -1040,126 +919,9 @@ def registro(request):
     return render(request, 'calificaciones/registro.html', {'form': form})
 
 
-@login_required
-@requiere_permiso('admin')
-def admin_gestionar_usuarios(request):
-    """
-    Panel de gestión de usuarios para administradores.
-    Muestra todos los usuarios con información de bloqueos e intentos de login.
-    """
-    # Obtener todos los usuarios con sus perfiles
-    usuarios = User.objects.all().select_related('perfilusuario__rol').order_by('username')
-    
-    # Agregar información adicional a cada usuario
-    for usuario in usuarios:
-        # Verificar si tiene cuenta bloqueada
-        usuario.cuenta_bloqueada = CuentaBloqueada.objects.filter(
-            usuario=usuario,
-            bloqueada=True
-        ).first()
-        
-        # Contar intentos de login recientes (últimos 7 días)
-        fecha_limite = timezone.now() - timedelta(days=7)
-        usuario.intentos_recientes = IntentoLogin.objects.filter(
-            username=usuario.username,
-            fecha_hora__gte=fecha_limite
-        ).count()
-        
-        # Contar intentos fallidos recientes
-        usuario.intentos_fallidos_recientes = IntentoLogin.objects.filter(
-            username=usuario.username,
-            exitoso=False,
-            fecha_hora__gte=fecha_limite
-        ).count()
-    
-    context = {
-        'usuarios': usuarios,
-        'total_usuarios': usuarios.count(),
-        'usuarios_bloqueados': sum(1 for u in usuarios if hasattr(u, 'cuenta_bloqueada') and u.cuenta_bloqueada),
-    }
-    
-    return render(request, 'calificaciones/admin/gestionar_usuarios.html', context)
-
-
-@login_required
-@requiere_permiso('admin')
-def desbloquear_cuenta_manual(request, user_id):
-    """
-    Desbloquea manualmente una cuenta de usuario.
-    Registra la acción en LogAuditoria con ACCOUNT_UNLOCKED.
-    """
-    # Obtener el usuario a desbloquear
-    user = get_object_or_404(User, id=user_id)
-    
-    # Buscar cuenta bloqueada
-    cuenta_bloqueada = CuentaBloqueada.objects.filter(
-        usuario=user,
-        bloqueada=True
-    ).first()
-    
-    if not cuenta_bloqueada:
-        messages.warning(request, f'La cuenta de {user.username} no está bloqueada.')
-        return redirect('admin_gestionar_usuarios')
-    
-    # Desbloquear la cuenta
-    cuenta_bloqueada.bloqueada = False
-    cuenta_bloqueada.fecha_desbloqueo = timezone.now()
-    cuenta_bloqueada.save()
-    
-    # Registrar en auditoría (CRÍTICO - Feedback del profesor)
-    ip_address = obtener_ip_cliente(request)
-    LogAuditoria.objects.create(
-        usuario=request.user,  # Admin que desbloqueó
-        accion='ACCOUNT_UNLOCKED',
-        tabla_afectada='CuentaBloqueada',
-        registro_id=cuenta_bloqueada.id,
-        ip_address=ip_address,
-        detalles=f'Cuenta de {user.username} desbloqueada manualmente por {request.user.username}'
-    )
-    
-    messages.success(
-        request,
-        f'✅ Cuenta de {user.username} desbloqueada exitosamente.'
-    )
-    
-    return redirect('admin_gestionar_usuarios')
-
-
-@login_required
-@requiere_permiso('admin')
-def ver_historial_login_usuario(request, user_id):
-    """
-    Muestra el historial completo de intentos de login de un usuario.
-    """
-    user = get_object_or_404(User, id=user_id)
-    
-    # Obtener todos los intentos de login del usuario
-    intentos = IntentoLogin.objects.filter(
-        username=user.username
-    ).order_by('-fecha_hora')[:50]  # Últimos 50 intentos
-    
-    # Obtener logs de auditoría relacionados con login
-    logs_login = LogAuditoria.objects.filter(
-        usuario=user,
-        accion__in=['LOGIN', 'LOGOUT', 'ACCOUNT_LOCKED', 'ACCOUNT_UNLOCKED']
-    ).order_by('-fecha_hora')[:50]
-    
-    context = {
-        'usuario': user,
-        'intentos': intentos,
-        'logs_login': logs_login,
-    }
-    
-    return render(request, 'calificaciones/admin/historial_login.html', context)
-
-
-# ============================================================================
-# SECTION 8: AUDITING AND COMPLIANCE
-# ============================================================================
-# Functions: registro_auditoria
-# Lines: 1301-1350 (approx. 50 lines)
-# ============================================================================
-
+# ==========================================
+# AUDITORÍA
+# ==========================================
 @login_required
 @requiere_permiso('consultar')
 def registro_auditoria(request):
@@ -1204,72 +966,3 @@ def registro_auditoria(request):
     }
     
     return render(request, 'calificaciones/registro_auditoria.html', context)
-
-
-# ============================================================================
-# SECTION 9: API ENDPOINTS AND MISCELLANEOUS
-# ============================================================================
-# Functions: calcular_factores_ajax, home
-# Lines: 1351-1480 (approx. 130 lines)
-# ============================================================================
-
-def calcular_factores_ajax(request):
-    """API endpoint para calcular factores automáticamente vía AJAX"""
-    try:
-        montos = {
-            'monto_8': request.GET.get('monto_8', '0'),
-            'monto_9': request.GET.get('monto_9', '0'),
-            'monto_10': request.GET.get('monto_10', '0'),
-            'monto_11': request.GET.get('monto_11', '0'),
-            'monto_12': request.GET.get('monto_12', '0'),
-        }
-        
-        # Convertir a Decimal
-        montos_decimal = {}
-        for key, value in montos.items():
-            try:
-                montos_decimal[key] = Decimal(value) if value else Decimal('0')
-            except:
-                montos_decimal[key] = Decimal('0')
-        
-        # Calcular suma total
-        suma_montos = sum(montos_decimal.values())
-        
-        # Calcular factores
-        factores = {}
-        for key, monto in montos_decimal.items():
-            factor_key = key.replace('monto', 'factor')
-            if suma_montos > 0:
-                factores[factor_key] = str(round(monto / suma_montos, 8))
-            else:
-                factores[factor_key] = '0.00000000'
-        
-        # Calcular suma de factores
-        suma_factores = sum(Decimal(f) for f in factores.values())
-        
-        return JsonResponse({
-            'success': True,
-            'factores': factores,
-            'suma_montos': str(suma_montos),
-            'suma_factores': str(suma_factores),
-            'es_valido': abs(suma_factores - Decimal('1.0')) < Decimal('0.00000001'),
-            'mensaje_error': '',
-            'nombres': {
-                'factor_8': 'Factor 8',
-                'factor_9': 'Factor 9',
-                'factor_10': 'Factor 10',
-                'factor_11': 'Factor 11',
-                'factor_12': 'Factor 12',
-            }
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=400)
-
-
-def home(request):
-    """Vista para la página de inicio"""
-    return render(request, 'home.html')
