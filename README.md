@@ -549,9 +549,20 @@ Para un despliegue en producción, recuerda:
 
 ## 📝 Changelog
 
-### Versión 4.0 (1 Dic 2025) - Fase 4: QA & Database Seeding ⭐ FINAL
+### Versión 4.1 (1 Dic 2025) - Jazzmin UI & Master Seeding Fix ⭐ FINAL
 
-**Script de Seeding Maestro**
+**Jazzmin Admin UI Profesional**
+
+- ✅ Instalado `django-jazzmin==3.0.1` - UI moderna para Django Admin
+- ✅ Tema Flatly (limpio y corporativo) aplicado
+- ✅ Branding NUAM configurado (títulos, headers personalizados)
+- ✅ Iconos Font Awesome para todos los modelos
+- ✅ Menú superior con acceso al Dashboard público
+- ✅ Sidebar expandible con navegación ordenada
+- ✅ Búsqueda rápida en Calificaciones Tributarias
+- ✅ Interfaz responsive para móviles
+
+**Script de Seeding Maestro - Corregido**
 
 - ✅ Creado `scripts/poblar_bd_maestra.py` - Dataset Golden completo
 - ✅ 3 Roles RBAC (Administrador, Analista Financiero, Auditor)
@@ -559,9 +570,11 @@ Para un despliegue en producción, recuerda:
 - ✅ 14 Instrumentos financieros variados (Acciones, Bonos, Fondos, Depósitos)
 - ✅ 30 Calificaciones con 30 factores tributarios completos (factor_8 a factor_37)
 - ✅ 10 Cargas masivas (historial últimos 7 días para Chart.js)
-- ✅ 50 Logs de auditoría (actividad últimos 30 días)
-- ✅ 20 Intentos de login (historial de seguridad)
+- ✅ Logs de auditoría y registros de seguridad
 - ✅ Generación de factores con validación REGLA A y REGLA B
+- ✅ **FIX:** Campo `user` → `usuario` en PerfilUsuario
+- ✅ **FIX:** `tipo_sociedad` ahora usa 'A' (Abierta) y 'C' (Cerrada)
+- ✅ **FIX:** Rangos de `secuencia` y `numero_dividendo` ajustados para IntegerField
 - ✅ Script idempotente con validaciones y output verbose
 
 **Documentación QA**
@@ -574,10 +587,10 @@ Para un despliegue en producción, recuerda:
 
 **Limpieza Final**
 
-- ✅ Eliminación de archivos de gestión de proyecto
+- ✅ Base de datos limpia lista para producción
 - ✅ Código 100% profesional en español
 - ✅ Proyecto listo para entrega al cliente
-- ✅ Push final a GitHub completado
+- ✅ Admin UI profesional implementado
 
 ### Versión 3.5 (1 Dic 2025) - Code Cleanup & Humanización
 
@@ -695,7 +708,7 @@ Este proyecto es propiedad de NUAM Exchange.
 
 **NUAM Exchange**  
 Sistema de Gestión de Calificaciones Tributarias  
-**Versión 4.0 FINAL** - Diciembre 2025
+**Versión 4.1 FINAL** - Diciembre 2025
 
 ---
 

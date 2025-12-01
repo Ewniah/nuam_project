@@ -39,6 +39,7 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 # Definición de aplicaciones
 
 INSTALLED_APPS = [
+    'jazzmin',  # UI profesional para Django Admin (debe ir ANTES de django.contrib.admin)
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -156,3 +157,53 @@ LOGIN_URL = 'login'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ==============================
+# JAZZMIN CONFIGURATION
+# ==============================
+# Configuración del tema profesional para Django Admin
+# Documentación: https://django-jazzmin.readthedocs.io/
+
+JAZZMIN_SETTINGS = {
+    # Títulos y branding
+    "site_title": "NUAM Admin",
+    "site_header": "NUAM Exchange",
+    "site_brand": "NUAM Backoffice",
+    "welcome_sign": "Bienvenido al Panel de Control Interno",
+    "copyright": "NUAM Exchange",
+
+    # Branding (descomentar si se agrega logo)
+    # "site_logo": "img/logo_nuam.png", 
+    
+    # Personalización de UI
+    "search_model": "calificaciones.CalificacionTributaria",
+    
+    # Menú superior
+    "topmenu_links": [
+        {"name": "Ir al Dashboard Público", "url": "home", "permissions": ["auth.view_user"]},
+    ],
+
+    # Menú de usuario
+    "usermenu_links": [
+        {"model": "auth.user"}
+    ],
+    
+    # Menú lateral
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "order_with_respect_to": ["calificaciones", "auth"],
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "calificaciones.CalificacionTributaria": "fas fa-file-invoice-dollar",
+        "calificaciones.InstrumentoFinanciero": "fas fa-building",
+        "calificaciones.ArchivoCargado": "fas fa-upload",
+        "calificaciones.LogAuditoria": "fas fa-history",
+    },
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "flatly",   # Tema limpio blanco/azul estilo corporativo
+    # "theme": "lumen",  # Tema alternativo limpio
+}

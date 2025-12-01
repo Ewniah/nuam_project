@@ -190,7 +190,7 @@ def poblar_usuarios():
         # Crear perfil de usuario
         rol = Rol.objects.get(nombre_rol=user_data['rol'])
         perfil, perfil_created = PerfilUsuario.objects.get_or_create(
-            user=user,
+            usuario=user,
             defaults={
                 'rol': rol,
                 'telefono': user_data['telefono'],
@@ -265,7 +265,7 @@ def poblar_calificaciones():
     
     origenes = ['BOLSA', 'CORREDORA']
     fuentes = ['MANUAL', 'MASIVA']
-    tipos_sociedad = ['S.A.', 'SpA', 'Ltda.', None]
+    tipos_sociedad = ['A', 'C', None]  # Corregido: Solo 'A' (Abierta) o 'C' (Cerrada)
     mercados = ['ACN', 'BCN', 'DER', None]
     
     # Crear 30 calificaciones
@@ -288,8 +288,8 @@ def poblar_calificaciones():
             'metodo_ingreso': 'FACTOR',
             'numero_dj': random.choice(['1922', '1949']),
             'fecha_informe': fecha_informe,
-            'secuencia': random.randint(1000000000, 9999999999) if random.random() > 0.5 else None,
-            'numero_dividendo': random.randint(1000000000, 9999999999) if random.random() > 0.3 else None,
+            'secuencia': random.randint(1000, 999999) if random.random() > 0.5 else None,  # Corregido: rango válido para IntegerField
+            'numero_dividendo': random.randint(1000, 999999) if random.random() > 0.3 else None,  # Corregido: rango válido
             'tipo_sociedad': random.choice(tipos_sociedad),
             'valor_historico': Decimal(str(round(random.uniform(1000, 100000), 2))) if random.random() > 0.4 else None,
             'mercado': random.choice(mercados),
