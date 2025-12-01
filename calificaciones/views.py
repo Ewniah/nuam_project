@@ -930,7 +930,33 @@ def eliminar_calificacion(request, pk):
 @login_required
 @requiere_permiso("crear")
 def crear_calificacion_factores(request):
-    """Vista para crear calificaciones con el formulario simplificado de 5 factores"""
+    """
+    Crea nueva calificación tributaria usando formulario simplificado de 5 factores.
+
+    Formulario alternativo que calcula el factor total a partir de 5 sub-factores
+    individuales (factor_1 a factor_5) proporcionando interfaz más intuitiva para
+    el usuario que trabaja con la clasificación SII.
+
+    Parámetros:
+        request (HttpRequest): Solicitud HTTP del usuario autenticado.
+
+    Retorna:
+        HttpResponse:
+            - POST válido: Redirect a 'listar_calificaciones' tras crear registro.
+            - POST inválido: Render del formulario con errores.
+            - GET: Render de 'calificaciones/form_factores_simple.html'.
+
+    Excepciones:
+        Exception: Captura errores de guardado y muestra mensaje al usuario.
+
+    Notas:
+        - Requiere permiso: 'crear'
+        - Formulario: CalificacionFactoresSimpleForm (5 factores individuales)
+        - Cálculo automático: factor_total = suma de 5 factores
+        - Registra en LogAuditoria con acción CREATE
+        - JSON con tipos de instrumentos para interfaz dinámica
+        - Logging implícito vía señales de modelo
+    """
     if request.method == "POST":
         form = CalificacionFactoresSimpleForm(request.POST)
 
@@ -980,7 +1006,34 @@ def crear_calificacion_factores(request):
 @login_required
 @requiere_permiso("modificar")
 def editar_calificacion_factores(request, pk):
-    """Vista para editar calificaciones con el formulario simplificado de 5 factores"""
+    """
+    Edita calificación tributaria existente usando formulario de 5 factores.
+
+    Permite modificar una calificación existente mediante el formulario simplificado
+    que desglosa el factor total en 5 componentes individuales.
+
+    Parámetros:
+        request (HttpRequest): Solicitud HTTP del usuario autenticado.
+        pk (int): Clave primaria de la CalificacionTributaria a editar.
+
+    Retorna:
+        HttpResponse:
+            - POST válido: Redirect a 'listar_calificaciones' tras actualizar.
+            - POST inválido: Render del formulario con errores y datos actuales.
+            - GET: Render de 'calificaciones/form_factores_simple.html' pre-poblado.
+
+    Excepciones:
+        Http404: Si no existe calificación con pk dado o activo=False.
+
+    Notas:
+        - Requiere permiso: 'modificar'
+        - Solo edita registros activos (activo=True)
+        - Formulario: CalificacionFactoresSimpleForm con instance
+        - Actualiza usuario_creador al usuario actual
+        - Registra en LogAuditoria con acción UPDATE
+        - JSON con tipos de instrumentos para interfaz dinámica
+        - Context incluye calificación original para comparación
+    """
     calificacion = get_object_or_404(CalificacionTributaria, pk=pk, activo=True)
 
     if request.method == "POST":
@@ -1127,7 +1180,33 @@ def crear_instrumento(request):
 @login_required
 @requiere_permiso("modificar")
 def editar_instrumento(request, pk):
-    """Edita un instrumento existente"""
+    """
+    Edita un instrumento financiero existente.
+
+    Permite actualizar información de un instrumento: código, nombre, tipo, emisor
+    y descripción. Validación automática de unicidad de código.
+
+    Parámetros:
+        request (HttpRequest): Solicitud HTTP del usuario autenticado.
+        pk (int): Clave primaria del InstrumentoFinanciero a editar.
+
+    Retorna:
+        HttpResponse:
+            - POST válido: Redirect a 'listar_instrumentos' tras actualizar.
+            - POST inválido: Render del formulario con errores.
+            - GET: Render de 'calificaciones/form_instrumento.html' pre-poblado.
+
+    Excepciones:
+        Http404: Si no existe instrumento con pk dado o activo=False.
+
+    Notas:
+        - Requiere permiso: 'modificar'
+        - Solo edita registros activos (activo=True)
+        - Formulario: InstrumentoFinancieroForm con instance
+        - Validación de unicidad de codigo_instrumento en formulario
+        - Registra en LogAuditoria con acción UPDATE
+        - No afecta calificaciones asociadas existentes
+    """
     instrumento = get_object_or_404(InstrumentoFinanciero, pk=pk, activo=True)
 
     if request.method == "POST":
@@ -1158,7 +1237,34 @@ def editar_instrumento(request, pk):
 @login_required
 @requiere_permiso("eliminar")
 def eliminar_instrumento(request, pk):
-    """Eliminación lógica de un instrumento"""
+    """
+    Realiza eliminación lógica de un instrumento financiero.
+
+    Soft delete que marca activo=False en lugar de eliminar físicamente el registro.
+    Protege integridad referencial validando que no existan calificaciones activas
+    asociadas antes de permitir la eliminación.
+
+    Parámetros:
+        request (HttpRequest): Solicitud HTTP del usuario autenticado.
+        pk (int): Clave primaria del InstrumentoFinanciero a eliminar.
+
+    Retorna:
+        HttpResponse:
+            - POST: Redirect a 'listar_instrumentos' tras eliminar o con error.
+            - GET: Render de 'calificaciones/confirmar_eliminar.html' para confirmación.
+
+    Excepciones:
+        Http404: Si no existe instrumento con pk dado o activo=False.
+
+    Notas:
+        - Requiere permiso: 'eliminar'
+        - Validación: Bloquea eliminación si existen CalificacionTributaria activas
+        - Eliminación lógica: activo=False (no DELETE físico)
+        - Registra en LogAuditoria con acción DELETE
+        - Logging: WARNING con usuario y código de instrumento
+        - Patrón GET-POST para confirmación de usuario
+        - Mensaje de error si tiene calificaciones asociadas
+    """
     instrumento = get_object_or_404(InstrumentoFinanciero, pk=pk, activo=True)
 
     # Verificar si tiene calificaciones asociadas
@@ -1641,7 +1747,32 @@ def mi_perfil(request):
 
 
 def registro(request):
-    """Permite el registro de nuevos usuarios"""
+    """
+    Permite el auto-registro de nuevos usuarios en el sistema.
+
+    Función pública (no requiere login) que permite crear cuentas de usuario con
+    asignación automática del rol 'Auditor' por defecto. Administradores pueden
+    cambiar el rol posteriormente.
+
+    Parámetros:
+        request (HttpRequest): Solicitud HTTP (pública, sin autenticación).
+
+    Retorna:
+        HttpResponse:
+            - POST válido: Redirect a 'login' con mensaje de éxito.
+            - POST inválido: Render del formulario con errores.
+            - GET: Render de 'calificaciones/registro.html' con formulario vacío.
+
+    Notas:
+        - No requiere login (vista pública)
+        - No requiere permisos especiales
+        - Formulario: RegistroForm (hereda de UserCreationForm)
+        - Rol por defecto: 'Auditor' (menor privilegio)
+        - Crea automáticamente PerfilUsuario asociado
+        - Registra en LogAuditoria con acción CREATE
+        - Usuario nuevo debe hacer login después de registro
+        - Validaciones: username único, password strength, email válido
+    """
     if request.method == "POST":
         form = RegistroForm(request.POST)
         if form.is_valid():
@@ -1674,8 +1805,31 @@ def registro(request):
 @requiere_permiso("admin")
 def admin_gestionar_usuarios(request):
     """
-    Panel de gestión de usuarios para administradores.
-    Muestra todos los usuarios con información de bloqueos e intentos de login.
+    Panel administrativo de gestión completa de usuarios del sistema.
+
+    Vista exclusiva para administradores que muestra listado de todos los usuarios
+    con información detallada de seguridad: cuentas bloqueadas, intentos de login
+    recientes (últimos 7 días), intentos fallidos, y rol asignado.
+
+    Parámetros:
+        request (HttpRequest): Solicitud del administrador autenticado.
+
+    Retorna:
+        HttpResponse: Render de 'calificaciones/admin/gestionar_usuarios.html' con:
+            - usuarios: QuerySet de User con perfiles, bloqueos e intentos
+            - total_usuarios: Conteo total de usuarios
+            - usuarios_bloqueados: Conteo de cuentas actualmente bloqueadas
+
+    Notas:
+        - Requiere permiso: 'admin' (solo Administrador)
+        - Query optimizado: select_related('perfilusuario__rol')
+        - Agrega atributos dinámicos a cada usuario:
+            - cuenta_bloqueada: Instancia de CuentaBloqueada si existe
+            - intentos_recientes: Conteo de intentos últimos 7 días
+            - intentos_fallidos_recientes: Conteo de fallos últimos 7 días
+        - Constante: RECENT_ACTIVITY_DAYS = 7
+        - Logging: DEBUG con username del admin
+        - Desde esta vista admin puede desbloquear cuentas
     """
     logger.debug(f"Admin user management accessed - Admin: {request.user.username}")
 
@@ -1778,7 +1932,32 @@ def desbloquear_cuenta_manual(request, user_id):
 @requiere_permiso("admin")
 def ver_historial_login_usuario(request, user_id):
     """
-    Muestra el historial completo de intentos de login de un usuario.
+    Muestra historial detallado de intentos de login de un usuario específico.
+
+    Vista administrativa que proporciona trazabilidad completa de actividad de
+    autenticación de un usuario: intentos exitosos, fallidos, bloqueos y desbloqueos.
+    Útil para auditoría de seguridad y troubleshooting.
+
+    Parámetros:
+        request (HttpRequest): Solicitud del administrador autenticado.
+        user_id (int): ID del usuario cuyo historial se desea consultar.
+
+    Retorna:
+        HttpResponse: Render de 'calificaciones/admin/historial_login.html' con:
+            - usuario: Instancia del User consultado
+            - intentos: Últimos 50 IntentoLogin ordenados por fecha desc
+            - logs_login: Últimos 50 LogAuditoria de acciones LOGIN/LOGOUT/LOCK/UNLOCK
+
+    Excepciones:
+        Http404: Si no existe usuario con user_id dado.
+
+    Notas:
+        - Requiere permiso: 'admin'
+        - Límite: 50 registros más recientes de cada tipo
+        - IntentoLogin: incluye exitoso, fecha_hora, ip_address
+        - LogAuditoria: filtrado por acciones LOGIN, LOGOUT, ACCOUNT_LOCKED, ACCOUNT_UNLOCKED
+        - Ordenamiento: descendente por fecha_hora (más recientes primero)
+        - Útil para investigar problemas de acceso de usuarios
     """
     user = get_object_or_404(User, id=user_id)
 
