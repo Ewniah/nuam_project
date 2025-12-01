@@ -1642,24 +1642,23 @@ def carga_masiva(request):
 
 @login_required
 @requiere_permiso("crear")
-def descargar_plantilla(request):
+def descargar_plantilla(request, formato='xlsx'):
     """
-    Genera y descarga una plantilla Excel para carga masiva de calificaciones.
+    Genera y descarga una plantilla para carga masiva de calificaciones en formato Excel o CSV.
     
-    Crea un archivo Excel con las columnas requeridas y una fila de ejemplo
+    Crea un archivo con las columnas requeridas y una fila de ejemplo
     para facilitar la carga masiva de calificaciones tributarias.
     
-    Retorna:
-        HttpResponse: Archivo Excel descargable con:
-            - Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-            - Filename: plantilla_carga_masiva.xlsx
-            - Columnas: metadata + 30 factores (8-37)
-    """
-    # Crear libro de Excel
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Plantilla Carga Masiva"
+    Parámetros:
+        request: HttpRequest
+        formato: str - 'xlsx' o 'csv' (default: 'xlsx')
     
+    Retorna:
+        HttpResponse: Archivo descargable con:
+            - Excel: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+            - CSV: text/csv; charset=utf-8
+            - Columnas: metadata (8) + 30 factores (8-37)
+    """
     # Encabezados de metadata
     headers = [
         "codigo_instrumento",
@@ -1675,8 +1674,6 @@ def descargar_plantilla(request):
     # Agregar headers de 30 factores
     for i in range(8, 38):
         headers.append(f"factor_{i}")
-    
-    ws.append(headers)
     
     # Fila de ejemplo
     ejemplo = [
@@ -1694,23 +1691,41 @@ def descargar_plantilla(request):
     for i in range(30):
         ejemplo.append("0.0333")
     
-    ws.append(ejemplo)
-    
-    # Estilo de encabezados (opcional)
-    for cell in ws[1]:
-        cell.font = openpyxl.styles.Font(bold=True)
-        cell.fill = openpyxl.styles.PatternFill(start_color="F37021", end_color="F37021", fill_type="solid")
-        cell.font = openpyxl.styles.Font(bold=True, color="FFFFFF")
-    
-    # Preparar respuesta HTTP
-    response = HttpResponse(
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-    response["Content-Disposition"] = "attachment; filename=plantilla_carga_masiva.xlsx"
-    
-    wb.save(response)
-    
-    logger.info(f"Template downloaded - User: {request.user.username}")
+    if formato == 'csv':
+        # Generar CSV
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename=plantilla_carga_masiva.csv'
+        
+        # Agregar BOM para Excel en Windows
+        response.write('\ufeff')
+        
+        writer = csv.writer(response)
+        writer.writerow(headers)
+        writer.writerow(ejemplo)
+        
+        logger.info(f"CSV template downloaded - User: {request.user.username}")
+    else:
+        # Generar Excel
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Plantilla Carga Masiva"
+        
+        ws.append(headers)
+        ws.append(ejemplo)
+        
+        # Estilo de encabezados
+        for cell in ws[1]:
+            cell.font = openpyxl.styles.Font(bold=True, color="FFFFFF")
+            cell.fill = openpyxl.styles.PatternFill(start_color="F37021", end_color="F37021", fill_type="solid")
+        
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = "attachment; filename=plantilla_carga_masiva.xlsx"
+        
+        wb.save(response)
+        
+        logger.info(f"Excel template downloaded - User: {request.user.username}")
     
     return response
 

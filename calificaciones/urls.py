@@ -22,7 +22,8 @@ urlpatterns = [
     
     # Carga Masiva
     path('carga-masiva/', views.carga_masiva, name='carga_masiva'),
-    path('carga-masiva/plantilla/', views.descargar_plantilla, name='descargar_plantilla'),
+    path('carga-masiva/plantilla/xlsx/', views.descargar_plantilla, {'formato': 'xlsx'}, name='descargar_plantilla'),
+    path('carga-masiva/plantilla/csv/', views.descargar_plantilla, {'formato': 'csv'}, name='descargar_plantilla_csv'),
     
     # Exportación
     path('exportar/excel/', views.exportar_excel, name='exportar_excel'),
