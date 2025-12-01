@@ -1,70 +1,183 @@
 {% extends 'base.html' %}
 
-{% block title %}Confirmar Eliminación - NUAM Exchange{% endblock %}
+{% block title %}Confirmar Eliminación - NUAM{% endblock %}
+
+{% block extra_css %}
+<style>
+    .warning-card {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .warning-icon {
+        color: #F37021;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.7;
+        }
+    }
+
+    .data-summary {
+        background-color: #f8f9fa;
+        border-left: 4px solid #F37021;
+    }
+
+    .data-row {
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .data-row:last-child {
+        border-bottom: none;
+    }
+
+    .btn-delete-confirm {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-delete-confirm:hover {
+        background-color: #bb2d3b;
+        border-color: #bb2d3b;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    }
+
+    .btn-cancel {
+        color: #6c757d;
+        border-color: #6c757d;
+        padding: 0.75rem 2rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancel:hover {
+        background-color: #6c757d;
+        color: white;
+        border-color: #6c757d;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-6">
-        <div class="card card-nuam border-0 shadow-lg">
-            <div class="card-header bg-danger text-white py-3">
-                <h4 class="mb-0 fw-bold">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
-                </h4>
-            </div>
-            <div class="card-body p-4">
-                <div class="text-center mb-4">
-                    <div class="text-danger opacity-75">
-                        <i class="fas fa-trash-alt fa-4x"></i>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0 warning-card">
+                <!-- Header -->
+                <div class="card-header bg-white border-0 text-center pt-4 pb-3">
+                    <i class="fas fa-exclamation-triangle fa-3x warning-icon mb-3"></i>
+                    <h3 class="fw-bold mb-0" style="color: #002A4E;">Confirmar Eliminación</h3>
+                </div>
+
+                <!-- Body -->
+                <div class="card-body px-4 pb-4">
+                    <!-- Warning Message -->
+                    <div class="text-center mb-4">
+                        <p class="mb-2" style="font-size: 1.1rem; color: #495057;">
+                            Estás a punto de eliminar la siguiente Calificación Tributaria.
+                        </p>
+                        <p class="fw-bold text-danger mb-0" style="font-size: 1rem;">
+                            Esta acción <strong>no se puede deshacer</strong>.
+                        </p>
                     </div>
-                </div>
 
-                <div class="alert alert-warning bg-opacity-10 border-warning border-opacity-25 mb-4">
-                    <h5 class="alert-heading fw-bold text-warning">
-                        <i class="fas fa-question-circle me-2"></i>¿Está seguro?
-                    </h5>
-                    <p class="mb-0 text-dark">
-                        Esta acción marcará el registro como inactivo. No se eliminará permanentemente de la base de
-                        datos.
-                    </p>
-                </div>
+                    <!-- Data Summary Box -->
+                    <div class="data-summary p-3 rounded mb-4">
+                        <h6 class="fw-semibold mb-3" style="color: #002A4E; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fas fa-file-alt me-2"></i>Datos del Registro
+                        </h6>
+                        
+                        <div class="data-row py-2">
+                            <div class="row">
+                                <div class="col-5 text-muted small">Tipo de Registro:</div>
+                                <div class="col-7 fw-semibold">{{ tipo|default:"Calificación Tributaria" }}</div>
+                            </div>
+                        </div>
 
-                <div class="bg-light p-4 rounded mb-4 border">
-                    <h6 class="fw-bold mb-3 text-nuam-secondary text-uppercase small">Registro a eliminar</h6>
-                    <div class="d-flex flex-column gap-2">
-                        <div class="d-flex justify-content-between border-bottom pb-2">
-                            <span class="text-muted">Tipo</span>
-                            <span class="fw-bold">{{ tipo }}</span>
+                        <div class="data-row py-2">
+                            <div class="row">
+                                <div class="col-5 text-muted small">ID:</div>
+                                <div class="col-7 fw-semibold">#{{ objeto.id }}</div>
+                            </div>
                         </div>
-                        <div class="d-flex justify-content-between border-bottom pb-2">
-                            <span class="text-muted">ID</span>
-                            <span class="fw-bold">{{ objeto.id }}</span>
-                        </div>
+
                         {% if objeto.instrumento %}
-                        <div class="d-flex justify-content-between border-bottom pb-2">
-                            <span class="text-muted">Instrumento</span>
-                            <span class="fw-bold">{{ objeto.instrumento.codigo_instrumento }}</span>
+                        <div class="data-row py-2">
+                            <div class="row">
+                                <div class="col-5 text-muted small">Instrumento:</div>
+                                <div class="col-7 fw-semibold">{{ objeto.instrumento.codigo_instrumento }}</div>
+                            </div>
                         </div>
                         {% endif %}
+
                         {% if objeto.codigo_instrumento %}
-                        <div class="d-flex justify-content-between border-bottom pb-2">
-                            <span class="text-muted">Código</span>
-                            <span class="fw-bold">{{ objeto.codigo_instrumento }}</span>
+                        <div class="data-row py-2">
+                            <div class="row">
+                                <div class="col-5 text-muted small">Código:</div>
+                                <div class="col-7 fw-semibold">{{ objeto.codigo_instrumento }}</div>
+                            </div>
                         </div>
                         {% endif %}
+
+                        {% if objeto.fecha_informe %}
+                        <div class="data-row py-2">
+                            <div class="row">
+                                <div class="col-5 text-muted small">Fecha Informe:</div>
+                                <div class="col-7 fw-semibold">{{ objeto.fecha_informe|date:"d/m/Y" }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if objeto.ejercicio %}
+                        <div class="data-row py-2">
+                            <div class="row">
+                                <div class="col-5 text-muted small">Año Fiscal:</div>
+                                <div class="col-7 fw-semibold">{{ objeto.ejercicio|stringformat:"d" }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if objeto.mercado %}
+                        <div class="data-row py-2">
+                            <div class="row">
+                                <div class="col-5 text-muted small">Mercado:</div>
+                                <div class="col-7 fw-semibold">{{ objeto.mercado }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex gap-3 justify-content-center">
+                            <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-secondary btn-cancel">
+                                <i class="fas fa-arrow-left me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-delete-confirm">
+                                <i class="fas fa-trash-alt me-2"></i>Eliminar Definitivamente
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Additional Info -->
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            El registro se marcará como inactivo en el sistema
+                        </small>
                     </div>
                 </div>
-
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-danger btn-lg">
-                            <i class="fas fa-trash-alt me-2"></i>Sí, Eliminar Registro
-                        </button>
-                        <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-secondary btn-lg">
-                            <i class="fas fa-times me-2"></i>Cancelar
-                        </a>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
