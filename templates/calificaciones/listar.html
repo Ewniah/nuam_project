@@ -380,8 +380,10 @@ document.addEventListener('DOMContentLoaded', function() {
             </h2>
             <p class="text-muted mb-0">Gestión completa de calificaciones tributarias con 30 factores</p>
         </div>
-        <!-- Botones de Acciones -->
+        <!-- Botones de Acciones - RBAC Protected -->
         <div class="d-flex gap-2">
+            {% comment %} RBAC: Crear/Cargar - Solo Admin y Analista {% endcomment %}
+            {% if user.is_superuser or user.perfilusuario.rol.nombre_rol == 'Administrador' or user.perfilusuario.rol.nombre_rol == 'Analista Financiero' %}
             <a href="{% url 'carga_masiva' %}" class="btn btn-primary btn-sm">
                 <i class="fas fa-upload me-1"></i>Carga Masiva
             </a>
@@ -391,9 +393,13 @@ document.addEventListener('DOMContentLoaded', function() {
             <button type="button" class="btn btn-outline-secondary btn-sm" id="btnModificar" disabled>
                 <i class="fas fa-edit me-1"></i>Modificar Selección
             </button>
+            {% endif %}
+            {% comment %} RBAC: Eliminar - SOLO Admin {% endcomment %}
+            {% if user.is_superuser or user.perfilusuario.rol.nombre_rol == 'Administrador' %}
             <button type="button" class="btn btn-outline-danger btn-sm" id="btnEliminar" disabled>
                 <i class="fas fa-trash-alt me-1"></i>Eliminar Selección
             </button>
+            {% endif %}
         </div>
     </div>
 

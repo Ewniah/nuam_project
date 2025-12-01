@@ -107,4 +107,193 @@
     </div>
 </div>
 </div>
+
+<script>
+// ========================================
+// SMART AUTOMATION FOR INSTRUMENT FORM
+// ========================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    const codigoInput = document.getElementById('{{ form.codigo_instrumento.id_for_label }}');
+    const nombreInput = document.getElementById('{{ form.nombre_instrumento.id_for_label }}');
+    const tipoInput = document.getElementById('{{ form.tipo_instrumento.id_for_label }}');
+    
+    // ========================================
+    // 1. AUTO-UPPERCASE PARA CÓDIGO
+    // ========================================
+    codigoInput.addEventListener('input', function() {
+        const cursorPos = this.selectionStart;
+        this.value = this.value.toUpperCase();
+        this.setSelectionRange(cursorPos, cursorPos);
+    });
+    
+    // ========================================
+    // 2. SUGERENCIA INTELIGENTE DE CÓDIGO
+    // ========================================
+    let codigoSugerido = false;
+    
+    nombreInput.addEventListener('input', function() {
+        const nombre = this.value.trim();
+        
+        // Solo sugerir si el código está vacío y no ha sido editado manualmente
+        if (!codigoSugerido && codigoInput.value.trim() === '' && nombre.length > 2) {
+            // Extraer primera palabra significativa
+            const palabras = nombre.toUpperCase().split(/\s+/);
+            const palabrasSignificativas = palabras.filter(p => 
+                !['DE', 'DEL', 'LA', 'LAS', 'LOS', 'EL', 'Y', 'E', 'O'].includes(p)
+            );
+            
+            let sugerencia = '';
+            if (palabrasSignificativas.length > 0) {
+                // Usar primera palabra o iniciales
+                if (palabrasSignificativas[0].length <= 5) {
+                    sugerencia = palabrasSignificativas[0];
+                } else {
+                    // Crear acrónimo con primeras letras
+                    sugerencia = palabrasSignificativas.slice(0, 4)
+                        .map(p => p[0])
+                        .join('');
+                }
+            }
+            
+            if (sugerencia) {
+                codigoInput.value = sugerencia.substring(0, 10);
+                // Feedback visual
+                codigoInput.style.transition = 'all 0.3s ease';
+                codigoInput.style.borderColor = '#F37021';
+                codigoInput.style.boxShadow = '0 0 0 0.2rem rgba(243, 112, 33, 0.25)';
+                setTimeout(() => {
+                    codigoInput.style.borderColor = '';
+                    codigoInput.style.boxShadow = '';
+                }, 1500);
+            }
+        }
+        
+        // ========================================
+        // 3. AUTO-DETECCIÓN DE TIPO (HEURÍSTICA)
+        // ========================================
+        const nombreLower = nombre.toLowerCase();
+        let tipoDetectado = '';
+        let confianza = '';
+        
+        // REGLA 1: Fondos (alta prioridad)
+        if (nombreLower.includes('fondo') || 
+            nombreLower.includes('cfi') || 
+            nombreLower.includes('fm') ||
+            nombreLower.includes('mutuo')) {
+            tipoDetectado = 'Fondo Mutuo';
+            confianza = '🎯';
+        }
+        // REGLA 2: Bonos
+        else if (nombreLower.includes('bono') || 
+                 nombreLower.includes('deuda') ||
+                 nombreLower.includes('obligación')) {
+            tipoDetectado = 'Bono';
+            confianza = '🎯';
+        }
+        // REGLA 3: ETF
+        else if (nombreLower.includes('etf') || 
+                 nombreLower.includes('spdr') ||
+                 nombreLower.includes('ishares')) {
+            tipoDetectado = 'ETF';
+            confianza = '🎯';
+        }
+        // REGLA 4: Acciones (empresas típicas)
+        else if (nombreLower.includes('banco') || 
+                 nombreLower.includes('s.a.') || 
+                 nombreLower.includes('sa ') ||
+                 nombreLower.includes('enel') || 
+                 nombreLower.includes('copec') ||
+                 nombreLower.includes('cmpc') ||
+                 nombreLower.includes('entel') ||
+                 nombreLower.includes('cencosud') ||
+                 nombreLower.includes('falabella') ||
+                 nombreLower.includes('sqm') ||
+                 nombreLower.includes('colbún') ||
+                 nombreLower.includes('security') ||
+                 nombreLower.includes('empresas ')) {
+            tipoDetectado = 'Acción';
+            confianza = '🎯';
+        }
+        
+        // Aplicar sugerencia si se detectó algo
+        if (tipoDetectado && tipoInput.value.trim() === '') {
+            tipoInput.value = tipoDetectado;
+            
+            // Feedback visual mejorado
+            tipoInput.style.transition = 'all 0.4s ease';
+            tipoInput.style.borderColor = '#F37021';
+            tipoInput.style.backgroundColor = '#fff5f0';
+            tipoInput.style.boxShadow = '0 0 0 0.25rem rgba(243, 112, 33, 0.25)';
+            
+            // Mostrar notificación sutil
+            const notif = document.createElement('div');
+            notif.className = 'alert alert-info alert-dismissible fade show mt-2';
+            notif.style.borderLeft = '4px solid #F37021';
+            notif.innerHTML = `
+                <i class="fas fa-robot me-2" style="color: #F37021;"></i>
+                <strong>${confianza} Auto-detección:</strong> Se sugirió "<strong>${tipoDetectado}</strong>" basado en el nombre
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            tipoInput.parentElement.appendChild(notif);
+            
+            // Remover notificación después de 5 segundos
+            setTimeout(() => {
+                notif.remove();
+                tipoInput.style.borderColor = '';
+                tipoInput.style.backgroundColor = '';
+                tipoInput.style.boxShadow = '';
+            }, 5000);
+        }
+    });
+    
+    // Marcar que el código fue editado manualmente
+    codigoInput.addEventListener('keydown', function() {
+        codigoSugerido = true;
+    });
+    
+    // ========================================
+    // 4. VALIDACIÓN EN TIEMPO REAL
+    // ========================================
+    nombreInput.addEventListener('blur', function() {
+        if (this.value.trim().length < 3) {
+            this.style.borderColor = '#dc3545';
+            this.nextElementSibling.textContent = 'El nombre debe tener al menos 3 caracteres';
+            this.nextElementSibling.classList.add('text-danger');
+        } else {
+            this.style.borderColor = '';
+            this.nextElementSibling.textContent = 'Nombre completo del instrumento financiero';
+            this.nextElementSibling.classList.remove('text-danger');
+        }
+    });
+    
+    tipoInput.addEventListener('blur', function() {
+        if (this.value.trim() === '') {
+            this.style.borderColor = '#ffc107';
+        } else {
+            this.style.borderColor = '';
+        }
+    });
+    
+    // ========================================
+    // 5. TIPS CONTEXTUALES
+    // ========================================
+    const tips = {
+        'Acción': '💼 Representa participación en una empresa',
+        'Bono': '📊 Instrumento de deuda de renta fija',
+        'Fondo Mutuo': '🏦 Cartera diversificada administrada profesionalmente',
+        'ETF': '📈 Fondo cotizado que replica índices'
+    };
+    
+    tipoInput.addEventListener('change', function() {
+        const tipText = tips[this.value];
+        if (tipText) {
+            const helpText = this.parentElement.querySelector('.form-text');
+            helpText.innerHTML = `<i class="fas fa-lightbulb me-1" style="color: #F37021;"></i>${tipText}`;
+        }
+    });
+});
+</script>
+
 {% endblock %}
