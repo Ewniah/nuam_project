@@ -1,22 +1,26 @@
 # 🧪 Scripts de Prueba - Sistema NUAM
 
-Este directorio contiene scripts para generar datos de prueba y verificar el funcionamiento del sistema de carga masiva.
+Este directorio contiene el script maestro para generar datos de prueba del sistema de carga masiva con 30 factores tributarios.
 
 ## 📋 Contenido
 
-### 1. `generar_datos_prueba.py`
+### `generar_datos_prueba.py` - Script Maestro Consolidado
 
-Genera un archivo Excel con datos de ejemplo para probar la carga masiva.
+**Versión:** 2.0 - Diciembre 2025
+
+Genera archivo Excel con datos de prueba completos para testing de carga masiva con los 30 factores tributarios (8-37).
 
 **Características:**
 
-- ✅ 20 registros de calificaciones tributarias
-- ✅ 5 tipos diferentes de instrumentos financieros
-- ✅ Mezcla de registros con MONTO y FACTOR
-- ✅ Fechas distribuidas en los últimos 60 días
-- ✅ Números de DJ únicos
-- ✅ Algunas observaciones de ejemplo
-- ✅ Formato Excel compatible con el sistema
+- ✅ **30 factores tributarios completos** (factor_8 a factor_37)
+- ✅ **3 escenarios de validación:**
+  - Golden Path: Todos los factores válidos (suma < 1)
+  - Range Failure: factor_37 = 5.0 (fuera de rango 0-1)
+  - Sum Failure: Suma de factores 8-16 > 1.0 (violación REGLA B)
+- ✅ Formato Excel (.xlsx) con estilos profesionales
+- ✅ Headers dinámicos con metadata + 30 factores + observaciones
+- ✅ Validación automática de reglas de negocio
+- ✅ Instrumentos financieros creados en BD
 
 **Uso:**
 
@@ -26,28 +30,9 @@ python scripts/generar_datos_prueba.py
 
 **Salida:**
 
-- Archivo: `datos_prueba_carga_masiva.xlsx`
+- Archivo: `test_30factores_completo.xlsx`
 - Ubicación: Raíz del proyecto
-
-### 2. `verificar_carga.py`
-
-Script de validación post-carga que verifica la integridad de los datos cargados.
-
-**Funcionalidades:**
-
-- ✅ Verifica el estado de la última carga masiva
-- ✅ Lista instrumentos financieros creados
-- ✅ Lista calificaciones tributarias creadas
-- ✅ Muestra estadísticas por método de ingreso
-- ✅ Verifica registros de auditoría
-- ✅ Valida integridad de datos (foreign keys, campos requeridos)
-- ✅ Compara con el archivo Excel original
-
-**Uso:**
-
-```bash
-python scripts/verificar_carga.py
-```
+- Contenido: 3 filas de prueba (Golden, Range Fail, Sum Fail)
 
 ## 🚀 Proceso Completo de Prueba
 
@@ -58,7 +43,7 @@ python scripts/verificar_carga.py
 python scripts/generar_datos_prueba.py
 ```
 
-Esto creará el archivo `datos_prueba_carga_masiva.xlsx` con 20 registros de ejemplo.
+Esto creará el archivo `test_30factores_completo.xlsx` con 3 escenarios de prueba.
 
 ### Paso 2: Subir archivo mediante interfaz web
 
@@ -78,70 +63,92 @@ Esto creará el archivo `datos_prueba_carga_masiva.xlsx` con 20 registros de eje
 
    - URL directa: http://127.0.0.1:8000/carga-masiva/
 
-4. Seleccionar el archivo `datos_prueba_carga_masiva.xlsx`
+4. Seleccionar el archivo `test_30factores_completo.xlsx`
 
 5. Hacer clic en **"Procesar Carga"**
 
 6. Esperar el resultado del procesamiento
 
-### Paso 3: Verificar la carga
+### Paso 3: Verificar resultados
 
-```bash
-# Ejecutar script de verificación
-python scripts/verificar_carga.py
-```
+**Resultados esperados:**
 
-Este script mostrará:
+- ✅ **Fila 1 (Golden Path):** Carga exitosa
+- ❌ **Fila 2 (Range Failure):** Error de validación (factor_37 = 5.0 fuera de rango)
+- ❌ **Fila 3 (Sum Failure):** Error de validación (suma de factores 8-16 > 1.0)
 
-- ✅ Estado de la carga (EXITOSO/PARCIAL/FALLIDO)
-- 📊 Cantidad de registros procesados
-- 📋 Lista de instrumentos creados
-- 📋 Lista de calificaciones creadas
-- 📈 Estadísticas por método de ingreso
-- 🔍 Validación de integridad de datos
-- 📊 Comparación con archivo original
+**Verificación manual:**
+
+1. Ir a **Dashboard** → Ver estadísticas de calificaciones
+2. Ir a **Calificaciones** → Verificar los 30 factores en la grilla
+3. Ir a **Auditoría** → Revisar logs de carga masiva
 
 ## 📊 Formato del Archivo Excel
 
-El archivo de carga masiva debe tener las siguientes columnas:
+El archivo de carga masiva con 30 factores debe tener las siguientes columnas:
 
-| Columna              | Tipo    | Requerido        | Descripción                                        |
-| -------------------- | ------- | ---------------- | -------------------------------------------------- |
-| `codigo_instrumento` | Texto   | ✅ Sí            | Código único del instrumento                       |
-| `nombre_instrumento` | Texto   | ⚠️ Opcional      | Nombre descriptivo del instrumento                 |
-| `tipo_instrumento`   | Texto   | ⚠️ Opcional      | Tipo: Bono, Depósito, Crédito, Pagaré, Letra, Otro |
-| `monto`              | Número  | ⚠️ Condicional\* | Monto en pesos chilenos                            |
-| `factor`             | Decimal | ⚠️ Condicional\* | Factor entre 0 y 1                                 |
-| `metodo_ingreso`     | Texto   | ✅ Sí            | MONTO o FACTOR                                     |
-| `numero_dj`          | Texto   | ⚠️ Opcional      | Número de Declaración Jurada                       |
-| `fecha_informe`      | Fecha   | ✅ Sí            | Formato: YYYY-MM-DD                                |
-| `observaciones`      | Texto   | ⚠️ Opcional      | Notas adicionales                                  |
+### Columnas de Metadata
 
-**Nota:** \* Debe especificarse `monto` O `factor`, no ambos.
+| Columna              | Tipo   | Requerido   | Descripción                      |
+| -------------------- | ------ | ----------- | -------------------------------- |
+| `codigo_instrumento` | Texto  | ✅ Sí       | Código único del instrumento     |
+| `fecha_informe`      | Fecha  | ✅ Sí       | Formato: YYYY-MM-DD              |
+| `ejercicio`          | Número | ⚠️ Opcional | Año fiscal (4 dígitos)           |
+| `secuencia`          | Número | ⚠️ Opcional | Secuencia (10 dígitos)           |
+| `tipo_sociedad`      | Texto  | ⚠️ Opcional | Tipo de sociedad                 |
+| `fecha_pago`         | Fecha  | ⚠️ Opcional | Fecha de pago del dividendo      |
+| `numero_dividendo`   | Número | ⚠️ Opcional | Número de dividendo (10 dígitos) |
+| `origen`             | Texto  | ⚠️ Opcional | BOLSA / CORREDORA                |
+| `fuente_origen`      | Texto  | ⚠️ Opcional | MANUAL / MASIVA                  |
+| `mercado`            | Texto  | ⚠️ Opcional | Código de mercado (3 caracteres) |
+| `observaciones`      | Texto  | ⚠️ Opcional | Notas adicionales                |
+
+### Columnas de Factores (30 factores)
+
+| Columna                   | Tipo    | Rango | Descripción                             |
+| ------------------------- | ------- | ----- | --------------------------------------- |
+| `factor_8`                | Decimal | 0-1   | Con crédito por IDPC ≥ 01.01.2017       |
+| `factor_9`                | Decimal | 0-1   | Con crédito por IDPC ≤ 31.12.2016       |
+| `factor_10` a `factor_37` | Decimal | 0-1   | Factores tributarios según DJ 1949/1922 |
+
+**Nota:** La suma de factores 8-16 debe ser ≤ 1.00000000 (REGLA B)
 
 ## 🔍 Validaciones del Sistema
 
 El sistema realiza las siguientes validaciones durante la carga:
 
-1. **Campos requeridos:**
+### 1. Validaciones de Campos Requeridos
 
-   - `codigo_instrumento` no puede estar vacío
-   - `fecha_informe` debe ser una fecha válida
+- ✅ `codigo_instrumento` no puede estar vacío
+- ✅ `fecha_informe` debe ser una fecha válida
 
-2. **Validación condicional:**
+### 2. Validaciones de Factores (REGLA A)
 
-   - Si `metodo_ingreso` = "MONTO", debe tener `monto` (no `factor`)
-   - Si `metodo_ingreso` = "FACTOR", debe tener `factor` (no `monto`)
+- ✅ Cada factor debe estar entre 0 y 1
+- ✅ Factores deben tener máximo 8 decimales
+- ✅ Al menos un factor debe ser mayor que 0
 
-3. **Creación automática:**
+### 3. Validación de Suma (REGLA B)
 
-   - Si el `codigo_instrumento` no existe, se crea automáticamente
-   - Se asocia con el usuario que realiza la carga
+- ✅ La suma de factores 8-16 debe ser ≤ 1.00000000
+- ✅ Validación automática al guardar
 
-4. **Auditoría:**
-   - Cada carga se registra en `CargaMasiva`
-   - Se registra en `LogAuditoria` con IP del usuario
-   - Cada error se detalla en `errores_detalle`
+### 4. Regla de Prioridad (CORREDORA > BOLSA)
+
+- ✅ Si existe calificación con mismo instrumento + fecha
+- ✅ CORREDORA tiene prioridad sobre BOLSA
+- ✅ Se omite la fila si ya existe con mayor prioridad
+
+### 5. Creación Automática de Instrumentos
+
+- ✅ Si `codigo_instrumento` no existe, se crea automáticamente
+- ✅ Se asocia con el usuario que realiza la carga
+
+### 6. Auditoría Completa
+
+- ✅ Cada carga se registra en `CargaMasiva`
+- ✅ Se registra en `LogAuditoria` con IP del usuario
+- ✅ Cada error se detalla en `errores_detalle`
 
 ## 📈 Interpretación de Resultados
 
@@ -224,8 +231,20 @@ Después de una carga exitosa, puedes:
 5. **Generar reportes:**
    - Dashboard con gráficas y estadísticas
 
+## 📦 Consolidación de Scripts
+
+**Versión 2.0 - Diciembre 2025**
+
+Este README refleja la consolidación de múltiples scripts de prueba en un único script maestro:
+
+- ❌ `generar_test_30factores.py` → Consolidado
+- ❌ `generar_test_final.py` → Consolidado
+- ❌ `mostrar_excel.py` → Eliminado (temporal)
+- ❌ `verificar_carga.py` → Eliminado (temporal)
+- ✅ `generar_datos_prueba.py` → **Script Maestro Único**
+
 ---
 
-**Fecha de creación:** Noviembre 30, 2025  
+**Última actualización:** Diciembre 1, 2025  
 **Versión del sistema:** Django 5.2.8  
 **Autor:** Sistema NUAM - Calificaciones Tributarias
