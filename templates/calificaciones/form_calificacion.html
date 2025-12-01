@@ -347,8 +347,12 @@
                     <div class="col-md-4">
                         <label for="{{ form.numero_dj.id_for_label }}" class="form-label">
                             {{ form.numero_dj.label }}
+                            <i class="fas fa-magic text-primary ms-1" title="Selección automática según tipo de instrumento"></i>
                         </label>
                         {{ form.numero_dj }}
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> Se asigna automáticamente según el instrumento
+                        </small>
                     </div>
                     
                     <!-- Ejercicio -->
@@ -660,11 +664,61 @@
     const CSRF_TOKEN = "{{ csrf_token }}";
     const TOTAL_FACTORES = 30;
     
+    // Mapa de instrumentos para autoselección de DJ
+    const INSTRUMENTOS_MAP = {{ instrumentos_map_json|safe }};
+    
     document.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 Inicializando formulario de calificación...');
         
         // ========================================
-        // 1. TOGGLE MODO MONTO/FACTOR
+        // 1. AUTOSELECCIÓN DE DJ BASADO EN INSTRUMENTO
+        // ========================================
+        const instrumentoSelect = document.getElementById('id_instrumento');
+        const numeroDjInput = document.getElementById('id_numero_dj');
+        
+        if (instrumentoSelect && numeroDjInput) {
+            instrumentoSelect.addEventListener('change', function() {
+                const instrumentoId = this.value;
+                
+                if (instrumentoId && INSTRUMENTOS_MAP[instrumentoId]) {
+                    const djRecomendado = INSTRUMENTOS_MAP[instrumentoId].dj;
+                    const tipoInstrumento = INSTRUMENTOS_MAP[instrumentoId].tipo;
+                    
+                    // Actualizar campo DJ automáticamente
+                    numeroDjInput.value = djRecomendado;
+                    
+                    // Feedback visual
+                    numeroDjInput.style.background = '#e7f3ff';
+                    numeroDjInput.style.borderColor = '#2196f3';
+                    
+                    console.log(`✅ DJ ${djRecomendado} asignado automáticamente (Instrumento: ${tipoInstrumento})`);
+                    
+                    // Mostrar notificación
+                    mostrarNotificacion(
+                        `DJ ${djRecomendado} seleccionado automáticamente para ${tipoInstrumento}`,
+                        'info'
+                    );
+                    
+                    // Restaurar estilo después de 2 segundos
+                    setTimeout(() => {
+                        numeroDjInput.style.background = '';
+                        numeroDjInput.style.borderColor = '';
+                    }, 2000);
+                } else if (!instrumentoId) {
+                    // Limpiar si no hay instrumento seleccionado
+                    numeroDjInput.value = '';
+                }
+            });
+            
+            // Aplicar automáticamente si ya hay un instrumento seleccionado (edición)
+            if (instrumentoSelect.value) {
+                const event = new Event('change');
+                instrumentoSelect.dispatchEvent(event);
+            }
+        }
+        
+        // ========================================
+        // 2. TOGGLE MODO MONTO/FACTOR
         // ========================================
         const modoMonto = document.getElementById('modo_monto');
         const modoFactor = document.getElementById('modo_factor');

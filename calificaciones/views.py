@@ -828,7 +828,32 @@ def crear_calificacion(request):
     else:
         form = CalificacionTributariaForm()
 
-    return render(request, "calificaciones/form_calificacion.html", {"form": form})
+    # Crear mapa de instrumentos para autoselección de DJ
+    instrumentos_map = {}
+    for instrumento in InstrumentoFinanciero.objects.filter(activo=True):
+        # Regla de negocio:
+        # - Acción/Sociedad Anónima -> DJ 1949
+        # - Fondo (CFI, FM, etc.) -> DJ 1922
+        tipo_lower = instrumento.tipo_instrumento.lower()
+        if 'accion' in tipo_lower or 'sociedad' in tipo_lower or 'sa' in tipo_lower:
+            dj_recomendado = '1949'
+        elif 'fondo' in tipo_lower or 'cfi' in tipo_lower or 'fm' in tipo_lower:
+            dj_recomendado = '1922'
+        else:
+            dj_recomendado = '1949'  # Default
+        
+        instrumentos_map[str(instrumento.id)] = {
+            'tipo': instrumento.tipo_instrumento,
+            'dj': dj_recomendado
+        }
+
+    # Convertir a JSON para pasar al template
+    instrumentos_map_json = json.dumps(instrumentos_map)
+
+    return render(request, "calificaciones/form_calificacion.html", {
+        "form": form,
+        "instrumentos_map_json": instrumentos_map_json
+    })
 
 
 @login_required
@@ -902,7 +927,29 @@ def editar_calificacion(request, pk):
     else:
         form = CalificacionTributariaForm(instance=calificacion)
 
-    context = {"form": form, "calificacion": calificacion}
+    # Crear mapa de instrumentos para autoselección de DJ (igual que en crear_calificacion)
+    instrumentos_map = {}
+    for instrumento in InstrumentoFinanciero.objects.filter(activo=True):
+        tipo_lower = instrumento.tipo_instrumento.lower()
+        if 'accion' in tipo_lower or 'sociedad' in tipo_lower or 'sa' in tipo_lower:
+            dj_recomendado = '1949'
+        elif 'fondo' in tipo_lower or 'cfi' in tipo_lower or 'fm' in tipo_lower:
+            dj_recomendado = '1922'
+        else:
+            dj_recomendado = '1949'
+        
+        instrumentos_map[str(instrumento.id)] = {
+            'tipo': instrumento.tipo_instrumento,
+            'dj': dj_recomendado
+        }
+
+    instrumentos_map_json = json.dumps(instrumentos_map)
+
+    context = {
+        "form": form, 
+        "calificacion": calificacion,
+        "instrumentos_map_json": instrumentos_map_json
+    }
     return render(request, "calificaciones/form_calificacion.html", context)
 
 
