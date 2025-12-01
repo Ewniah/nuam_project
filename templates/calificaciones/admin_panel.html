@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
-{% block title %}Panel de Administración - NUAM{% endblock %}
+{% block title %}Panel de Administración Completo - NUAM{% endblock %}
 {% block navbar_section %}Panel de Administración{% endblock %}
 
 {% block extra_css %}
@@ -40,6 +40,32 @@
         font-size: 1.75rem;
     }
     
+    /* Tabs Navigation */
+    .nav-tabs-admin {
+        border-bottom: 2px solid #dee2e6;
+        margin-bottom: 1.5rem;
+    }
+    
+    .nav-tabs-admin .nav-link {
+        color: #6c757d;
+        border: none;
+        border-bottom: 3px solid transparent;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .nav-tabs-admin .nav-link:hover {
+        color: var(--nuam-orange);
+        border-bottom-color: rgba(243, 112, 33, 0.3);
+    }
+    
+    .nav-tabs-admin .nav-link.active {
+        color: var(--nuam-orange);
+        background-color: transparent;
+        border-bottom-color: var(--nuam-orange);
+    }
+    
     .badge-rol {
         font-size: 0.75rem;
         padding: 0.35rem 0.75rem;
@@ -55,17 +81,27 @@
         font-size: 0.875rem;
     }
     
-    .health-indicator {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 0.5rem;
+    .action-icon {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        cursor: pointer;
     }
     
-    .health-good { background-color: #28a745; }
-    .health-warning { background-color: #ffc107; }
-    .health-error { background-color: #dc3545; }
+    .action-icon:hover {
+        transform: scale(1.1);
+    }
+    
+    .badge-status {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
 </style>
 {% endblock %}
 
@@ -75,10 +111,10 @@
     <div class="row align-items-center">
         <div class="col">
             <h2 class="mb-1 fw-bold">
-                <i class="fas fa-shield-alt me-2"></i>Panel de Administración del Sistema
+                <i class="fas fa-cogs me-2"></i>Panel de Administración Completo
             </h2>
             <p class="mb-0 opacity-75">
-                <i class="fas fa-user-cog me-1"></i>Gestión completa de usuarios y monitoreo del sistema NUAM
+                <i class="fas fa-database me-1"></i>Gestión completa de la base de datos y usuarios del sistema NUAM
             </p>
         </div>
         <div class="col-auto">
@@ -91,307 +127,579 @@
 
 <!-- Estadísticas Principales -->
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center">
-                <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+            <div class="card-body text-center">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary mx-auto mb-2">
                     <i class="fas fa-users"></i>
                 </div>
-                <div>
-                    <h3 class="mb-0 fw-bold">{{ total_users }}</h3>
-                    <small class="text-muted">Usuarios Totales</small>
-                </div>
+                <h4 class="mb-0 fw-bold">{{ total_users }}</h4>
+                <small class="text-muted">Usuarios</small>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center">
-                <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
-                    <i class="fas fa-user-check"></i>
+            <div class="card-body text-center">
+                <div class="stat-icon bg-success bg-opacity-10 text-success mx-auto mb-2">
+                    <i class="fas fa-file-invoice"></i>
                 </div>
-                <div>
-                    <h3 class="mb-0 fw-bold">{{ active_users }}</h3>
-                    <small class="text-muted">Usuarios Activos</small>
-                </div>
+                <h4 class="mb-0 fw-bold">{{ db_stats.total_calificaciones|intcomma }}</h4>
+                <small class="text-muted">Calificaciones</small>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center">
-                <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
-                    <i class="fas fa-user-slash"></i>
+            <div class="card-body text-center">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning mx-auto mb-2">
+                    <i class="fas fa-briefcase"></i>
                 </div>
-                <div>
-                    <h3 class="mb-0 fw-bold">{{ inactive_users }}</h3>
-                    <small class="text-muted">Usuarios Inactivos</small>
-                </div>
+                <h4 class="mb-0 fw-bold">{{ db_stats.total_instrumentos }}</h4>
+                <small class="text-muted">Instrumentos</small>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center">
-                <div class="stat-icon bg-danger bg-opacity-10 text-danger me-3">
-                    <i class="fas fa-database"></i>
+            <div class="card-body text-center">
+                <div class="stat-icon bg-info bg-opacity-10 text-info mx-auto mb-2">
+                    <i class="fas fa-shield-alt"></i>
                 </div>
-                <div>
-                    <h3 class="mb-0 fw-bold">{{ db_stats.total_calificaciones|intcomma }}</h3>
-                    <small class="text-muted">Registros en BD</small>
+                <h4 class="mb-0 fw-bold">{{ db_stats.total_roles }}</h4>
+                <small class="text-muted">Roles</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger mx-auto mb-2">
+                    <i class="fas fa-history"></i>
                 </div>
+                <h4 class="mb-0 fw-bold">{{ db_stats.total_logs|intcomma }}</h4>
+                <small class="text-muted">Logs Auditoría</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="stat-icon bg-secondary bg-opacity-10 text-secondary mx-auto mb-2">
+                    <i class="fas fa-upload"></i>
+                </div>
+                <h4 class="mb-0 fw-bold">{{ db_stats.cargas_masivas }}</h4>
+                <small class="text-muted">Cargas Masivas</small>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Gestión de Usuarios -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white border-bottom py-3">
-        <div class="row align-items-center">
-            <div class="col">
-                <h5 class="mb-0 fw-bold" style="color: var(--nuam-navy);">
-                    <i class="fas fa-users-cog me-2"></i>Gestión de Acceso y Usuarios
-                </h5>
-            </div>
-            <div class="col-auto">
-                <a href="{% url 'admin_crear_usuario' %}" class="btn btn-sm btn-nuam">
-                    <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
-                </a>
-            </div>
-        </div>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead style="background-color: #f8f9fa;">
-                    <tr>
-                        <th class="ps-4">Usuario</th>
-                        <th>Correo Electrónico</th>
-                        <th>Rol</th>
-                        <th class="text-center">Estado</th>
-                        <th class="text-center">Último Acceso</th>
-                        <th class="text-center pe-4">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for usuario in usuarios %}
-                    <tr>
-                        <td class="ps-4">
-                            <div class="d-flex align-items-center">
-                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" 
-                                     style="width: 40px; height: 40px; font-weight: 600;">
-                                    {{ usuario.username|slice:":2"|upper }}
-                                </div>
-                                <div>
-                                    <div class="fw-semibold">{{ usuario.username }}</div>
-                                    <small class="text-muted">{{ usuario.get_full_name|default:"Sin nombre" }}</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <small>{{ usuario.email|default:"Sin email" }}</small>
-                        </td>
-                        <td>
-                            {% if usuario.is_superuser %}
-                                <span class="badge bg-danger badge-rol">
-                                    <i class="fas fa-crown me-1"></i>Superusuario
-                                </span>
-                            {% elif usuario.perfilusuario %}
-                                {% if usuario.perfilusuario.rol.nombre_rol == 'Administrador' %}
-                                    <span class="badge badge-rol" style="background-color: var(--nuam-navy);">
-                                        <i class="fas fa-user-shield me-1"></i>Administrador
-                                    </span>
-                                {% elif usuario.perfilusuario.rol.nombre_rol == 'Analista Financiero' %}
-                                    <span class="badge bg-success badge-rol">
-                                        <i class="fas fa-chart-line me-1"></i>Analista
-                                    </span>
-                                {% elif usuario.perfilusuario.rol.nombre_rol == 'Auditor' %}
-                                    <span class="badge bg-info badge-rol">
-                                        <i class="fas fa-search me-1"></i>Auditor
-                                    </span>
-                                {% else %}
-                                    <span class="badge bg-secondary badge-rol">{{ usuario.perfilusuario.rol.nombre_rol }}</span>
-                                {% endif %}
-                            {% else %}
-                                <span class="badge bg-secondary badge-rol">Sin rol</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">
-                            {% if usuario.is_active %}
-                                {% if usuario.cuenta_bloqueada %}
-                                    <span class="badge bg-danger">
-                                        <i class="fas fa-lock me-1"></i>Bloqueado
-                                    </span>
-                                {% else %}
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check-circle me-1"></i>Activo
-                                    </span>
-                                {% endif %}
-                            {% else %}
-                                <span class="badge bg-secondary">
-                                    <i class="fas fa-times-circle me-1"></i>Inactivo
-                                </span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">
-                            <small class="text-muted">
-                                {% if usuario.last_login %}
-                                    {{ usuario.last_login|date:"d/m/Y H:i" }}
-                                {% else %}
-                                    Nunca
-                                {% endif %}
-                            </small>
-                        </td>
-                        <td class="text-center pe-4">
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a href="{% url 'admin_editar_usuario' usuario.id %}" 
-                                   class="btn btn-outline-primary btn-action" 
-                                   title="Editar usuario">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                
-                                {% if usuario.cuenta_bloqueada %}
-                                <a href="{% url 'desbloquear_cuenta' usuario.id %}" 
-                                   class="btn btn-outline-warning btn-action"
-                                   title="Desbloquear cuenta">
-                                    <i class="fas fa-unlock"></i>
-                                </a>
-                                {% endif %}
-                                
-                                {% if usuario.id != request.user.id %}
-                                <a href="{% url 'admin_toggle_usuario' usuario.id %}" 
-                                   class="btn btn-outline-{% if usuario.is_active %}danger{% else %}success{% endif %} btn-action"
-                                   title="{% if usuario.is_active %}Desactivar{% else %}Activar{% endif %} cuenta"
-                                   onclick="return confirm('¿Está seguro de {% if usuario.is_active %}desactivar{% else %}activar{% endif %} este usuario?')">
-                                    <i class="fas fa-{% if usuario.is_active %}ban{% else %}check{% endif %}"></i>
-                                </a>
-                                {% endif %}
-                                
-                                <a href="{% url 'ver_historial_login' usuario.id %}" 
-                                   class="btn btn-outline-info btn-action"
-                                   title="Ver historial de login">
-                                    <i class="fas fa-history"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center py-5 text-muted">
-                            <i class="fas fa-users fa-3x mb-3 d-block opacity-25"></i>
-                            No hay usuarios registrados
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+<!-- Tabs de Gestión -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs nav-tabs-admin" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="usuarios-tab" data-bs-toggle="tab" 
+                        data-bs-target="#usuarios-panel" type="button" role="tab">
+                    <i class="fas fa-users me-2"></i>Usuarios
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="calificaciones-tab" data-bs-toggle="tab" 
+                        data-bs-target="#calificaciones-panel" type="button" role="tab">
+                    <i class="fas fa-file-invoice me-2"></i>Calificaciones
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="instrumentos-tab" data-bs-toggle="tab" 
+                        data-bs-target="#instrumentos-panel" type="button" role="tab">
+                    <i class="fas fa-briefcase me-2"></i>Instrumentos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="roles-tab" data-bs-toggle="tab" 
+                        data-bs-target="#roles-panel" type="button" role="tab">
+                    <i class="fas fa-shield-alt me-2"></i>Roles
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cargas-tab" data-bs-toggle="tab" 
+                        data-bs-target="#cargas-panel" type="button" role="tab">
+                    <i class="fas fa-upload me-2"></i>Cargas Masivas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="logs-tab" data-bs-toggle="tab" 
+                        data-bs-target="#logs-panel" type="button" role="tab">
+                    <i class="fas fa-history me-2"></i>Auditoría
+                </button>
+            </li>
+        </ul>
 
-<!-- Estado del Backend -->
-<div class="row g-3">
-    <div class="col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-bottom py-3">
-                <h5 class="mb-0 fw-bold" style="color: var(--nuam-navy);">
-                    <i class="fas fa-server me-2"></i>Estado del Backend
-                </h5>
+        <!-- Tab Content -->
+        <div class="tab-content mt-4" id="adminTabsContent">
+            
+            <!-- PANEL USUARIOS -->
+            <div class="tab-pane fade show active" id="usuarios-panel" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold" style="color: var(--nuam-navy);">
+                        <i class="fas fa-users-cog me-2"></i>Gestión de Usuarios
+                    </h5>
+                    <a href="{% url 'admin_crear_usuario' %}" class="btn btn-sm btn-nuam">
+                        <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
+                    </a>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background-color: #f8f9fa;">
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Email</th>
+                                <th>Rol</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center">Último Acceso</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" 
+                                             style="width: 40px; height: 40px; font-weight: 600;">
+                                            {{ usuario.username|slice:":2"|upper }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-semibold">{{ usuario.username }}</div>
+                                            <small class="text-muted">{{ usuario.get_full_name|default:"Sin nombre" }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><small>{{ usuario.email|default:"Sin email" }}</small></td>
+                                <td>
+                                    {% if usuario.is_superuser %}
+                                        <span class="badge bg-danger badge-rol">
+                                            <i class="fas fa-crown me-1"></i>Superusuario
+                                        </span>
+                                    {% elif usuario.perfilusuario %}
+                                        {% if usuario.perfilusuario.rol.nombre_rol == 'Administrador' %}
+                                            <span class="badge badge-rol" style="background-color: var(--nuam-navy);">
+                                                <i class="fas fa-shield-alt me-1"></i>Administrador
+                                            </span>
+                                        {% elif usuario.perfilusuario.rol.nombre_rol == 'Analista Financiero' %}
+                                            <span class="badge bg-success badge-rol">
+                                                <i class="fas fa-chart-line me-1"></i>Analista
+                                            </span>
+                                        {% elif usuario.perfilusuario.rol.nombre_rol == 'Auditor' %}
+                                            <span class="badge bg-info badge-rol">
+                                                <i class="fas fa-search me-1"></i>Auditor
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary badge-rol">Sin rol</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if usuario.is_active %}
+                                        <span class="badge badge-status bg-success bg-opacity-10 text-success">
+                                            <i class="fas fa-check-circle me-1"></i>Activo
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-status bg-danger bg-opacity-10 text-danger">
+                                            <i class="fas fa-times-circle me-1"></i>Inactivo
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <small class="text-muted">
+                                        {% if usuario.last_login %}
+                                            {{ usuario.last_login|date:"d/m/Y H:i" }}
+                                        {% else %}
+                                            <em>Nunca</em>
+                                        {% endif %}
+                                    </small>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'admin_editar_usuario' usuario.id %}" 
+                                           class="action-icon bg-primary bg-opacity-10 text-primary"
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if usuario.id != request.user.id %}
+                                        <form method="post" action="{% url 'admin_toggle_usuario' usuario.id %}" 
+                                              class="d-inline" onsubmit="return confirm('¿Confirmar cambio de estado?');">
+                                            {% csrf_token %}
+                                            <button type="submit" 
+                                                    class="action-icon border-0 {% if usuario.is_active %}bg-danger bg-opacity-10 text-danger{% else %}bg-success bg-opacity-10 text-success{% endif %}"
+                                                    title="{% if usuario.is_active %}Desactivar{% else %}Activar{% endif %}">
+                                                <i class="fas fa-{% if usuario.is_active %}ban{% else %}check{% endif %}"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-2 opacity-50"></i>
+                                    <p class="mb-0">No hay usuarios registrados</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="card-body">
+
+            <!-- PANEL CALIFICACIONES -->
+            <div class="tab-pane fade" id="calificaciones-panel" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold" style="color: var(--nuam-navy);">
+                        <i class="fas fa-file-invoice me-2"></i>Últimas Calificaciones Tributarias
+                    </h5>
+                    <a href="{% url 'listar_calificaciones' %}" class="btn btn-sm btn-nuam">
+                        <i class="fas fa-list me-2"></i>Ver Todas
+                    </a>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background-color: #f8f9fa;">
+                            <tr>
+                                <th>ID</th>
+                                <th>Instrumento</th>
+                                <th>Fecha Informe</th>
+                                <th>Mercado</th>
+                                <th>Monto Total</th>
+                                <th class="text-center">Estado</th>
+                                <th>Creado Por</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for calif in calificaciones %}
+                            <tr>
+                                <td><code>#{{ calif.id }}</code></td>
+                                <td>
+                                    <div class="fw-semibold">{{ calif.instrumento.codigo_instrumento }}</div>
+                                    <small class="text-muted">{{ calif.instrumento.nombre_instrumento|truncatewords:5 }}</small>
+                                </td>
+                                <td><small>{{ calif.fecha_informe|date:"d/m/Y" }}</small></td>
+                                <td><span class="badge bg-secondary">{{ calif.mercado }}</span></td>
+                                <td class="fw-bold text-success">${{ calif.monto|floatformat:2|intcomma }}</td>
+                                <td class="text-center">
+                                    {% if calif.activo %}
+                                        <span class="badge bg-success bg-opacity-10 text-success">
+                                            <i class="fas fa-check-circle me-1"></i>Activo
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td><small class="text-muted">{{ calif.usuario_creador.username|default:"Sistema" }}</small></td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'editar_calificacion' calif.id %}" 
+                                           class="action-icon bg-primary bg-opacity-10 text-primary"
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'confirmar_eliminar' calif.id %}" 
+                                           class="action-icon bg-danger bg-opacity-10 text-danger"
+                                           title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-2 opacity-50"></i>
+                                    <p class="mb-0">No hay calificaciones registradas</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANEL INSTRUMENTOS -->
+            <div class="tab-pane fade" id="instrumentos-panel" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold" style="color: var(--nuam-navy);">
+                        <i class="fas fa-briefcase me-2"></i>Gestión de Instrumentos Financieros
+                    </h5>
+                    <a href="{% url 'crear_instrumento' %}" class="btn btn-sm btn-nuam">
+                        <i class="fas fa-plus me-2"></i>Nuevo Instrumento
+                    </a>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background-color: #f8f9fa;">
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Fecha Creación</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inst in instrumentos %}
+                            <tr>
+                                <td><code class="fw-bold">{{ inst.codigo_instrumento }}</code></td>
+                                <td>{{ inst.nombre_instrumento }}</td>
+                                <td><span class="badge bg-info">{{ inst.tipo_instrumento }}</span></td>
+                                <td><small class="text-muted">{{ inst.fecha_creacion|date:"d/m/Y H:i" }}</small></td>
+                                <td class="text-center">
+                                    {% if inst.activo %}
+                                        <span class="badge bg-success bg-opacity-10 text-success">
+                                            <i class="fas fa-check-circle me-1"></i>Activo
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'editar_instrumento' inst.id %}" 
+                                           class="action-icon bg-primary bg-opacity-10 text-primary"
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'eliminar_instrumento' inst.id %}" 
+                                           class="action-icon bg-danger bg-opacity-10 text-danger"
+                                           title="Eliminar"
+                                           onclick="return confirm('¿Eliminar este instrumento?');">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-2 opacity-50"></i>
+                                    <p class="mb-0">No hay instrumentos registrados</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANEL ROLES -->
+            <div class="tab-pane fade" id="roles-panel" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold" style="color: var(--nuam-navy);">
+                        <i class="fas fa-shield-alt me-2"></i>Gestión de Roles y Permisos
+                    </h5>
+                    <button class="btn btn-sm btn-nuam" disabled>
+                        <i class="fas fa-plus me-2"></i>Nuevo Rol (Próximamente)
+                    </button>
+                </div>
+                
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="border rounded p-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="health-indicator health-good"></span>
-                                <strong>Integridad de Datos</strong>
-                            </div>
-                            <p class="mb-1 text-muted small">Calificaciones activas: <strong>{{ db_stats.calificaciones_activas }}</strong> de {{ db_stats.total_calificaciones }}</p>
-                            <p class="mb-0 text-muted small">Instrumentos activos: <strong>{{ db_stats.instrumentos_activos }}</strong> de {{ db_stats.total_instrumentos }}</p>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="border rounded p-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="health-indicator {% if ultimo_error %}health-warning{% else %}health-good{% endif %}"></span>
-                                <strong>Último Error Registrado</strong>
-                            </div>
-                            {% if ultimo_error %}
-                                <p class="mb-1 text-warning small">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>{{ ultimo_error.accion }}
-                                </p>
-                                <p class="mb-0 text-muted small">{{ ultimo_error.fecha_hora|date:"d/m/Y H:i" }}</p>
-                            {% else %}
-                                <p class="mb-0 text-success small">
-                                    <i class="fas fa-check-circle me-1"></i>Sin errores recientes
-                                </p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="border rounded p-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="health-indicator health-good"></span>
-                                <strong>Actividad del Sistema</strong>
-                            </div>
-                            <p class="mb-1 text-muted small">Total de logs: <strong>{{ db_stats.total_logs|intcomma }}</strong></p>
-                            <p class="mb-0 text-muted small">Cargas masivas: <strong>{{ db_stats.cargas_masivas }}</strong></p>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="border rounded p-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="health-indicator health-good"></span>
-                                <strong>Conectividad</strong>
-                            </div>
-                            <p class="mb-1 text-muted small">Base de datos: <strong class="text-success">Conectada</strong></p>
-                            <p class="mb-0 text-muted small">Servidor: <strong class="text-success">Operativo</strong></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-bottom py-3">
-                <h5 class="mb-0 fw-bold" style="color: var(--nuam-navy);">
-                    <i class="fas fa-history me-2"></i>Actividad Reciente
-                </h5>
-            </div>
-            <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
-                <div class="list-group list-group-flush">
-                    {% for log in recent_logs %}
-                    <div class="list-group-item border-0 py-2 px-3">
-                        <div class="d-flex align-items-start">
-                            <div class="flex-shrink-0 me-2">
-                                {% if log.accion == 'CREATE' %}
-                                    <i class="fas fa-plus-circle text-success"></i>
-                                {% elif log.accion == 'UPDATE' %}
-                                    <i class="fas fa-edit text-warning"></i>
-                                {% elif log.accion == 'DELETE' %}
-                                    <i class="fas fa-trash text-danger"></i>
-                                {% elif log.accion == 'LOGIN' %}
-                                    <i class="fas fa-sign-in-alt text-info"></i>
-                                {% else %}
-                                    <i class="fas fa-info-circle text-secondary"></i>
-                                {% endif %}
-                            </div>
-                            <div class="flex-grow-1">
-                                <small class="d-block fw-semibold">{{ log.usuario.username }}</small>
-                                <small class="text-muted d-block" style="font-size: 0.75rem;">{{ log.detalles|truncatewords:8 }}</small>
-                                <small class="text-muted d-block" style="font-size: 0.7rem;">{{ log.fecha_hora|date:"d/m H:i" }}</small>
+                    {% for rol in roles %}
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    {% if rol.nombre_rol == 'Administrador' %}
+                                        <div class="stat-icon bg-danger bg-opacity-10 text-danger me-3" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </div>
+                                    {% elif rol.nombre_rol == 'Analista Financiero' %}
+                                        <div class="stat-icon bg-success bg-opacity-10 text-success me-3" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                    {% elif rol.nombre_rol == 'Auditor' %}
+                                        <div class="stat-icon bg-info bg-opacity-10 text-info me-3" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-search"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="stat-icon bg-secondary bg-opacity-10 text-secondary me-3" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">{{ rol.nombre_rol }}</h6>
+                                        <small class="text-muted">
+                                            {{ rol.perfilusuario_set.count }} usuario{{ rol.perfilusuario_set.count|pluralize }}
+                                        </small>
+                                    </div>
+                                </div>
+                                <p class="text-muted small mb-0">{{ rol.descripcion }}</p>
                             </div>
                         </div>
                     </div>
                     {% empty %}
-                    <div class="text-center py-4 text-muted">
-                        <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>
-                        <small>Sin actividad reciente</small>
+                    <div class="col-12">
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No hay roles configurados en el sistema
+                        </div>
                     </div>
                     {% endfor %}
+                </div>
+            </div>
+
+            <!-- PANEL CARGAS MASIVAS -->
+            <div class="tab-pane fade" id="cargas-panel" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold" style="color: var(--nuam-navy);">
+                        <i class="fas fa-upload me-2"></i>Historial de Cargas Masivas
+                    </h5>
+                    <a href="{% url 'carga_masiva' %}" class="btn btn-sm btn-nuam">
+                        <i class="fas fa-cloud-upload-alt me-2"></i>Nueva Carga
+                    </a>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background-color: #f8f9fa;">
+                            <tr>
+                                <th>ID</th>
+                                <th>Archivo</th>
+                                <th>Usuario</th>
+                                <th>Fecha Carga</th>
+                                <th class="text-center">Registros</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for carga in cargas_masivas %}
+                            <tr>
+                                <td><code>#{{ carga.id }}</code></td>
+                                <td>
+                                    <i class="fas fa-file-excel text-success me-2"></i>
+                                    <small>{{ carga.archivo.name|slice:"17:" }}</small>
+                                </td>
+                                <td><small>{{ carga.usuario.username }}</small></td>
+                                <td><small class="text-muted">{{ carga.fecha_carga|date:"d/m/Y H:i" }}</small></td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ carga.total_registros }} reg.</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if carga.estado == 'COMPLETADO' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Completado
+                                        </span>
+                                    {% elif carga.estado == 'PROCESANDO' %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-spinner fa-spin me-1"></i>Procesando
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times me-1"></i>Error
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="#" class="action-icon bg-info bg-opacity-10 text-info" title="Ver Detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="action-icon bg-danger bg-opacity-10 text-danger" 
+                                           title="Eliminar"
+                                           onclick="return confirm('¿Eliminar esta carga?');">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-2 opacity-50"></i>
+                                    <p class="mb-0">No hay cargas masivas registradas</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANEL AUDITORÍA -->
+            <div class="tab-pane fade" id="logs-panel" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold" style="color: var(--nuam-navy);">
+                        <i class="fas fa-history me-2"></i>Registro de Auditoría
+                    </h5>
+                    <a href="{% url 'registro_auditoria' %}" class="btn btn-sm btn-nuam">
+                        <i class="fas fa-list me-2"></i>Ver Todos
+                    </a>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background-color: #f8f9fa;">
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Usuario</th>
+                                <th>Acción</th>
+                                <th>Tabla</th>
+                                <th>Detalles</th>
+                                <th>IP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in recent_logs %}
+                            <tr>
+                                <td>
+                                    <small class="text-muted">{{ log.fecha_hora|date:"d/m/Y H:i:s" }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ log.usuario.username|default:"Sistema" }}</small>
+                                </td>
+                                <td>
+                                    {% if log.accion == 'CREATE' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-plus-circle me-1"></i>Crear
+                                        </span>
+                                    {% elif log.accion == 'UPDATE' %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-edit me-1"></i>Editar
+                                        </span>
+                                    {% elif log.accion == 'DELETE' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-trash me-1"></i>Eliminar
+                                        </span>
+                                    {% elif log.accion == 'LOGIN' %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ log.accion }}</span>
+                                    {% endif %}
+                                </td>
+                                <td><code>{{ log.tabla_afectada|default:"N/A" }}</code></td>
+                                <td><small class="text-muted">{{ log.detalles|truncatewords:8 }}</small></td>
+                                <td><code class="small">{{ log.ip_address|default:"N/A" }}</code></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-2 opacity-50"></i>
+                                    <p class="mb-0">No hay registros de auditoría</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -401,18 +709,28 @@
 {% endblock %}
 
 {% block extra_js %}
-<style>
-    .btn-nuam {
-        background-color: var(--nuam-orange);
-        border-color: var(--nuam-orange);
-        color: white;
-        font-weight: 600;
-    }
-    
-    .btn-nuam:hover {
-        background-color: #d95e16;
-        border-color: #d95e16;
-        color: white;
-    }
-</style>
+<script>
+    // Guardar tab activo en localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+        const triggerTabList = document.querySelectorAll('#adminTabs button[data-bs-toggle="tab"]');
+        
+        // Restaurar tab activo si existe
+        const activeTab = localStorage.getItem('adminActiveTab');
+        if (activeTab) {
+            const tabTrigger = document.querySelector(`#adminTabs button[data-bs-target="${activeTab}"]`);
+            if (tabTrigger) {
+                const tab = new bootstrap.Tab(tabTrigger);
+                tab.show();
+            }
+        }
+        
+        // Guardar tab cuando cambia
+        triggerTabList.forEach(triggerEl => {
+            triggerEl.addEventListener('shown.bs.tab', event => {
+                const target = event.target.getAttribute('data-bs-target');
+                localStorage.setItem('adminActiveTab', target);
+            });
+        });
+    });
+</script>
 {% endblock %}

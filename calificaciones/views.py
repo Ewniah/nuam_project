@@ -2629,10 +2629,22 @@ def admin_panel(request):
         'instrumentos_activos': InstrumentoFinanciero.objects.filter(activo=True).count(),
         'total_logs': LogAuditoria.objects.count(),
         'cargas_masivas': CargaMasiva.objects.count(),
+        'total_roles': Rol.objects.count(),
     }
     
+    # Datos para gestión completa de BD
+    calificaciones = CalificacionTributaria.objects.select_related(
+        'instrumento', 'usuario_creador'
+    ).order_by('-fecha_creacion')[:50]  # Últimas 50
+    
+    instrumentos = InstrumentoFinanciero.objects.all().order_by('-fecha_creacion')[:50]
+    
+    roles = Rol.objects.all().order_by('nombre_rol')
+    
+    cargas_masivas = CargaMasiva.objects.select_related('usuario').order_by('-fecha_carga')[:20]
+    
     # Últimos registros de auditoría
-    recent_logs = LogAuditoria.objects.select_related('usuario').order_by('-fecha_hora')[:10]
+    recent_logs = LogAuditoria.objects.select_related('usuario').order_by('-fecha_hora')[:50]
     
     # Último error registrado (si existe)
     ultimo_error = LogAuditoria.objects.filter(
@@ -2645,6 +2657,10 @@ def admin_panel(request):
         'active_users': active_users,
         'inactive_users': inactive_users,
         'db_stats': db_stats,
+        'calificaciones': calificaciones,
+        'instrumentos': instrumentos,
+        'roles': roles,
+        'cargas_masivas': cargas_masivas,
         'recent_logs': recent_logs,
         'ultimo_error': ultimo_error,
     }
