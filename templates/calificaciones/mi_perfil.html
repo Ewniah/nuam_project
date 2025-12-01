@@ -6,22 +6,21 @@
 
 {% block content %}
 <!-- Page Header -->
-<div class="page-header mb-4">
+<div class="page-header mb-4 p-4 rounded shadow-sm">
     <div class="row align-items-center">
         <div class="col">
-            <h2 class="mb-1 fw-bold text-nuam-secondary">
-                <i class="fas fa-user-circle text-nuam-primary me-2"></i>Mi Perfil
+            <h2 class="mb-1 fw-bold text-white">
+                <i class="fas fa-user-circle me-2"></i>Mi Perfil
             </h2>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"
-                            class="text-decoration-none">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Mi Perfil</li>
-                </ol>
-            </nav>
+            <p class="text-white-50 mb-0">
+                <i class="fas fa-info-circle me-1"></i>Información de tu cuenta y actividad reciente
+            </p>
         </div>
         <div class="col-auto">
-            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+            <a href="{% url 'password_change' %}" class="btn btn-warning me-2">
+                <i class="fas fa-lock me-2"></i>Cambiar Contraseña
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-light">
                 <i class="fas fa-arrow-left me-2"></i>Volver
             </a>
         </div>
@@ -248,22 +247,73 @@
 
 {% endblock %}
 
-{% block extra_js %}
+{% block extra_css %}
 <style>
+    :root {
+        --nuam-orange: #F37021;
+        --nuam-navy: #002A4E;
+    }
+    
     .avatar-circle {
-        width: 120px;
-        height: 120px;
+        width: 140px;
+        height: 140px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--nuam-primary) 0%, #0090cc 100%);
+        background: linear-gradient(135deg, var(--nuam-orange) 0%, #ff8c42 100%);
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 8px 20px rgba(0, 178, 255, 0.3);
+        box-shadow: 0 8px 24px rgba(243, 112, 33, 0.4);
+        border: 4px solid white;
     }
 
     .avatar-circle i {
-        font-size: 4rem;
+        font-size: 4.5rem;
         color: white;
+    }
+    
+    .card-nuam {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card-nuam:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .badge.bg-nuam-primary {
+        background-color: var(--nuam-navy) !important;
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, var(--nuam-navy) 0%, #003d70 100%);
+    }
+    
+    .text-nuam-secondary {
+        color: var(--nuam-navy) !important;
+    }
+    
+    .text-nuam-primary {
+        color: var(--nuam-orange) !important;
+    }
+    
+    .card-header-nuam h6 {
+        color: var(--nuam-navy);
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: var(--nuam-orange);
+        border-color: var(--nuam-orange);
+        color: white;
+    }
+    
+    .list-group-item {
+        transition: background-color 0.2s ease;
+    }
+    
+    .list-group-item:hover {
+        background-color: #f8f9fa;
     }
 </style>
 {% endblock %}
