@@ -17,15 +17,71 @@
             </p>
         </div>
         <div class="col-auto">
-            <a href="{% url 'password_change' %}" class="btn btn-warning me-2">
-                <i class="fas fa-lock me-2"></i>Cambiar Contraseña
-            </a>
+            {% if user.is_superuser or user.perfilusuario.rol.nombre_rol == 'Administrador' %}
+                <a href="/admin/password_change/" class="btn btn-warning me-2">
+                    <i class="fas fa-lock me-2"></i>Cambiar Contraseña
+                </a>
+            {% else %}
+                <button type="button" class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#modalSolicitudPassword">
+                    <i class="fas fa-key me-2"></i>Solicitar Cambio de Contraseña
+                </button>
+            {% endif %}
             <a href="{% url 'dashboard' %}" class="btn btn-outline-light">
-                <i class="fas fa-arrow-left me-2"></i>Volver
+                <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
             </a>
         </div>
     </div>
 </div>
+
+<!-- Modal de Solicitud de Cambio de Contraseña (Solo usuarios no-admin) -->
+{% if not user.is_superuser and user.perfilusuario.rol.nombre_rol != 'Administrador' %}
+<div class="modal fade" id="modalSolicitudPassword" tabindex="-1" aria-labelledby="modalSolicitudPasswordLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--nuam-navy) 0%, #003d70 100%); color: white;">
+                <h5 class="modal-title" id="modalSolicitudPasswordLabel">
+                    <i class="fas fa-key me-2"></i>Solicitud de Cambio de Contraseña
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info border-0" style="background-color: #e7f3ff;">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Por seguridad, solo los <strong>Administradores</strong> pueden cambiar contraseñas directamente.
+                </div>
+                <p class="mb-3">Para solicitar un cambio de contraseña, por favor contacta a un administrador del sistema por los siguientes medios:</p>
+                
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item px-0 py-3">
+                        <h6 class="mb-2"><i class="fas fa-envelope text-primary me-2"></i>Correo Electrónico</h6>
+                        <p class="mb-0 text-muted">soporte.nuam@empresa.cl</p>
+                    </div>
+                    <div class="list-group-item px-0 py-3">
+                        <h6 class="mb-2"><i class="fas fa-phone text-success me-2"></i>Teléfono</h6>
+                        <p class="mb-0 text-muted">+56 2 1234 5678 (Ext. 100)</p>
+                    </div>
+                    <div class="list-group-item px-0 py-3 border-bottom-0">
+                        <h6 class="mb-2"><i class="fas fa-user-shield text-warning me-2"></i>Administrador Asignado</h6>
+                        <p class="mb-0 text-muted">Departamento de TI - Mesa de Ayuda</p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning border-0 mt-3 mb-0" style="background-color: #fff3cd;">
+                    <small>
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <strong>Importante:</strong> Deberás proporcionar tu nombre completo, RUT y motivo de la solicitud.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <div class="row g-4">
     <!-- Información del Usuario -->
