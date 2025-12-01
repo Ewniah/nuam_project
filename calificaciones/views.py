@@ -42,6 +42,8 @@ from .forms import (
     CargaMasivaForm,
     RegistroForm,
     CalificacionFactoresSimpleForm,
+    AdminUserCreationForm,
+    AdminUserEditForm,
 )
 from .models import (
     CalificacionTributaria,
@@ -2567,3 +2569,256 @@ def home(request):
         - Puede incluir enlaces a login, información del sistema, etc.
     """
     return render(request, "home.html")
+
+
+# ============================================================================
+# ADMIN PANEL - CUSTOM ADMINISTRATION INTERFACE
+# ============================================================================
+
+@login_required
+@requiere_permiso("admin")
+def admin_panel(request):
+    """
+    Panel de administración personalizado con gestión de usuarios y estado del sistema.
+    
+    Vista exclusiva para administradores que proporciona:
+    - Estadísticas de usuarios (total, activos, bloqueados)
+    - Estadísticas de base de datos (calificaciones, instrumentos)
+    - Gestión completa de usuarios
+    - Monitoreo de estado del sistema
+    
+    Parámetros:
+        request (HttpRequest): Solicitud del administrador autenticado.
+    
+    Retorna:
+        HttpResponse: Render de 'calificaciones/admin_panel.html' con:
+            - usuarios: QuerySet de usuarios con perfiles y roles
+            - total_users: Conteo total de usuarios
+            - active_users: Conteo de usuarios activos
+            - inactive_users: Conteo de usuarios inactivos
+            - db_stats: Diccionario con estadísticas de BD
+            - recent_logs: Últimos 10 registros de auditoría
+    
+    Notas:
+        - Requiere permiso: 'admin' (solo Administrador)
+        - Query optimizado con select_related
+        - Incluye información de bloqueos de cuenta
+        - Muestra estado de salud del sistema
+    """
+    logger.debug(f"Admin panel accessed by: {request.user.username}")
+    
+    # Obtener todos los usuarios con perfiles
+    usuarios = User.objects.all().select_related("perfilusuario__rol").order_by("-date_joined")
+    
+    # Estadísticas de usuarios
+    total_users = usuarios.count()
+    active_users = usuarios.filter(is_active=True).count()
+    inactive_users = usuarios.filter(is_active=False).count()
+    
+    # Agregar información de bloqueos
+    for usuario in usuarios:
+        usuario.cuenta_bloqueada = CuentaBloqueada.objects.filter(
+            usuario=usuario, bloqueada=True
+        ).first()
+    
+    # Estadísticas de base de datos
+    db_stats = {
+        'total_calificaciones': CalificacionTributaria.objects.count(),
+        'calificaciones_activas': CalificacionTributaria.objects.filter(activo=True).count(),
+        'total_instrumentos': InstrumentoFinanciero.objects.count(),
+        'instrumentos_activos': InstrumentoFinanciero.objects.filter(activo=True).count(),
+        'total_logs': LogAuditoria.objects.count(),
+        'cargas_masivas': CargaMasiva.objects.count(),
+    }
+    
+    # Últimos registros de auditoría
+    recent_logs = LogAuditoria.objects.select_related('usuario').order_by('-fecha_hora')[:10]
+    
+    # Último error registrado (si existe)
+    ultimo_error = LogAuditoria.objects.filter(
+        accion__in=['FAILED_LOGIN', 'ACCOUNT_LOCKED', 'BULK_UPLOAD_ERROR']
+    ).order_by('-fecha_hora').first()
+    
+    context = {
+        'usuarios': usuarios,
+        'total_users': total_users,
+        'active_users': active_users,
+        'inactive_users': inactive_users,
+        'db_stats': db_stats,
+        'recent_logs': recent_logs,
+        'ultimo_error': ultimo_error,
+    }
+    
+    return render(request, 'calificaciones/admin_panel.html', context)
+
+
+@login_required
+@requiere_permiso("admin")
+def admin_crear_usuario(request):
+    """
+    Vista para crear nuevos usuarios con asignación de rol.
+    
+    Permite a administradores crear cuentas de usuario con perfil completo:
+    - Datos básicos (username, email, nombre completo)
+    - Asignación de rol (Administrador, Analista, Auditor)
+    - Datos adicionales (teléfono, departamento)
+    - Estado inicial (activo/inactivo)
+    
+    Parámetros:
+        request (HttpRequest): Solicitud del administrador autenticado.
+    
+    Retorna:
+        HttpResponse: 
+            - GET: Render de formulario vacío
+            - POST válido: Redirect a admin_panel con mensaje de éxito
+            - POST inválido: Re-render de formulario con errores
+    
+    Notas:
+        - Requiere permiso: 'admin'
+        - Registra acción CREATE en LogAuditoria
+        - Crea automáticamente PerfilUsuario con rol
+        - Valida unicidad de username y email
+    """
+    if request.method == 'POST':
+        form = AdminUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            
+            # Registrar en auditoría
+            ip_address = obtener_ip_cliente(request)
+            LogAuditoria.objects.create(
+                usuario=request.user,
+                accion='CREATE',
+                tabla_afectada='User',
+                registro_id=user.id,
+                ip_address=ip_address,
+                detalles=f"Usuario {user.username} creado por {request.user.username} con rol {user.perfilusuario.rol.nombre_rol}"
+            )
+            
+            logger.info(f"User created - Admin: {request.user.username}, New user: {user.username}, Role: {user.perfilusuario.rol.nombre_rol}")
+            
+            messages.success(request, f"✅ Usuario {user.username} creado exitosamente con rol {user.perfilusuario.rol.nombre_rol}")
+            return redirect('admin_panel')
+    else:
+        form = AdminUserCreationForm()
+    
+    return render(request, 'calificaciones/admin_crear_usuario.html', {'form': form})
+
+
+@login_required
+@requiere_permiso("admin")
+def admin_editar_usuario(request, user_id):
+    """
+    Vista para editar usuarios existentes.
+    
+    Permite a administradores modificar:
+    - Datos personales (nombre, apellido, email)
+    - Rol del sistema
+    - Estado de la cuenta (activo/inactivo)
+    - Información adicional (teléfono, departamento)
+    
+    Parámetros:
+        request (HttpRequest): Solicitud del administrador autenticado.
+        user_id (int): ID del usuario a editar.
+    
+    Retorna:
+        HttpResponse:
+            - GET: Render de formulario con datos actuales
+            - POST válido: Redirect a admin_panel con mensaje de éxito
+            - POST inválido: Re-render con errores
+    
+    Excepciones:
+        Http404: Si no existe usuario con user_id dado.
+    
+    Notas:
+        - Requiere permiso: 'admin'
+        - Registra acción UPDATE en LogAuditoria
+        - No permite cambiar username (riesgo de integridad)
+        - Actualiza automáticamente PerfilUsuario
+    """
+    user = get_object_or_404(User, id=user_id)
+    
+    if request.method == 'POST':
+        form = AdminUserEditForm(request.POST, instance=user)
+        if form.is_valid():
+            user = form.save()
+            
+            # Registrar en auditoría
+            ip_address = obtener_ip_cliente(request)
+            LogAuditoria.objects.create(
+                usuario=request.user,
+                accion='UPDATE',
+                tabla_afectada='User',
+                registro_id=user.id,
+                ip_address=ip_address,
+                detalles=f"Usuario {user.username} actualizado por {request.user.username}"
+            )
+            
+            logger.info(f"User updated - Admin: {request.user.username}, Target user: {user.username}")
+            
+            messages.success(request, f"✅ Usuario {user.username} actualizado exitosamente")
+            return redirect('admin_panel')
+    else:
+        form = AdminUserEditForm(instance=user)
+    
+    return render(request, 'calificaciones/admin_editar_usuario.html', {
+        'form': form,
+        'usuario': user
+    })
+
+
+@login_required
+@requiere_permiso("admin")
+def admin_toggle_usuario(request, user_id):
+    """
+    Activa o desactiva una cuenta de usuario.
+    
+    Toggle rápido del estado is_active sin formulario completo.
+    Útil para suspender temporalmente acceso sin eliminar la cuenta.
+    
+    Parámetros:
+        request (HttpRequest): Solicitud del administrador autenticado.
+        user_id (int): ID del usuario a activar/desactivar.
+    
+    Retorna:
+        HttpResponse: Redirect a admin_panel con mensaje de resultado.
+    
+    Excepciones:
+        Http404: Si no existe usuario con user_id dado.
+        PermissionDenied: Si intenta desactivar su propia cuenta.
+    
+    Notas:
+        - Requiere permiso: 'admin'
+        - Registra acción UPDATE en LogAuditoria
+        - Previene auto-desactivación del admin actual
+        - Preserva todos los datos del usuario
+    """
+    user = get_object_or_404(User, id=user_id)
+    
+    # Prevenir auto-desactivación
+    if user.id == request.user.id:
+        messages.error(request, "❌ No puedes desactivar tu propia cuenta")
+        return redirect('admin_panel')
+    
+    # Toggle estado
+    user.is_active = not user.is_active
+    user.save()
+    
+    # Registrar en auditoría
+    ip_address = obtener_ip_cliente(request)
+    accion_texto = "activado" if user.is_active else "desactivado"
+    LogAuditoria.objects.create(
+        usuario=request.user,
+        accion='UPDATE',
+        tabla_afectada='User',
+        registro_id=user.id,
+        ip_address=ip_address,
+        detalles=f"Usuario {user.username} {accion_texto} por {request.user.username}"
+    )
+    
+    logger.warning(f"User {'activated' if user.is_active else 'deactivated'} - Admin: {request.user.username}, Target: {user.username}")
+    
+    estado_emoji = "✅" if user.is_active else "🚫"
+    messages.success(request, f"{estado_emoji} Usuario {user.username} {accion_texto} exitosamente")
+    
+    return redirect('admin_panel')

@@ -383,3 +383,169 @@ class CalificacionFactoresSimpleForm(forms.ModelForm):
             )
         
         return cleaned_data
+
+
+class AdminUserCreationForm(UserCreationForm):
+    """Formulario administrativo para crear usuarios con asignación de grupo/rol"""
+    
+    email = forms.EmailField(
+        required=True,
+        label='Correo Electrónico',
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'usuario@empresa.cl'
+        })
+    )
+    first_name = forms.CharField(
+        max_length=150,
+        required=True,
+        label='Nombre',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Nombre completo'
+        })
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        required=True,
+        label='Apellido',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Apellidos'
+        })
+    )
+    rol = forms.ModelChoiceField(
+        queryset=Rol.objects.all(),
+        required=True,
+        label='Rol del Sistema',
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        }),
+        help_text='Administrador: acceso completo | Analista Financiero: CRUD | Auditor: solo lectura'
+    )
+    telefono = forms.CharField(
+        max_length=20,
+        required=False,
+        label='Teléfono (opcional)',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '+56 9 1234 5678'
+        })
+    )
+    departamento = forms.CharField(
+        max_length=100,
+        required=False,
+        label='Departamento (opcional)',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Ej: Finanzas, TI'
+        })
+    )
+    is_active = forms.BooleanField(
+        required=False,
+        initial=True,
+        label='Cuenta Activa',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        }),
+        help_text='Desmarcar para crear cuenta desactivada'
+    )
+    
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'password1', 'password2', 'is_active']
+        widgets = {
+            'username': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre de usuario único'
+            })
+        }
+        labels = {
+            'username': 'Nombre de Usuario'
+        }
+    
+    def save(self, commit=True):
+        """Guarda usuario y crea perfil con rol asignado"""
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        user.is_active = self.cleaned_data['is_active']
+        
+        if commit:
+            user.save()
+            
+            # Crear perfil de usuario con rol
+            from .models import PerfilUsuario
+            PerfilUsuario.objects.create(
+                user=user,
+                rol=self.cleaned_data['rol'],
+                telefono=self.cleaned_data.get('telefono', ''),
+                departamento=self.cleaned_data.get('departamento', '')
+            )
+        
+        return user
+
+
+class AdminUserEditForm(forms.ModelForm):
+    """Formulario administrativo para editar usuarios existentes"""
+    
+    rol = forms.ModelChoiceField(
+        queryset=Rol.objects.all(),
+        required=True,
+        label='Rol del Sistema',
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        })
+    )
+    telefono = forms.CharField(
+        max_length=20,
+        required=False,
+        label='Teléfono',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control'
+        })
+    )
+    departamento = forms.CharField(
+        max_length=100,
+        required=False,
+        label='Departamento',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control'
+        })
+    )
+    
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'is_active']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        }
+        labels = {
+            'first_name': 'Nombre',
+            'last_name': 'Apellido',
+            'email': 'Correo Electrónico',
+            'is_active': 'Cuenta Activa'
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and hasattr(self.instance, 'perfilusuario'):
+            self.fields['rol'].initial = self.instance.perfilusuario.rol
+            self.fields['telefono'].initial = self.instance.perfilusuario.telefono
+            self.fields['departamento'].initial = self.instance.perfilusuario.departamento
+    
+    def save(self, commit=True):
+        """Guarda usuario y actualiza perfil"""
+        user = super().save(commit=commit)
+        
+        if commit and hasattr(user, 'perfilusuario'):
+            user.perfilusuario.rol = self.cleaned_data['rol']
+            user.perfilusuario.telefono = self.cleaned_data.get('telefono', '')
+            user.perfilusuario.departamento = self.cleaned_data.get('departamento', '')
+            user.perfilusuario.save()
+        
+        return user

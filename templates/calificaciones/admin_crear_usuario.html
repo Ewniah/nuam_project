@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Nuevo Usuario - NUAM{% endblock %}
+{% block navbar_section %}Crear Usuario{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --nuam-orange: #F37021;
+        --nuam-navy: #002A4E;
+    }
+    
+    .page-header-admin {
+        background: linear-gradient(135deg, var(--nuam-navy) 0%, #003d70 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0, 42, 78, 0.2);
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid var(--nuam-orange);
+    }
+    
+    .btn-nuam {
+        background-color: var(--nuam-orange);
+        border-color: var(--nuam-orange);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .btn-nuam:hover {
+        background-color: #d95e16;
+        border-color: #d95e16;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header-admin">
+    <div class="row align-items-center">
+        <div class="col">
+            <h2 class="mb-1 fw-bold">
+                <i class="fas fa-user-plus me-2"></i>Crear Nuevo Usuario
+            </h2>
+            <p class="mb-0 opacity-75">
+                Complete el formulario para crear una nueva cuenta de usuario con perfil completo
+            </p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'admin_panel' %}" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Volver
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Datos de Autenticación -->
+                    <div class="form-section">
+                        <h5 class="mb-3 fw-bold" style="color: var(--nuam-navy);">
+                            <i class="fas fa-key me-2"></i>Datos de Autenticación
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.username.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.username }}
+                                {% if form.username.errors %}
+                                    <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Nombre único para iniciar sesión</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.password1.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.password1.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.password1 }}
+                                {% if form.password1.errors %}
+                                    <div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.password2.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.password2.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.password2 }}
+                                {% if form.password2.errors %}
+                                    <div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Datos Personales -->
+                    <div class="form-section">
+                        <h5 class="mb-3 fw-bold" style="color: var(--nuam-navy);">
+                            <i class="fas fa-user me-2"></i>Datos Personales
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.first_name.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.last_name.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-12">
+                                <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.email.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Rol y Permisos -->
+                    <div class="form-section">
+                        <h5 class="mb-3 fw-bold" style="color: var(--nuam-navy);">
+                            <i class="fas fa-shield-alt me-2"></i>Rol y Permisos
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label for="{{ form.rol.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.rol.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.rol }}
+                                {% if form.rol.errors %}
+                                    <div class="text-danger small mt-1">{{ form.rol.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">{{ form.rol.help_text }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Información Adicional -->
+                    <div class="form-section">
+                        <h5 class="mb-3 fw-bold" style="color: var(--nuam-navy);">
+                            <i class="fas fa-info-circle me-2"></i>Información Adicional
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.telefono.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.telefono.label }}
+                                </label>
+                                {{ form.telefono }}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.departamento.id_for_label }}" class="form-label fw-semibold">
+                                    {{ form.departamento.label }}
+                                </label>
+                                {{ form.departamento }}
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label fw-semibold" for="{{ form.is_active.id_for_label }}">
+                                        {{ form.is_active.label }}
+                                    </label>
+                                    <small class="form-text text-muted d-block">{{ form.is_active.help_text }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botones de Acción -->
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a href="{% url 'admin_panel' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-nuam">
+                            <i class="fas fa-save me-2"></i>Crear Usuario
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

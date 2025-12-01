@@ -43,6 +43,12 @@ urlpatterns = [
     path('gestion/usuarios/desbloquear/<int:user_id>/', views.desbloquear_cuenta_manual, name='desbloquear_cuenta'),
     path('gestion/usuarios/historial/<int:user_id>/', views.ver_historial_login_usuario, name='ver_historial_login'),
     
+    # Panel de Administración Custom
+    path('admin-panel/', views.admin_panel, name='admin_panel'),
+    path('admin-panel/usuarios/crear/', views.admin_crear_usuario, name='admin_crear_usuario'),
+    path('admin-panel/usuarios/editar/<int:user_id>/', views.admin_editar_usuario, name='admin_editar_usuario'),
+    path('admin-panel/usuarios/toggle/<int:user_id>/', views.admin_toggle_usuario, name='admin_toggle_usuario'),
+    
     # Factores - Formulario Simplificado
     path('calificaciones/factores/crear/', views.crear_calificacion_factores, name='crear_calificacion_factores'),
     path('calificaciones/factores/editar/<int:pk>/', views.editar_calificacion_factores, name='editar_calificacion_factores'),
