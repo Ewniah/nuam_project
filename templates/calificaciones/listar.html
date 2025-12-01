@@ -519,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>
                             <input type="checkbox" class="row-checkbox" value="{{ cal.id }}" data-cal-id="{{ cal.id }}">
                         </td>
-                        <td>{{ cal.ejercicio|default:"-" }}</td>
+                        <td>{{ cal.ejercicio|stringformat:"d"|default:"-" }}</td>
                         <td class="text-start">{{ cal.instrumento.codigo_instrumento }}</td>
                         <td>{{ cal.fecha_informe|date:"d/m/Y" }}</td>
                         <td>{{ cal.secuencia|default:"-" }}</td>
