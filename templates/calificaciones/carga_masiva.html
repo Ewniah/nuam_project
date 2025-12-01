@@ -1,37 +1,208 @@
 {% extends 'base.html' %}
 {% load formatos %}
 
-{% block title %}Carga Masiva - NUAM Exchange{% endblock %}
+{% block title %}Carga Masiva - NUAM{% endblock %}
 {% block navbar_section %}Carga Masiva{% endblock %}
 
-{% block content %}
-<!-- Header de la página -->
-<div class="page-header mb-4">
-    <div class="row align-items-center">
-        <div class="col">
-            <h2 class="mb-1 fw-bold text-nuam-secondary">
-                <i class="fas fa-cloud-upload-alt text-nuam-primary me-2"></i>Carga Masiva de Calificaciones
-            </h2>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"
-                            class="text-decoration-none">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Carga Masiva</li>
-                </ol>
-            </nav>
-        </div>
-        <div class="col-auto">
-            <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Volver
-            </a>
-        </div>
-    </div>
-</div>
+{% block extra_css %}
+<style>
+    .upload-zone {
+        border: 3px dashed #dee2e6;
+        border-radius: 12px;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
 
-<div class="row g-4">
-    <!-- Formulario de carga -->
-    <div class="col-lg-8">
-        <div class="card card-nuam border-0 shadow-sm mb-4">
+    .upload-zone:hover {
+        border-color: #F37021;
+        background-color: #fff;
+    }
+
+    .upload-zone.drag-over {
+        border-color: #F37021;
+        background-color: #fff5f0;
+    }
+
+    .btn-nuam-upload {
+        background-color: #F37021;
+        border-color: #F37021;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-nuam-upload:hover {
+        background-color: #d95e16;
+        border-color: #d95e16;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(243, 112, 33, 0.4);
+    }
+
+    .instructions-accordion .accordion-button {
+        background-color: #fff5f0;
+        color: #002A4E;
+        font-weight: 600;
+    }
+
+    .instructions-accordion .accordion-button:not(.collapsed) {
+        background-color: #F37021;
+        color: white;
+    }
+
+    .required-column {
+        background-color: #f8f9fa;
+        border-left: 3px solid #F37021;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+    }
+
+    .history-table {
+        font-size: 0.875rem;
+    }
+
+    .status-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #002A4E;">
+                <i class="fas fa-cloud-upload-alt me-2" style="color: #F37021;"></i>Carga Masiva de Calificaciones
+            </h2>
+            <p class="text-muted mb-0">Importar múltiples registros desde archivos Excel o CSV</p>
+        </div>
+        <a href="{% url 'listar_calificaciones' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-2"></i>Volver
+        </a>
+    </div>
+
+    <!-- 2-Column Layout -->
+    <div class="row g-4">
+        <!-- LEFT COLUMN: Upload Form & Instructions -->
+        <div class="col-lg-7">
+            <!-- ZONE A: Upload Form -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 fw-semibold" style="color: #002A4E;">
+                        <i class="fas fa-upload me-2" style="color: #F37021;"></i>Nueva Carga Masiva
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+                        
+                        <!-- Upload Zone -->
+                        <div class="upload-zone text-center py-5 mb-4" id="uploadZone">
+                            <i class="fas fa-cloud-upload-alt fa-4x mb-3" style="color: #F37021;"></i>
+                            <h5 class="mb-2" style="color: #002A4E;">Arrastra tu archivo aquí</h5>
+                            <p class="text-muted mb-3">o haz clic para seleccionar</p>
+                            <input type="file" name="archivo" id="fileInput" class="d-none" accept=".csv,.xlsx" required>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('fileInput').click()">
+                                <i class="fas fa-folder-open me-2"></i>Seleccionar Archivo
+                            </button>
+                            <p class="text-muted small mt-3 mb-0">
+                                <i class="fas fa-info-circle me-1"></i>Formatos: CSV, Excel (.xlsx) - Máximo 10 MB
+                            </p>
+                        </div>
+
+                        <div id="fileInfo" class="alert alert-success d-none">
+                            <i class="fas fa-file-check me-2"></i>
+                            <strong>Archivo seleccionado:</strong> <span id="fileName"></span>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-nuam-upload w-100" id="btnSubmit">
+                            <i class="fas fa-upload me-2"></i>Procesar Archivo
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Instructions Panel (Accordion) -->
+            <div class="accordion instructions-accordion" id="instructionsAccordion">
+                <div class="accordion-item border-0 shadow-sm">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#formatInstructions">
+                            <i class="fas fa-file-excel me-2"></i>Formato Requerido (Excel/CSV)
+                        </button>
+                    </h2>
+                    <div id="formatInstructions" class="accordion-collapse collapse show" data-bs-parent="#instructionsAccordion">
+                        <div class="accordion-body">
+                            <div class="alert alert-warning mb-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Importante:</strong> El archivo debe contener cabeceras exactas. Nombres en minúsculas y con guiones bajos.
+                            </div>
+
+                            <h6 class="fw-bold mb-3" style="color: #002A4E;">📋 Columnas Requeridas</h6>
+
+                            <!-- Metadata Columns -->
+                            <p class="small fw-semibold mb-2" style="color: #F37021;">METADATA (Obligatorias):</p>
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <div class="required-column">
+                                        <code>codigo_instrumento</code>
+                                        <small class="d-block text-muted">Código del instrumento</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="required-column">
+                                        <code>fecha_informe</code>
+                                        <small class="d-block text-muted">Formato: YYYY-MM-DD</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="required-column">
+                                        <code>mercado</code>
+                                        <small class="d-block text-muted">ACN, CFI, FFM</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="required-column">
+                                        <code>tipo_sociedad</code>
+                                        <small class="d-block text-muted">A=Corredora, C=Bolsa</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="required-column">
+                                        <code>secuencia</code>
+                                        <small class="d-block text-muted">Número de secuencia</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="required-column">
+                                        <code>numero_dividendo</code>
+                                        <small class="d-block text-muted">Número de dividendo</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Factors Columns -->
+                            <p class="small fw-semibold mb-2" style="color: #F37021;">FACTORES (30 columnas):</p>
+                            <div class="alert alert-info mb-0">
+                                <p class="mb-2"><strong>Opción 1:</strong> Columna <code>monto</code> (el sistema calcula los 30 factores automáticamente)</p>
+                                <p class="mb-0"><strong>Opción 2:</strong> Columnas <code>factor_8</code>, <code>factor_9</code>, ... , <code>factor_37</code> (valores calculados manualmente)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Upload History -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 h-100">
             <div class="card-header card-header-nuam bg-white border-bottom py-3">
                 <h5 class="mb-0 fw-bold text-nuam-secondary">
                     <i class="fas fa-file-upload me-2"></i>Subir Archivo
