@@ -70,6 +70,10 @@ coverage.xml
 *.swo
 *~
 
+# AI Tools (no subir al repositorio)
+.apm/
+.github/prompts/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 
