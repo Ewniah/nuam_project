@@ -35,8 +35,8 @@ urlpatterns = [
     # Auditoría
     path('auditoria/', views.registro_auditoria, name='registro_auditoria'),
     
-    # Registro de Usuario
-    path('registro/', views.registro, name='registro_usuario'),
+    # Registro de Usuario (Deshabilitado - solo admin puede crear usuarios)
+    path('registro/', views.registro, name='registro_usuario'),  # Redirige a login con mensaje
     
     # Gestión de Usuarios
     path('gestion/usuarios/', views.admin_gestionar_usuarios, name='admin_gestionar_usuarios'),

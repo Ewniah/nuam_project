@@ -346,12 +346,17 @@ def login_view(request):
                     f"Intente nuevamente en 30 minutos.",
                 )
             else:
-                intentos_restantes = 5 - intentos
-                if intentos_restantes <= 2:
+                intentos_restantes = max(0, 5 - intentos)
+                if intentos_restantes > 0 and intentos_restantes <= 2:
                     messages.warning(
                         request,
-                        f"Credenciales incorrectas. Le quedan {intentos_restantes} intentos "
+                        f"Credenciales incorrectas. Le quedan {intentos_restantes} {'intento' if intentos_restantes == 1 else 'intentos'} "
                         f"antes de que su cuenta sea bloqueada.",
+                    )
+                elif intentos_restantes == 0:
+                    messages.error(
+                        request,
+                        "Credenciales incorrectas. Su cuenta será bloqueada en el próximo intento fallido."
                     )
                 else:
                     messages.error(request, "Credenciales incorrectas. Intente nuevamente.")
@@ -1227,7 +1232,7 @@ def editar_instrumento(request, pk):
         - Registra en LogAuditoria con acción UPDATE
         - No afecta calificaciones asociadas existentes
     """
-    instrumento = get_object_or_404(InstrumentoFinanciero, pk=pk, activo=True)
+    instrumento = get_object_or_404(InstrumentoFinanciero, pk=pk)
 
     if request.method == "POST":
         form = InstrumentoFinancieroForm(request.POST, instance=instrumento)
@@ -2104,57 +2109,29 @@ def mi_perfil(request):
 
 def registro(request):
     """
-    Permite el auto-registro de nuevos usuarios en el sistema.
-
-    Función pública (no requiere login) que permite crear cuentas de usuario con
-    asignación automática del rol 'Auditor' por defecto. Administradores pueden
-    cambiar el rol posteriormente.
+    DESHABILITADO: Auto-registro público deshabilitado por política de seguridad.
+    
+    Los usuarios deben ser creados exclusivamente por el Administrador a través del
+    Panel de Administración. Esta medida previene registros no autorizados y mantiene
+    el control centralizado de accesos al sistema.
 
     Parámetros:
-        request (HttpRequest): Solicitud HTTP (pública, sin autenticación).
+        request (HttpRequest): Solicitud HTTP (redirigida).
 
     Retorna:
-        HttpResponse:
-            - POST válido: Redirect a 'login' con mensaje de éxito.
-            - POST inválido: Render del formulario con errores.
-            - GET: Render de 'calificaciones/registro.html' con formulario vacío.
+        HttpResponse: Redirect a 'login' con mensaje informativo.
 
     Notas:
-        - No requiere login (vista pública)
-        - No requiere permisos especiales
-        - Formulario: RegistroForm (hereda de UserCreationForm)
-        - Rol por defecto: 'Auditor' (menor privilegio)
-        - Crea automáticamente PerfilUsuario asociado
-        - Registra en LogAuditoria con acción CREATE
-        - Usuario nuevo debe hacer login después de registro
-        - Validaciones: username único, password strength, email válido
+        - Vista deshabilitada permanentemente
+        - Usuarios deben contactar al administrador
+        - Solo administradores pueden crear cuentas vía Panel Admin
+        - Mantiene URL para evitar errores 404, pero bloquea funcionalidad
     """
-    if request.method == "POST":
-        form = RegistroForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-
-            # Crear perfil de usuario con rol por defecto (Auditor)
-            rol_auditor = Rol.objects.get(nombre_rol="Auditor")
-            PerfilUsuario.objects.create(usuario=user, rol=rol_auditor)
-
-            # Registrar en auditoría
-            ip_address = obtener_ip_cliente(request)
-            LogAuditoria.objects.create(
-                usuario=user,
-                accion="CREATE",
-                tabla_afectada="User",
-                registro_id=user.id,
-                ip_address=ip_address,
-                detalles=f"Usuario registrado: {user.username}",
-            )
-
-            messages.success(request, "Registro exitoso. Ya puedes iniciar sesión.")
-            return redirect("login")
-    else:
-        form = RegistroForm()
-
-    return render(request, "calificaciones/registro.html", {"form": form})
+    messages.warning(
+        request,
+        "El registro público está deshabilitado. Por favor, contacte al administrador del sistema para obtener una cuenta."
+    )
+    return redirect("login")
 
 
 @login_required

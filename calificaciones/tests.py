@@ -415,7 +415,15 @@ class TestCargaMasivaForm(TestCase):
 
 
 class TestRegistroForm(TestCase):
-    """Pruebas para el formulario RegistroForm"""
+    """
+    DEPRECADO: Pruebas para el formulario RegistroForm.
+    
+    El registro público fue deshabilitado por política de seguridad.
+    Estos tests se mantienen para verificar la compatibilidad del código legacy,
+    pero no reflejan la funcionalidad actual del sistema.
+    
+    TODO: Eliminar en versión 4.0 junto con RegistroForm
+    """
     
     def test_form_valido(self):
         """Verifica que el formulario de registro es válido"""

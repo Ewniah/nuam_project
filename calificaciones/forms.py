@@ -10,7 +10,7 @@ class CalificacionTributariaForm(forms.ModelForm):
     class Meta:
         model = CalificacionTributaria
         fields = '__all__'
-        exclude = ['usuario_creador', 'fecha_creacion', 'fecha_modificacion', 'metodo_ingreso', 'factor']
+        exclude = ['usuario_creador', 'fecha_creacion', 'fecha_modificacion', 'metodo_ingreso', 'factor', 'fuente_origen']
         
         widgets = {
             'instrumento': forms.Select(attrs={
@@ -177,7 +177,17 @@ class CargaMasivaForm(forms.Form):
 
 
 class RegistroForm(UserCreationForm):
-    """Formulario de registro de usuario con campos adicionales y perfil"""
+    """
+    DEPRECADO: Formulario de registro público de usuarios.
+    
+    El registro público fue deshabilitado por política de seguridad.
+    Solo los administradores pueden crear usuarios a través del Panel Admin.
+    
+    NOTA: Esta clase se mantiene por compatibilidad con tests existentes,
+    pero no debe usarse en producción. La vista registro() redirige a login.
+    
+    TODO: Eliminar completamente en versión 4.0
+    """
     email = forms.EmailField(
         required=True,
         label='Correo Electrónico',

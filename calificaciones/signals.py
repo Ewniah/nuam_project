@@ -22,25 +22,43 @@ def obtener_ip(request):
 @receiver(post_save, sender=CalificacionTributaria)
 def log_calificacion_save(sender, instance, created, **kwargs):
     """Registra creación/modificación de calificaciones"""
+    # Saltar si se llama desde una vista (la vista registrará manualmente con usuario e IP)
+    # Solo registrar si no hay contexto de usuario (guardados automáticos, migraciones, etc.)
+    import inspect
+    frame = inspect.currentframe()
+    caller_locals = frame.f_back.f_locals if frame.f_back else {}
+    
+    # Saltar si 'request' está en el contexto del llamador (significa que es una vista llamando save)
+    if 'request' in caller_locals:
+        return
+    
     accion = 'CREATE' if created else 'UPDATE'
     LogAuditoria.objects.create(
         usuario=instance.usuario_creador,
         accion=accion,
         tabla_afectada='CalificacionTributaria',
         registro_id=instance.id,
-        detalles=f"Instrumento: {instance.instrumento.codigo_instrumento}, Monto: {instance.monto}, Factor: {instance.factor}"
+        detalles=f"Instrumento: {instance.instrumento.codigo_instrumento}, Monto: {instance.monto}, Factor: {instance.factor} [Sistema]"
     )
 
 
 @receiver(pre_delete, sender=CalificacionTributaria)
 def log_calificacion_delete(sender, instance, **kwargs):
     """Registra eliminación de calificaciones"""
+    # Saltar si se llama desde una vista (la vista registrará manualmente)
+    import inspect
+    frame = inspect.currentframe()
+    caller_locals = frame.f_back.f_locals if frame.f_back else {}
+    
+    if 'request' in caller_locals:
+        return
+    
     LogAuditoria.objects.create(
         usuario=instance.usuario_creador,
         accion='DELETE',
         tabla_afectada='CalificacionTributaria',
         registro_id=instance.id,
-        detalles=f"Eliminado: {instance.instrumento.codigo_instrumento}"
+        detalles=f"Eliminado: {instance.instrumento.codigo_instrumento} [Sistema]"
     )
 
 
@@ -48,12 +66,22 @@ def log_calificacion_delete(sender, instance, **kwargs):
 @receiver(post_save, sender=InstrumentoFinanciero)
 def log_instrumento_save(sender, instance, created, **kwargs):
     """Registra creación/modificación de instrumentos"""
+    # Saltar si se llama desde una vista (la vista registrará manualmente con usuario)
+    # Solo registrar si no hay contexto de usuario (guardados automáticos, migraciones, etc.)
+    import inspect
+    frame = inspect.currentframe()
+    caller_locals = frame.f_back.f_locals if frame.f_back else {}
+    
+    # Saltar si 'request' está en el contexto del llamador (significa que es una vista llamando save)
+    if 'request' in caller_locals:
+        return
+    
     accion = 'CREATE' if created else 'UPDATE'
     LogAuditoria.objects.create(
         accion=accion,
         tabla_afectada='InstrumentoFinanciero',
         registro_id=instance.id,
-        detalles=f"Código: {instance.codigo_instrumento}, Tipo: {instance.tipo_instrumento}"
+        detalles=f"Código: {instance.codigo_instrumento}, Tipo: {instance.tipo_instrumento} [Sistema]"
     )
 
 

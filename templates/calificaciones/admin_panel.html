@@ -412,7 +412,10 @@
                                     {% endif %}
                                 </td>
                                 <td><span class="badge bg-secondary">{{ calif.mercado }}</span></td>
-                                <td class="fw-bold text-success">${{ calif.monto|floatformat:2|intcomma }}</td>
+                                <td class="fw-bold text-success">
+                                    {% load formatos %}
+                                    ${{ calif|sumar_factores|floatformat:2 }}
+                                </td>
                                 <td class="text-center">
                                     {% if calif.activo %}
                                         <span class="badge bg-success bg-opacity-10 text-success">

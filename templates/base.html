@@ -217,6 +217,12 @@
                             <li><a class="dropdown-item" href="{% url 'mi_perfil' %}">
                                 <i class="fas fa-cog me-2 text-muted"></i>Configuración
                             </a></li>
+                            {% comment %} RBAC: Django Admin - Solo Staff/Superuser {% endcomment %}
+                            {% if user.is_staff %}
+                            <li><a class="dropdown-item" href="{% url 'admin:index' %}" target="_blank" rel="noopener noreferrer">
+                                <i class="fas fa-tools me-2 text-muted"></i>Administración
+                            </a></li>
+                            {% endif %}
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form action="{% url 'logout' %}" method="post" class="d-inline w-100">
