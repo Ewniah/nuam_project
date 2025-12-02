@@ -490,15 +490,25 @@ python manage.py runserver
 
 ## 👥 Usuarios de Prueba (Dataset Golden)
 
-Si ejecutaste `python scripts/poblar_bd_maestra.py`, puedes usar las siguientes credenciales:
+Si ejecutaste `python scripts/poblar_bd_maestra.py`, los usuarios se crean con la contraseña establecida en tu archivo `.env`:
 
-| Usuario   | Contraseña  | Rol                 | Email             |
-| --------- | ----------- | ------------------- | ----------------- |
-| admin     | admin123    | Administrador       | admin@nuam.cl     |
-| analista1 | analista123 | Analista Financiero | analista1@nuam.cl |
-| analista2 | analista123 | Analista Financiero | analista2@nuam.cl |
-| auditor1  | auditor123  | Auditor             | auditor1@nuam.cl  |
-| demo      | demo123     | Administrador       | demo@nuam.cl      |
+| Usuario   | Rol                 | Email             | Contraseña         |
+| --------- | ------------------- | ----------------- | ------------------ |
+| admin     | Administrador       | admin@nuam.cl     | Ver archivo `.env` |
+| analista1 | Analista Financiero | analista1@nuam.cl | Ver archivo `.env` |
+| analista2 | Analista Financiero | analista2@nuam.cl | Ver archivo `.env` |
+| auditor1  | Auditor             | auditor1@nuam.cl  | Ver archivo `.env` |
+| demo      | Administrador       | demo@nuam.cl      | Ver archivo `.env` |
+
+**Configuración de contraseña de desarrollo:**
+
+Agrega esta línea a tu archivo `.env`:
+
+```bash
+DEFAULT_TEST_PASSWORD=nuam2025dev
+```
+
+**⚠️ IMPORTANTE:** En producción, establece contraseñas seguras manualmente, no uses el script de seeding.
 
 **Datos incluidos en el Dataset Golden:**
 

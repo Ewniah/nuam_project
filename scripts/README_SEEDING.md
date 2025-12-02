@@ -67,13 +67,24 @@ python scripts/poblar_bd_maestra.py
 
 ### 5 Usuarios
 
-| Username    | Password      | Rol                 | Email             |
-| ----------- | ------------- | ------------------- | ----------------- |
-| `admin`     | `admin123`    | Administrador       | admin@nuam.cl     |
-| `analista1` | `analista123` | Analista Financiero | analista1@nuam.cl |
-| `analista2` | `analista123` | Analista Financiero | analista2@nuam.cl |
-| `auditor1`  | `auditor123`  | Auditor             | auditor1@nuam.cl  |
-| `demo`      | `demo123`     | Administrador       | demo@nuam.cl      |
+**NOTA DE SEGURIDAD:** Las contraseñas se establecen mediante la variable de entorno `DEFAULT_TEST_PASSWORD`.
+
+Por defecto en desarrollo: `nuam2025dev` (configurable en `.env`)
+
+| Username    | Rol                 | Email             | Contraseña      |
+| ----------- | ------------------- | ----------------- | --------------- |
+| `admin`     | Administrador       | admin@nuam.cl     | Ver `.env` file |
+| `analista1` | Analista Financiero | analista1@nuam.cl | Ver `.env` file |
+| `analista2` | Analista Financiero | analista2@nuam.cl | Ver `.env` file |
+| `auditor1`  | Auditor             | auditor1@nuam.cl  | Ver `.env` file |
+| `demo`      | Administrador       | demo@nuam.cl      | Ver `.env` file |
+
+**Para configurar la contraseña de desarrollo:**
+
+```bash
+# En tu archivo .env, agregar:
+DEFAULT_TEST_PASSWORD=tu_password_de_desarrollo_aqui
+```
 
 ### 14 Instrumentos Financieros
 

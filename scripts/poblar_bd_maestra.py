@@ -104,11 +104,20 @@ def poblar_usuarios():
     print("B. CREANDO USUARIOS")
     print("="*70)
     
+    # NOTA DE SEGURIDAD: Las contraseñas están definidas en variables de entorno
+    # Ver README_SEEDING.md para credenciales de desarrollo
+    import os
+    from django.core.management.utils import get_random_secret_key
+    
+    # Generar contraseña temporal segura para desarrollo
+    # En producción, estas deben establecerse mediante variables de entorno
+    DEFAULT_TEST_PASSWORD = os.getenv('DEFAULT_TEST_PASSWORD', get_random_secret_key()[:12])
+    
     usuarios_config = [
         {
             'username': 'admin',
             'email': 'admin@nuam.cl',
-            'password': 'admin123',
+            'password': DEFAULT_TEST_PASSWORD,  # Ver README para contraseña de desarrollo
             'first_name': 'Administrador',
             'last_name': 'Sistema',
             'is_superuser': True,
@@ -120,7 +129,7 @@ def poblar_usuarios():
         {
             'username': 'analista1',
             'email': 'analista1@nuam.cl',
-            'password': 'analista123',
+            'password': DEFAULT_TEST_PASSWORD,
             'first_name': 'María',
             'last_name': 'González',
             'is_superuser': False,
@@ -132,7 +141,7 @@ def poblar_usuarios():
         {
             'username': 'analista2',
             'email': 'analista2@nuam.cl',
-            'password': 'analista123',
+            'password': DEFAULT_TEST_PASSWORD,
             'first_name': 'Carlos',
             'last_name': 'Rodríguez',
             'is_superuser': False,
@@ -144,7 +153,7 @@ def poblar_usuarios():
         {
             'username': 'auditor1',
             'email': 'auditor1@nuam.cl',
-            'password': 'auditor123',
+            'password': DEFAULT_TEST_PASSWORD,
             'first_name': 'Patricia',
             'last_name': 'Silva',
             'is_superuser': False,
@@ -156,7 +165,7 @@ def poblar_usuarios():
         {
             'username': 'demo',
             'email': 'demo@nuam.cl',
-            'password': 'demo123',
+            'password': DEFAULT_TEST_PASSWORD,
             'first_name': 'Usuario',
             'last_name': 'Demo',
             'is_superuser': True,
