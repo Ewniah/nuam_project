@@ -422,14 +422,14 @@ python manage.py migrate
 # Este script crea roles, usuarios, instrumentos, calificaciones y datos de prueba
 python scripts/poblar_bd_maestra.py
 
+# ⚠️ IMPORTANTE: Configura la contraseña de desarrollo primero
+# Agrega esta línea a tu archivo .env:
+# DEFAULT_TEST_PASSWORD=nuam2025dev
+
 # El script crea automáticamente:
 # - 3 Roles (Administrador, Analista, Auditor)
-# - 5 Usuarios con contraseñas:
-#   - admin / admin123 (Administrador)
-#   - analista1 / analista123 (Analista)
-#   - analista2 / analista123 (Analista)
-#   - auditor1 / auditor123 (Auditor)
-#   - demo / demo123 (Administrador)
+# - 5 Usuarios (admin, analista1, analista2, auditor1, demo)
+#   Contraseña: La definida en .env (DEFAULT_TEST_PASSWORD)
 # - 14 Instrumentos financieros
 # - 30 Calificaciones con 30 factores completos
 # - Historial de cargas masivas y logs de auditoría
@@ -559,7 +559,28 @@ Para un despliegue en producción, recuerda:
 
 ## 📝 Changelog
 
-### Versión 4.1 (1 Dic 2025) - Jazzmin UI & Master Seeding Fix ⭐ FINAL
+### Versión 4.2 (1 Dic 2025) - Security Hardening 🔒 FINAL
+
+**Resolución de Alerta GitGuardian**
+
+- ✅ Eliminadas contraseñas hardcodeadas de scripts y documentación
+- ✅ Migración a variables de entorno con `DEFAULT_TEST_PASSWORD`
+- ✅ Fallback seguro con generación aleatoria si no existe variable
+- ✅ Creado `.env.example` como plantilla sin valores reales
+- ✅ Creado `SECURITY.md` con políticas de seguridad completas
+- ✅ Creado `GITGUARDIAN_RESOLUTION.md` con documentación del incidente
+- ✅ Actualizada documentación (README, README_SEEDING) con referencias a `.env`
+- ✅ Script de seeding funcional con nueva configuración segura
+
+**Mejores Prácticas Implementadas**
+
+- ✅ Separación de secretos del código fuente
+- ✅ Documentación de configuración segura para desarrollo y producción
+- ✅ Gestión de credenciales mediante variables de entorno
+- ✅ `.env` correctamente en `.gitignore`
+- ✅ Historial de incidentes de seguridad documentado
+
+### Versión 4.1 (1 Dic 2025) - Jazzmin UI & Master Seeding Fix
 
 **Jazzmin Admin UI Profesional**
 
@@ -718,7 +739,9 @@ Este proyecto es propiedad de NUAM Exchange.
 
 **NUAM Exchange**  
 Sistema de Gestión de Calificaciones Tributarias  
-**Versión 4.1 FINAL** - Diciembre 2025
+**Versión 4.2 FINAL** - Diciembre 2025
+
+**Seguridad**: Ver `SECURITY.md` para política de seguridad y reporte de vulnerabilidades
 
 ---
 
@@ -728,6 +751,27 @@ Sistema de Gestión de Calificaciones Tributarias
 ✅ **Fase 2:** Lógica y estabilización del modelo - COMPLETADA  
 ✅ **Fase 3:** Implementación de 30 factores tributarios - COMPLETADA  
 ✅ **Fase 3.5:** Code Cleanup & Humanización - COMPLETADA  
-✅ **Fase 4:** QA, Database Reset & Master Seeding - COMPLETADA
+✅ **Fase 4:** QA, Database Reset & Master Seeding - COMPLETADA  
+✅ **Fase 4.2:** Security Hardening & GitGuardian Resolution - COMPLETADA
 
-🎉 **PROYECTO LISTO PARA ENTREGA FINAL**
+🎉 **PROYECTO LISTO PARA ENTREGA FINAL - VERSIÓN 4.2**
+
+---
+
+## 🔒 Seguridad
+
+Este proyecto implementa las siguientes medidas de seguridad:
+
+- ✅ Variables de entorno para gestión de secretos (`.env`)
+- ✅ Contraseñas nunca hardcodeadas en código fuente
+- ✅ Política de seguridad documentada en `SECURITY.md`
+- ✅ Sistema RBAC con 3 roles y permisos granulares
+- ✅ Auditoría completa de todas las operaciones
+- ✅ Bloqueo de cuentas por intentos fallidos de login
+- ✅ Protección contra SQL Injection, XSS, CSRF
+
+**Para configuración segura, consulta:**
+
+- `SECURITY.md` - Política de seguridad completa
+- `.env.example` - Plantilla de configuración
+- `GITGUARDIAN_RESOLUTION.md` - Resolución de alertas de seguridad
